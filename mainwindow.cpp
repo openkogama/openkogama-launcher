@@ -6,6 +6,9 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setWindowTitle("OpenKogama Launcher");
+
+    ui->versionComboBox->addItem("1.25.13.285");
 }
 
 MainWindow::~MainWindow()
