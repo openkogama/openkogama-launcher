@@ -13,6 +13,11 @@ qt_add_executable(openkogama-launcher
     mainwindow.ui
 )
 
+qt_add_resources(openkogama-launcher "resources"
+    PREFIX "/"
+    FILES versions.json
+)
+
 target_link_libraries(openkogama-launcher
     PRIVATE
         Qt::Core
