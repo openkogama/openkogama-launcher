@@ -11,6 +11,16 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
+struct Version {
+    QString version;
+    QString date;
+    QString unity;
+    QString backend;
+    QString download;
+    QString installed;
+    QString sha;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -24,5 +34,7 @@ private:
     QNetworkAccessManager m_net;
     void downloadFile(const QUrl &url, const QString &path);
     void loadVersions();
+    void onVersionSelected(const QModelIndex &current, const QModelIndex &previous);
+    QList<Version> versions;
 };
 #endif // MAINWINDOW_H
