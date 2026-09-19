@@ -1,0 +1,14 @@
+{
+    "versions": [
+        {
+            "id": "d151586e-3d66-4fde-aac7-7fc58762717e",
+            "version": "1.25.13.285",
+            "timestamp": 1439992819,
+            "il2cpp": false,
+            "zipSize": 16098776,
+            "unpackedSize": 52517030,
+            "sha256": "c1b26a990d67f5fa620fd521a6cf470a7a4fbcda98a283a7b89526367c6e2668",
+            "url": "https://github.com/bustersky13/version-storage/releases/download/versions/kogama-125013-d151586e-3d66-4fde-aac7-7fc58762717e.zip"
+        }
+    ]
+}
