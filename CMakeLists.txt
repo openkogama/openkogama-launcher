@@ -11,11 +11,15 @@ qt_add_executable(openkogama-launcher
     mainwindow.cpp
     mainwindow.h
     mainwindow.ui
+    app.rc
+    installdialog.h installdialog.cpp installdialog.ui
 )
 
 qt_add_resources(openkogama-launcher "resources"
     PREFIX "/"
     FILES versions.json
+    FILES discord.png
+    FILES install.png
 )
 
 target_link_libraries(openkogama-launcher
