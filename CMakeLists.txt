@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(openkogama-launcher LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core CorePrivate Widgets Network Concurrent)
 
 qt_standard_project_setup()
 
@@ -13,6 +13,7 @@ qt_add_executable(openkogama-launcher
     mainwindow.ui
     app.rc
     installdialog.h installdialog.cpp installdialog.ui
+    installprogressdialog.h installprogressdialog.cpp installprogressdialog.ui
 )
 
 qt_add_resources(openkogama-launcher "resources"
@@ -20,6 +21,7 @@ qt_add_resources(openkogama-launcher "resources"
     FILES versions.json
     FILES discord.png
     FILES install.png
+    FILES unknown.png
 )
 
 target_link_libraries(openkogama-launcher
@@ -27,6 +29,8 @@ target_link_libraries(openkogama-launcher
         Qt::Core
         Qt::Widgets
         Qt::Network
+        Qt::CorePrivate
+        Qt::Concurrent
 )
 
 install(TARGETS openkogama-launcher

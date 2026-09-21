@@ -7,18 +7,15 @@
 #include <QHeaderView>
 #include <QStandardItemModel>
 #include <QDebug>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
 
-InstallDialog::InstallDialog(QWidget *parent)
+InstallDialog::InstallDialog(const QByteArray &versionsJson, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::InstallDialog)
 {
     ui->setupUi(this);
     setWindowIcon(QIcon(":/install.png"));
-    m_net = new QNetworkAccessManager(this);
     loadVersions();
-    m_net->get(QNetworkRequest(QUrl("https://cdn.openkogama.org/versions.json")));
+    populate(versionsJson);
 }
 
 InstallDialog::~InstallDialog()
@@ -26,8 +23,20 @@ InstallDialog::~InstallDialog()
     delete ui;
 }
 
+Version InstallDialog::selectedVersion() const {
+    QModelIndex current = ui->versionsTreeView->currentIndex();
+    if (!current.isValid()) return {};
+    return versions[proxy->mapToSource(current).row()];
+}
+
+QString InstallDialog::instanceName() const {
+    QString name = ui->versionNameLineEdit->text().trimmed();
+    return name.isEmpty() ? selectedVersion().version : name;
+}
+
 void InstallDialog::onVersionSelected(const QModelIndex &current, const QModelIndex &previous) {
-    auto object = versions[current.row()];
+    if (!current.isValid()) return;
+    auto object = versions[proxy->mapToSource(current).row()];
     ui->versionValue->setText(object.version);
     ui->releasedValue->setText(object.date);
     ui->unityValue->setText(object.unity);
@@ -38,10 +47,7 @@ void InstallDialog::onVersionSelected(const QModelIndex &current, const QModelIn
     ui->versionNameLineEdit->setPlaceholderText(object.version);
 }
 
-void InstallDialog::onNetworkReply(QNetworkReply *reply) {
-    if (reply->error() != QNetworkReply::NoError) return;
-    QByteArray data = reply->readAll();
-
+void InstallDialog::populate(const QByteArray &data) {
     QJsonParseError err;
     auto document = QJsonDocument::fromJson(data, &err);
     if (err.error == QJsonParseError::NoError) {
@@ -57,26 +63,39 @@ void InstallDialog::onNetworkReply(QNetworkReply *reply) {
             QString backend;
             if (object.value("il2cpp").toBool()) backend = "IL2CPP";
             else backend = "Mono";
-            QString download = QLocale().formattedDataSize(object.value("zipSize").toInt());
-            QString installed = QLocale().formattedDataSize(object.value("unpackedSize").toInt());
-            QString sha = object.value("sha256").toString().left(7);
-            versions.append({version, date, unity, backend, download, installed, sha});
+            qint64 zipSize = object.value("zipSize").toVariant().toLongLong();
+            QString download = QLocale().formattedDataSize(zipSize);
+            QString installed = QLocale().formattedDataSize(object.value("unpackedSize").toVariant().toLongLong());
+            QString sha256 = object.value("sha256").toString();
+            QString id = object.value("id").toString();
+
+            QStringList urls;
+            for (const auto& u : object.value("urls").toArray())
+                urls.append(u.toString());
+
+            versions.append({version, date, unity, backend, download, installed,
+                             sha256.left(7), urls, sha256, zipSize, id});
 
             model->appendRow({new QStandardItem(version),
                 new QStandardItem(date),});
         }
     }
-    ui->versionsTreeView->setCurrentIndex(model->index(0,0));
+    ui->versionsTreeView->setCurrentIndex(proxy->index(0,0));
 }
 
 void InstallDialog::loadVersions() {
     model = new QStandardItemModel(this);
     model->setHorizontalHeaderLabels({"Version", "Released"});
 
-    ui->versionsTreeView->setModel(model);
+    proxy = new QSortFilterProxyModel(this);
+    proxy->setSourceModel(model);
+    proxy->setFilterCaseSensitivity(Qt::CaseInsensitive);
+    proxy->setFilterKeyColumn(-1);
+
+    ui->versionsTreeView->setModel(proxy);
 
     connect(ui->versionsTreeView->selectionModel(), &QItemSelectionModel::currentChanged, this, &InstallDialog::onVersionSelected);
-    connect(m_net, &QNetworkAccessManager::finished, this, &InstallDialog::onNetworkReply);
+    connect(ui->searchLineEdit, &QLineEdit::textChanged, proxy, &QSortFilterProxyModel::setFilterFixedString);
 
     ui->versionsTreeView->setCurrentIndex(QModelIndex());
     ui->versionsTreeView->clearSelection();

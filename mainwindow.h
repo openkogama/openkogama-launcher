@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QStandardItemModel>
 #include <QUrl>
 
 QT_BEGIN_NAMESPACE
@@ -20,6 +21,9 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    QStandardItemModel *instances;
+    QByteArray m_versionsJson;
+    void loadInstances();
     void onInstallTriggered();
     void onDiscordTriggered();
 };
