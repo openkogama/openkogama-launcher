@@ -41,9 +41,15 @@
     </property>
     <addaction name="actionDiscord"/>
    </widget>
+   <addaction name="actionLaunch"/>
    <addaction name="menuFile"/>
    <addaction name="menuHelp"/>
   </widget>
+  <action name="actionLaunch">
+   <property name="text">
+    <string>Launch</string>
+   </property>
+  </action>
   <action name="actionInstall">
    <property name="text">
     <string>Install Version</string>

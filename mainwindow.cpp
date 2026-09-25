@@ -2,6 +2,8 @@
 #include "ui_mainwindow.h"
 #include "installdialog.h"
 #include "installprogressdialog.h"
+#include "launchdialog.h"
+#include "worldsdialog.h"
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <QDir>
@@ -16,6 +18,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QMessageBox>
+#include <QMenu>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,8 +29,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionInstall, &QAction::triggered, this, &MainWindow::onInstallTriggered);
     connect(ui->actionDiscord, &QAction::triggered, this, &MainWindow::onDiscordTriggered);
+    connect(ui->actionLaunch, &QAction::triggered, this, &MainWindow::onLaunchTriggered);
     ui->actionDiscord->setIcon(QIcon(":/discord.png"));
     ui->actionInstall->setIcon(QIcon(":/install.png"));
+    ui->actionLaunch->setIcon(QIcon(":/launch.png"));
 
     instances = new QStandardItemModel(this);
     ui->instancesView->setModel(instances);
@@ -45,6 +50,11 @@ MainWindow::MainWindow(QWidget *parent)
         "QListView { border: 0; outline: 0; background: #2b2b2b; }"
         "QListView::item { color: #dddddd; padding: 4px; }"
         "QListView::item:selected { background: #232323; border-radius: 6px; color: #ffffff; }");
+    ui->instancesView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->instancesView, &QListView::customContextMenuRequested, this, &MainWindow::showInstanceMenu);
+    connect(ui->instancesView, &QListView::doubleClicked, this, [this](const QModelIndex &index) {
+        launchInstance(index.data(Qt::UserRole).toString());
+    });
 
     ui->menuBar->setStyleSheet(
         "QMenuBar { background: #2b2b2b; border-bottom: 1px solid #1a1a1a; }");
@@ -117,4 +127,48 @@ void MainWindow::onInstallTriggered() {
 }
 void MainWindow::onDiscordTriggered() {
     QDesktopServices::openUrl(QUrl("https://discord.gg/u6tKuP3k4M"));
+}
+
+void MainWindow::onLaunchTriggered() {
+    QModelIndex index = ui->instancesView->currentIndex();
+    if (!index.isValid()) {
+        QMessageBox::information(this, "Launch", "Select an instance first");
+        return;
+    }
+    launchInstance(index.data(Qt::UserRole).toString());
+}
+
+void MainWindow::showInstanceMenu(const QPoint &pos) {
+    QModelIndex index = ui->instancesView->indexAt(pos);
+    if (!index.isValid()) return;
+    ui->instancesView->setCurrentIndex(index);
+
+    QMenu menu(this);
+    QAction *launch = menu.addAction(QIcon(":/launch.png"), "Launch");
+    if (menu.exec(ui->instancesView->viewport()->mapToGlobal(pos)) == launch)
+        launchInstance(index.data(Qt::UserRole).toString());
+}
+
+void MainWindow::launchInstance(const QString &path) {
+    QDir dir(path);
+    QString data = dir.entryList({"*_Data"}, QDir::Dirs).value(0);
+    if (data.isEmpty()) {
+        QMessageBox::warning(this, "Launch", "This version is not a standalone build and can't be launched yet");
+        return;
+    }
+
+    QString exe = data.chopped(5) + ".exe";
+    if (!dir.exists(exe)) {
+        QString other = dir.entryList({"*.exe"}, QDir::Files).value(0);
+        if (other.isEmpty() || !dir.rename(other, exe)) {
+            QMessageBox::warning(this, "Launch", "No game executable in " + path);
+            return;
+        }
+    }
+
+    LaunchDialog launch(this);
+    if (launch.exec() != QDialog::Accepted) return;
+
+    WorldsDialog worlds(path, exe, launch.server(), this);
+    worlds.exec();
 }

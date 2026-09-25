@@ -14,6 +14,8 @@ qt_add_executable(openkogama-launcher
     app.rc
     installdialog.h installdialog.cpp installdialog.ui
     installprogressdialog.h installprogressdialog.cpp installprogressdialog.ui
+    launchdialog.h launchdialog.cpp launchdialog.ui
+    worldsdialog.h worldsdialog.cpp worldsdialog.ui
 )
 
 qt_add_resources(openkogama-launcher "resources"
@@ -22,6 +24,7 @@ qt_add_resources(openkogama-launcher "resources"
     FILES discord.png
     FILES install.png
     FILES unknown.png
+    FILES launch.png
 )
 
 target_link_libraries(openkogama-launcher

@@ -26,5 +26,8 @@ private:
     void loadInstances();
     void onInstallTriggered();
     void onDiscordTriggered();
+    void onLaunchTriggered();
+    void showInstanceMenu(const QPoint &pos);
+    void launchInstance(const QString &path);
 };
 #endif // MAINWINDOW_H
