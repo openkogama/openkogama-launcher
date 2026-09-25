@@ -8,7 +8,14 @@
 #include <QTimer>
 
 static constexpr unsigned long CreateNoWindow = 0x08000000;
-static constexpr int PingAttempts = 80;
+static constexpr int PingAttempts = 200;
+static constexpr int PingTimeout = 150;
+
+static QNetworkRequest pingRequest() {
+    QNetworkRequest request(QUrl(ServerUrl + "/ping"));
+    request.setTransferTimeout(PingTimeout);
+    return request;
+}
 
 LaunchDialog::LaunchDialog(QWidget *parent)
     : QDialog(parent)
@@ -22,7 +29,7 @@ LaunchDialog::LaunchDialog(QWidget *parent)
     ui->progressBar->setRange(0, 100);
 
     setStep("Checking server...", 0);
-    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/ping")));
+    QNetworkReply *reply = m_net->get(pingRequest());
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         if (m_cancelled) return;
@@ -77,14 +84,14 @@ void LaunchDialog::waitForServer(int attempts) {
     }
 
     setStep("Waiting for server...", 20 + 80 * (PingAttempts - attempts) / PingAttempts);
-    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/ping")));
+    QNetworkReply *reply = m_net->get(pingRequest());
     connect(reply, &QNetworkReply::finished, this, [this, reply, attempts]() {
         reply->deleteLater();
         if (m_cancelled) return;
         if (reply->error() == QNetworkReply::NoError)
             accept();
         else
-            QTimer::singleShot(250, this, [this, attempts]() { waitForServer(attempts - 1); });
+            QTimer::singleShot(50, this, [this, attempts]() { waitForServer(attempts - 1); });
     });
 }
 

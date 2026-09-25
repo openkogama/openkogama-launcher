@@ -16,6 +16,7 @@ qt_add_executable(openkogama-launcher
     installprogressdialog.h installprogressdialog.cpp installprogressdialog.ui
     launchdialog.h launchdialog.cpp launchdialog.ui
     worldsdialog.h worldsdialog.cpp worldsdialog.ui
+    centereddelegate.h
 )
 
 qt_add_resources(openkogama-launcher "resources"

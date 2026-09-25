@@ -4,6 +4,7 @@
 #include "installprogressdialog.h"
 #include "launchdialog.h"
 #include "worldsdialog.h"
+#include "centereddelegate.h"
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <QDir>
@@ -19,6 +20,9 @@
 #include <QNetworkRequest>
 #include <QMessageBox>
 #include <QMenu>
+#include <QShortcut>
+
+static constexpr int NameRole = Qt::UserRole + 1;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -33,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->actionDiscord->setIcon(QIcon(":/discord.png"));
     ui->actionInstall->setIcon(QIcon(":/install.png"));
     ui->actionLaunch->setIcon(QIcon(":/launch.png"));
+    ui->actionLaunch->setText(QString());
+    ui->actionLaunch->setToolTip("Launch");
 
     instances = new QStandardItemModel(this);
     ui->instancesView->setModel(instances);
@@ -50,8 +56,14 @@ MainWindow::MainWindow(QWidget *parent)
         "QListView { border: 0; outline: 0; background: #2b2b2b; }"
         "QListView::item { color: #dddddd; padding: 4px; }"
         "QListView::item:selected { background: #232323; border-radius: 6px; color: #ffffff; }");
+    ui->instancesView->setItemDelegate(new CenteredDelegate(ui->instancesView));
     ui->instancesView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->instancesView, &QListView::customContextMenuRequested, this, &MainWindow::showInstanceMenu);
+    auto *renameShortcut = new QShortcut(QKeySequence(Qt::Key_F2), ui->instancesView);
+    connect(renameShortcut, &QShortcut::activated, this, &MainWindow::renameInstance);
+    connect(instances, &QStandardItemModel::itemChanged, this, &MainWindow::onInstanceRenamed);
+    auto *deleteShortcut = new QShortcut(QKeySequence::Delete, ui->instancesView);
+    connect(deleteShortcut, &QShortcut::activated, this, &MainWindow::deleteInstance);
     connect(ui->instancesView, &QListView::doubleClicked, this, [this](const QModelIndex &index) {
         launchInstance(index.data(Qt::UserRole).toString());
     });
@@ -103,6 +115,7 @@ void MainWindow::loadInstances() {
         auto *item = new QStandardItem(icon, name);
         item->setToolTip("KoGaMa " + version);
         item->setData(instanceDir.path(), Qt::UserRole);
+        item->setData(name, NameRole);
         instances->appendRow(item);
     }
 }
@@ -140,13 +153,77 @@ void MainWindow::onLaunchTriggered() {
 
 void MainWindow::showInstanceMenu(const QPoint &pos) {
     QModelIndex index = ui->instancesView->indexAt(pos);
-    if (!index.isValid()) return;
+    if (!index.isValid()) {
+        ui->instancesView->clearSelection();
+        QMenu menu(this);
+        menu.addAction(ui->actionInstall);
+        menu.exec(ui->instancesView->viewport()->mapToGlobal(pos));
+        return;
+    }
     ui->instancesView->setCurrentIndex(index);
 
     QMenu menu(this);
     QAction *launch = menu.addAction(QIcon(":/launch.png"), "Launch");
-    if (menu.exec(ui->instancesView->viewport()->mapToGlobal(pos)) == launch)
+    menu.addSeparator();
+    QAction *rename = menu.addAction("Rename");
+    QAction *remove = menu.addAction("Delete");
+
+    QAction *chosen = menu.exec(ui->instancesView->viewport()->mapToGlobal(pos));
+    if (chosen == launch)
         launchInstance(index.data(Qt::UserRole).toString());
+    else if (chosen == rename)
+        renameInstance();
+    else if (chosen == remove)
+        deleteInstance();
+}
+
+void MainWindow::renameInstance() {
+    QModelIndex index = ui->instancesView->currentIndex();
+    if (index.isValid())
+        ui->instancesView->edit(index);
+}
+
+void MainWindow::onInstanceRenamed(QStandardItem *item) {
+    QString name = item->text().trimmed();
+    QString previous = item->data(NameRole).toString();
+    if (name == previous) return;
+    if (name.isEmpty()) {
+        item->setText(previous);
+        return;
+    }
+
+    QFile file(QDir(item->data(Qt::UserRole).toString()).filePath("instance.json"));
+    QJsonObject meta;
+    if (file.open(QIODevice::ReadOnly)) {
+        meta = QJsonDocument::fromJson(file.readAll()).object();
+        file.close();
+    }
+
+    meta["name"] = name;
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        QMessageBox::warning(this, "Rename", "Could not save " + file.fileName());
+        item->setText(previous);
+        return;
+    }
+    file.write(QJsonDocument(meta).toJson());
+    item->setData(name, NameRole);
+}
+
+void MainWindow::deleteInstance() {
+    QModelIndex index = ui->instancesView->currentIndex();
+    if (!index.isValid()) return;
+
+    auto answer = QMessageBox::question(this, "Delete Instance",
+        "Delete \"" + index.data().toString() + "\" and all its files? This can't be undone.",
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (answer != QMessageBox::Yes) return;
+
+    QDir dir(index.data(Qt::UserRole).toString());
+    QString base = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/instances";
+    if (QDir::cleanPath(dir.absolutePath()).startsWith(QDir::cleanPath(base) + "/") && !dir.removeRecursively())
+        QMessageBox::warning(this, "Delete Instance", "Some files could not be deleted. Close the game if it is running and try again.");
+
+    loadInstances();
 }
 
 void MainWindow::launchInstance(const QString &path) {
@@ -169,6 +246,8 @@ void MainWindow::launchInstance(const QString &path) {
     LaunchDialog launch(this);
     if (launch.exec() != QDialog::Accepted) return;
 
-    WorldsDialog worlds(path, exe, launch.server(), this);
-    worlds.exec();
+    auto *worlds = new WorldsDialog(path, exe, launch.server(), this);
+    worlds->setAttribute(Qt::WA_DeleteOnClose);
+    worlds->setModal(false);
+    worlds->show();
 }

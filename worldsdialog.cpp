@@ -1,6 +1,12 @@
 #include "worldsdialog.h"
 #include "ui_worldsdialog.h"
 #include "launchdialog.h"
+#include "centereddelegate.h"
+#include <QPixmap>
+#include <QTimer>
+
+static const QSize ThumbnailSize(200, 80);
+static constexpr int NameRole = Qt::UserRole + 1;
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
@@ -11,6 +17,8 @@
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QLineEdit>
+#include <QMenu>
+#include <QShortcut>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -36,11 +44,38 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->avatarButton, &QPushButton::clicked, this, [this]() { launch("avatar", 0); });
     connect(ui->newButton, &QPushButton::clicked, this, &WorldsDialog::createWorld);
     connect(ui->importButton, &QPushButton::clicked, this, &WorldsDialog::importWorld);
+    auto *renameShortcut = new QShortcut(QKeySequence(Qt::Key_F2), ui->worldsList);
+    connect(renameShortcut, &QShortcut::activated, this, &WorldsDialog::renameWorld);
+    connect(ui->worldsList, &QListWidget::itemChanged, this, &WorldsDialog::onWorldRenamed);
+    auto *deleteShortcut = new QShortcut(QKeySequence::Delete, ui->worldsList);
+    connect(deleteShortcut, &QShortcut::activated, this, &WorldsDialog::deleteWorld);
+    ui->worldsList->setItemDelegate(new CenteredDelegate(ui->worldsList));
+    ui->worldsList->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->worldsList, &QListWidget::customContextMenuRequested, this, &WorldsDialog::showWorldMenu);
     connect(ui->closeButton, &QPushButton::clicked, this, &WorldsDialog::reject);
+    ui->worldsList->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(ui->worldsList, &QListWidget::itemDoubleClicked, this, [this]() { launch("play", selectedWorld()); });
+
+    ui->worldsList->setViewMode(QListView::IconMode);
+    ui->worldsList->setIconSize(ThumbnailSize);
+    ui->worldsList->setGridSize(QSize(ThumbnailSize.width() + 20, ThumbnailSize.height() + 40));
+    ui->worldsList->setResizeMode(QListView::Adjust);
+    ui->worldsList->setMovement(QListView::Static);
+    ui->worldsList->setWordWrap(true);
+    ui->worldsList->setUniformItemSizes(true);
+    ui->worldsList->setFrameShape(QFrame::NoFrame);
+    ui->worldsList->setFocusPolicy(Qt::NoFocus);
+    ui->worldsList->setStyleSheet(
+        "QListView { border: 0; outline: 0; background: #2b2b2b; }"
+        "QListView::item { color: #dddddd; padding: 4px; }"
+        "QListView::item:selected { background: #232323; border-radius: 6px; color: #ffffff; }");
 
     loadWorlds();
     loadTemplates();
+
+    auto *poll = new QTimer(this);
+    connect(poll, &QTimer::timeout, this, &WorldsDialog::checkRevision);
+    poll->start(1000);
 }
 
 WorldsDialog::~WorldsDialog()
@@ -58,20 +93,69 @@ void WorldsDialog::loadWorlds(int select) {
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/api/worlds")));
     connect(reply, &QNetworkReply::finished, this, [this, reply, select]() {
         reply->deleteLater();
+        QSignalBlocker blocker(ui->worldsList);
         ui->worldsList->clear();
+
+        QPixmap empty(ThumbnailSize);
+        empty.fill(QColor("#3a3a3a"));
 
         const QJsonArray worlds = QJsonDocument::fromJson(reply->readAll()).array();
         for (const QJsonValue &value : worlds) {
             QJsonObject world = value.toObject();
-            QString saved = QDateTime::fromString(world["savedAt"].toString(), Qt::ISODateWithMs).toLocalTime().toString("yyyy-MM-dd HH:mm");
-            auto *item = new QListWidgetItem(world["name"].toString() + "\n" + saved, ui->worldsList);
-            item->setData(Qt::UserRole, world["id"].toInt());
-            if (world["id"].toInt() == select)
+            int id = world["id"].toInt();
+            auto *item = new QListWidgetItem(thumbnail(empty), world["name"].toString(), ui->worldsList);
+            item->setFlags(item->flags() | Qt::ItemIsEditable);
+            item->setData(Qt::UserRole, id);
+            item->setData(NameRole, world["name"].toString());
+            auto date = [](const QJsonValue &value) {
+                return QDateTime::fromString(value.toString(), Qt::ISODateWithMs).toLocalTime().toString("yyyy-MM-dd HH:mm");
+            };
+            item->setToolTip("Saved: " + date(world["savedAt"]) + "\n"
+                +(world["publishedAt"].isString() ? "Published: " + date(world["publishedAt"]) : QString("Not published")));
+            if (id == select)
                 ui->worldsList->setCurrentItem(item);
+            loadThumbnail(item, id);
         }
         if (!ui->worldsList->currentItem() && ui->worldsList->count() > 0)
             ui->worldsList->setCurrentRow(0);
     });
+}
+
+void WorldsDialog::checkRevision() {
+    QNetworkRequest request(QUrl(ServerUrl + "/api/worlds/revision"));
+    request.setTransferTimeout(500);
+    QNetworkReply *reply = m_net->get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) return;
+
+        int revision = QJsonDocument::fromJson(reply->readAll()).object()["revision"].toInt();
+        if (revision == m_revision) return;
+        bool first = m_revision < 0;
+        m_revision = revision;
+        if (!first && !ui->worldsList->viewport()->findChild<QLineEdit *>())
+            loadWorlds(selectedWorld());
+    });
+}
+
+void WorldsDialog::loadThumbnail(QListWidgetItem *item, int world) {
+    QPointer<QListWidget> list = ui->worldsList;
+    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/images/0/" + QString::number(world) + ".png?v=" + QString::number(m_revision))));
+    connect(reply, &QNetworkReply::finished, this, [reply, list, item, world]() {
+        reply->deleteLater();
+        QPixmap image;
+        if (reply->error() != QNetworkReply::NoError || !image.loadFromData(reply->readAll()) || !list) return;
+        for (int i = 0; i < list->count(); ++i)
+            if (list->item(i) == item && item->data(Qt::UserRole).toInt() == world)
+                item->setIcon(thumbnail(image.scaled(ThumbnailSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation)));
+    });
+}
+
+QIcon WorldsDialog::thumbnail(const QPixmap &pixmap) {
+    QIcon icon;
+    icon.addPixmap(pixmap, QIcon::Normal);
+    icon.addPixmap(pixmap, QIcon::Selected);
+    return icon;
 }
 
 void WorldsDialog::loadTemplates() {
@@ -147,6 +231,84 @@ void WorldsDialog::importWorld() {
     });
 }
 
+void WorldsDialog::renameWorld() {
+    if (QListWidgetItem *item = ui->worldsList->currentItem())
+        ui->worldsList->editItem(item);
+}
+
+void WorldsDialog::onWorldRenamed(QListWidgetItem *item) {
+    QString name = item->text().trimmed();
+    QString previous = item->data(NameRole).toString();
+    if (name == previous) return;
+    if (name.isEmpty()) {
+        item->setText(previous);
+        return;
+    }
+
+    item->setData(NameRole, name);
+    int id = item->data(Qt::UserRole).toInt();
+    QUrl url(ServerUrl + "/api/worlds/rename");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(id));
+    query.addQueryItem("name", name);
+    url.setQuery(query);
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = m_net->post(request, QByteArray());
+    connect(reply, &QNetworkReply::finished, this, [this, reply, id]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) {
+            QMessageBox::warning(this, "Rename", "Could not rename this world");
+            loadWorlds(id);
+        }
+    });
+}
+
+void WorldsDialog::deleteWorld() {
+    QListWidgetItem *item = ui->worldsList->currentItem();
+    if (!item) return;
+
+    auto answer = QMessageBox::question(this, "Delete World",
+        "Delete \"" + item->text() + "\"? This can't be undone.",
+        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+    if (answer != QMessageBox::Yes) return;
+
+    QUrl url(ServerUrl + "/api/worlds/delete");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
+    url.setQuery(query);
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = m_net->post(request, QByteArray());
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError)
+            QMessageBox::warning(this, "Delete World", "This world is open in the game. Close it first.");
+        loadWorlds();
+    });
+}
+
+void WorldsDialog::showWorldMenu(const QPoint &pos) {
+    QListWidgetItem *item = ui->worldsList->itemAt(pos);
+    if (!item) return;
+    ui->worldsList->setCurrentItem(item);
+
+    QMenu menu(this);
+    QAction *play = menu.addAction("Play");
+    QAction *build = menu.addAction("Build");
+    menu.addSeparator();
+    QAction *rename = menu.addAction("Rename");
+    QAction *remove = menu.addAction("Delete");
+
+    QAction *chosen = menu.exec(ui->worldsList->viewport()->mapToGlobal(pos));
+    if (chosen == play) launch("play", selectedWorld());
+    else if (chosen == build) launch("edit", selectedWorld());
+    else if (chosen == rename) renameWorld();
+    else if (chosen == remove) deleteWorld();
+}
+
 int WorldsDialog::selectedWorld() const {
     QListWidgetItem *item = ui->worldsList->currentItem();
     return item ? item->data(Qt::UserRole).toInt() : 0;
@@ -166,7 +328,10 @@ void WorldsDialog::launch(const QString &mode, int world) {
 
     auto *client = new QProcess(parentWidget());
     client->setProgram(QDir(m_path).filePath(m_exe));
-    client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64())});
+    QDir logs(QDir(m_path).filePath("logs"));
+    logs.mkpath(".");
+    QString log = logs.filePath("client-" + QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss-zzz") + ".log");
+    client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
     client->setWorkingDirectory(m_path);
     client->setProcessEnvironment(env);
     connect(client, &QProcess::finished, client, &QObject::deleteLater);

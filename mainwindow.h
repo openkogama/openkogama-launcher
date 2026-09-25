@@ -29,5 +29,8 @@ private:
     void onLaunchTriggered();
     void showInstanceMenu(const QPoint &pos);
     void launchInstance(const QString &path);
+    void renameInstance();
+    void deleteInstance();
+    void onInstanceRenamed(QStandardItem *item);
 };
 #endif // MAINWINDOW_H
