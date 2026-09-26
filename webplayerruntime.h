@@ -8,6 +8,7 @@ class QWidget;
 namespace WebPlayerRuntime {
 
 bool isWebPlayerFile(const QString &name);
+QString bundledDir(const QString &name);
 QString playerPath();
 bool ensureInstalled(QWidget *parent);
 

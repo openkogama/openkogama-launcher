@@ -131,8 +131,9 @@ void WorldsDialog::loadWorlds(int select) {
             auto date = [](const QJsonValue &value) {
                 return QDateTime::fromString(value.toString(), Qt::ISODateWithMs).toLocalTime().toString("yyyy-MM-dd HH:mm");
             };
-            item->setToolTip("Saved: " + date(world["savedAt"]) + "\n"
-                +(world["publishedAt"].isString() ? "Published: " + date(world["publishedAt"]) : QString("Not published")));
+            item->setToolTip("Last played: " + (world["playedAt"].isString() ? date(world["playedAt"]) : QString("never")) + "\n"
+                + "Saved: " + date(world["savedAt"]) + "\n"
+                + (world["publishedAt"].isString() ? "Published: " + date(world["publishedAt"]) : QString("Not published")));
             if (id == select)
                 ui->worldsList->setCurrentItem(item);
             loadThumbnail(item, id);
@@ -375,6 +376,11 @@ void WorldsDialog::launch(const QString &mode, int world) {
         }
     } else {
         client->setProgram(QDir(m_path).filePath(m_exe));
+        QFile meta(QDir(m_path).filePath("instance.json"));
+        meta.open(QIODevice::ReadOnly);
+        QString version = QJsonDocument::fromJson(meta.readAll()).object().value("version").toString();
+        if (!version.isEmpty())
+            session += "&client=" + version;
         client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
     }
     client->setWorkingDirectory(m_path);
@@ -386,7 +392,7 @@ void WorldsDialog::launch(const QString &mode, int world) {
     console->follow("Game", log);
     if (WebPlayerRuntime::isWebPlayerFile(m_exe))
         console->followNewest("Unity", QDir::tempPath() + "/UnityWebPlayer/log");
-    console->followNewest("Server", QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/server/logs", true);
+    console->followNewest("Server", WebPlayerRuntime::bundledDir("server") + "/logs", true);
     connect(console, &ConsoleWindow::crashed, console, [console]() {
         if (!Settings::consoleOnCrash())
             return;

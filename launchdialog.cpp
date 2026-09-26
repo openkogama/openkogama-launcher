@@ -1,4 +1,5 @@
 #include "launchdialog.h"
+#include "webplayerruntime.h"
 #include "ui_launchdialog.h"
 #include <QDialogButtonBox>
 #include <QDir>
@@ -55,7 +56,7 @@ void LaunchDialog::reject() {
 }
 
 void LaunchDialog::startServer() {
-    QDir dir(QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/server");
+    QDir dir(WebPlayerRuntime::bundledDir("server"));
     if (!dir.exists("openkogama-server.exe")) {
         fail("Server not found in " + dir.path());
         return;

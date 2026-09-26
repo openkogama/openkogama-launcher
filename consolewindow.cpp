@@ -42,7 +42,7 @@ ConsoleWindow::ConsoleWindow(const QString &title, QWidget *parent)
     , m_tabs(new QTabWidget(this))
 {
     setWindowTitle(title);
-    resize(900, 500);
+    resize(560, 760);
 
     auto *copy = new QPushButton("Copy", this);
     auto *close = new QPushButton("Close", this);
