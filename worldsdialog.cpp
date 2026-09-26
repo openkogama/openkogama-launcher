@@ -2,6 +2,7 @@
 #include "ui_worldsdialog.h"
 #include "launchdialog.h"
 #include "centereddelegate.h"
+#include "webplayerruntime.h"
 #include <QPixmap>
 #include <QTimer>
 
@@ -28,14 +29,16 @@ static constexpr int NameRole = Qt::UserRole + 1;
 #include <QUrlQuery>
 
 WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *server, QWidget *parent)
-    : QDialog(parent)
+    : QDialog(nullptr)
     , ui(new Ui::WorldsDialog)
+    , m_owner(parent)
     , m_path(path)
     , m_exe(exe)
     , m_server(server)
     , m_net(new QNetworkAccessManager(this))
 {
     ui->setupUi(this);
+    setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
     setWindowIcon(QIcon(":/launch.png"));
     setWindowTitle("Worlds - KoGaMa " + QDir(path).dirName());
 
@@ -326,12 +329,22 @@ void WorldsDialog::launch(const QString &mode, int world) {
 
     QString session = ServerUrl + "/session?mode=" + mode + (world ? "&world=" + QString::number(world) : QString());
 
-    auto *client = new QProcess(parentWidget());
-    client->setProgram(QDir(m_path).filePath(m_exe));
+    auto *client = new QProcess(m_owner);
     QDir logs(QDir(m_path).filePath("logs"));
     logs.mkpath(".");
     QString log = logs.filePath("client-" + QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss-zzz") + ".log");
-    client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
+
+    if (WebPlayerRuntime::isWebPlayerFile(m_exe)) {
+        QFile meta(QDir(m_path).filePath("instance.json"));
+        meta.open(QIODevice::ReadOnly);
+        QString version = QJsonDocument::fromJson(meta.readAll()).object().value("version").toString();
+        client->setProgram(WebPlayerRuntime::playerPath());
+        client->setArguments({QDir::toNativeSeparators(QDir(m_path).filePath(m_exe)), "--version", version,
+            "--reply", "sendPlayerParams=" + session, "--title", "KoGaMa " + QDir(m_path).dirName(), "--log", QDir::toNativeSeparators(log)});
+    } else {
+        client->setProgram(QDir(m_path).filePath(m_exe));
+        client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
+    }
     client->setWorkingDirectory(m_path);
     client->setProcessEnvironment(env);
     connect(client, &QProcess::finished, client, &QObject::deleteLater);

@@ -39,6 +39,7 @@ private:
     int selectedWorld() const;
 
     Ui::WorldsDialog *ui;
+    QPointer<QWidget> m_owner;
     QString m_path;
     QString m_exe;
     QPointer<QProcess> m_server;

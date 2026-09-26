@@ -5,6 +5,7 @@
 #include "launchdialog.h"
 #include "worldsdialog.h"
 #include "centereddelegate.h"
+#include "webplayerruntime.h"
 #include <QDesktopServices>
 #include <QStandardPaths>
 #include <QDir>
@@ -21,8 +22,48 @@
 #include <QMessageBox>
 #include <QMenu>
 #include <QShortcut>
+#include <QDirIterator>
+#include <QProgressDialog>
+#include <QFutureWatcher>
+#include <QtConcurrent>
 
 static constexpr int NameRole = Qt::UserRole + 1;
+
+static QString instancesBase() {
+    return QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/instances";
+}
+
+static bool saveInstanceName(const QString &path, const QString &name) {
+    QFile file(QDir(path).filePath("instance.json"));
+    QJsonObject meta;
+    if (file.open(QIODevice::ReadOnly)) {
+        meta = QJsonDocument::fromJson(file.readAll()).object();
+        file.close();
+    }
+
+    meta["name"] = name;
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) return false;
+    file.write(QJsonDocument(meta).toJson());
+    return true;
+}
+
+static bool copyInstance(const QString &source, const QString &dest) {
+    QDir from(source);
+    QDir to(dest);
+    if (!to.mkpath(".")) return false;
+
+    QDirIterator it(source, QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QFileInfo entry(it.next());
+        QString target = to.filePath(from.relativeFilePath(entry.filePath()));
+        if (entry.isDir()) {
+            if (!to.mkpath(target)) return false;
+        } else if (!QFile::copy(entry.filePath(), target)) {
+            return false;
+        }
+    }
+    return true;
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -88,8 +129,7 @@ MainWindow::MainWindow(QWidget *parent)
 void MainWindow::loadInstances() {
     instances->clear();
 
-    QString base = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/instances";
-    QDir dir(base);
+    QDir dir(instancesBase());
 
     QFileIconProvider iconProvider;
     const auto folders = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
@@ -166,6 +206,7 @@ void MainWindow::showInstanceMenu(const QPoint &pos) {
     QAction *launch = menu.addAction(QIcon(":/launch.png"), "Launch");
     menu.addSeparator();
     QAction *rename = menu.addAction("Rename");
+    QAction *duplicate = menu.addAction("Duplicate");
     QAction *remove = menu.addAction("Delete");
 
     QAction *chosen = menu.exec(ui->instancesView->viewport()->mapToGlobal(pos));
@@ -173,6 +214,8 @@ void MainWindow::showInstanceMenu(const QPoint &pos) {
         launchInstance(index.data(Qt::UserRole).toString());
     else if (chosen == rename)
         renameInstance();
+    else if (chosen == duplicate)
+        duplicateInstance();
     else if (chosen == remove)
         deleteInstance();
 }
@@ -192,21 +235,43 @@ void MainWindow::onInstanceRenamed(QStandardItem *item) {
         return;
     }
 
-    QFile file(QDir(item->data(Qt::UserRole).toString()).filePath("instance.json"));
-    QJsonObject meta;
-    if (file.open(QIODevice::ReadOnly)) {
-        meta = QJsonDocument::fromJson(file.readAll()).object();
-        file.close();
-    }
-
-    meta["name"] = name;
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        QMessageBox::warning(this, "Rename", "Could not save " + file.fileName());
+    if (!saveInstanceName(item->data(Qt::UserRole).toString(), name)) {
+        QMessageBox::warning(this, "Rename", "Could not save instance.json");
         item->setText(previous);
         return;
     }
-    file.write(QJsonDocument(meta).toJson());
     item->setData(name, NameRole);
+}
+
+void MainWindow::duplicateInstance() {
+    QModelIndex index = ui->instancesView->currentIndex();
+    if (!index.isValid()) return;
+
+    QString source = index.data(Qt::UserRole).toString();
+    QString name = index.data(NameRole).toString() + " (copy)";
+    QString folder = QFileInfo(source).fileName() + " (copy)";
+    QString dest = instancesBase() + "/" + folder;
+    for (int n = 2; QDir(dest).exists(); n++)
+        dest = instancesBase() + "/" + folder + " (" + QString::number(n) + ")";
+
+    auto *progress = new QProgressDialog("Duplicating " + index.data(NameRole).toString() + "...", QString(), 0, 0, this);
+    progress->setWindowTitle("Duplicate Instance");
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setMinimumDuration(0);
+    progress->show();
+
+    auto *watcher = new QFutureWatcher<bool>(this);
+    connect(watcher, &QFutureWatcher<bool>::finished, this, [this, watcher, progress, dest, name]() {
+        progress->deleteLater();
+        watcher->deleteLater();
+        if (!watcher->result() || !saveInstanceName(dest, name)) {
+            QDir(dest).removeRecursively();
+            QMessageBox::warning(this, "Duplicate Instance", "Could not copy the instance files");
+            return;
+        }
+        loadInstances();
+    });
+    watcher->setFuture(QtConcurrent::run([source, dest]() { return copyInstance(source, dest); }));
 }
 
 void MainWindow::deleteInstance() {
@@ -219,8 +284,7 @@ void MainWindow::deleteInstance() {
     if (answer != QMessageBox::Yes) return;
 
     QDir dir(index.data(Qt::UserRole).toString());
-    QString base = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/instances";
-    if (QDir::cleanPath(dir.absolutePath()).startsWith(QDir::cleanPath(base) + "/") && !dir.removeRecursively())
+    if (QDir::cleanPath(dir.absolutePath()).startsWith(QDir::cleanPath(instancesBase()) + "/") && !dir.removeRecursively())
         QMessageBox::warning(this, "Delete Instance", "Some files could not be deleted. Close the game if it is running and try again.");
 
     loadInstances();
@@ -228,18 +292,29 @@ void MainWindow::deleteInstance() {
 
 void MainWindow::launchInstance(const QString &path) {
     QDir dir(path);
-    QString data = dir.entryList({"*_Data"}, QDir::Dirs).value(0);
-    if (data.isEmpty()) {
-        QMessageBox::warning(this, "Launch", "This version is not a standalone build and can't be launched yet");
-        return;
-    }
+    QString exe = dir.entryList({"*.unityweb", "*.unity3d"}, QDir::Files).value(0);
 
-    QString exe = data.chopped(5) + ".exe";
-    if (!dir.exists(exe)) {
-        QString other = dir.entryList({"*.exe"}, QDir::Files).value(0);
-        if (other.isEmpty() || !dir.rename(other, exe)) {
-            QMessageBox::warning(this, "Launch", "No game executable in " + path);
+    if (!exe.isEmpty()) {
+        if (!QFile::exists(WebPlayerRuntime::playerPath())) {
+            QMessageBox::warning(this, "Launch", "OpenKogama Player is missing from " + QDir::toNativeSeparators(WebPlayerRuntime::playerPath()));
             return;
+        }
+        if (!WebPlayerRuntime::ensureInstalled(this))
+            return;
+    } else {
+        QString data = dir.entryList({"*_Data"}, QDir::Dirs).value(0);
+        if (data.isEmpty()) {
+            QMessageBox::warning(this, "Launch", "This version can't be launched yet");
+            return;
+        }
+
+        exe = data.chopped(5) + ".exe";
+        if (!dir.exists(exe)) {
+            QString other = dir.entryList({"*.exe"}, QDir::Files).value(0);
+            if (other.isEmpty() || !dir.rename(other, exe)) {
+                QMessageBox::warning(this, "Launch", "No game executable in " + path);
+                return;
+            }
         }
     }
 

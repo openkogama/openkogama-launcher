@@ -30,6 +30,7 @@ private:
     void showInstanceMenu(const QPoint &pos);
     void launchInstance(const QString &path);
     void renameInstance();
+    void duplicateInstance();
     void deleteInstance();
     void onInstanceRenamed(QStandardItem *item);
 };
