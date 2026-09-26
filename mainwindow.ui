@@ -34,6 +34,7 @@
      <string>File</string>
     </property>
     <addaction name="actionInstall"/>
+    <addaction name="actionSettings"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
@@ -53,6 +54,11 @@
   <action name="actionInstall">
    <property name="text">
     <string>Install Version</string>
+   </property>
+  </action>
+  <action name="actionSettings">
+   <property name="text">
+    <string>Settings...</string>
    </property>
   </action>
   <action name="actionDiscord">

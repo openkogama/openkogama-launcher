@@ -3,6 +3,7 @@
 #include "installdialog.h"
 #include "installprogressdialog.h"
 #include "launchdialog.h"
+#include "settingsdialog.h"
 #include "worldsdialog.h"
 #include "centereddelegate.h"
 #include "webplayerruntime.h"
@@ -75,6 +76,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->actionInstall, &QAction::triggered, this, &MainWindow::onInstallTriggered);
     connect(ui->actionDiscord, &QAction::triggered, this, &MainWindow::onDiscordTriggered);
     connect(ui->actionLaunch, &QAction::triggered, this, &MainWindow::onLaunchTriggered);
+    connect(ui->actionSettings, &QAction::triggered, this, [this]() { SettingsDialog(this).exec(); });
     ui->actionDiscord->setIcon(QIcon(":/discord.png"));
     ui->actionInstall->setIcon(QIcon(":/install.png"));
     ui->actionLaunch->setIcon(QIcon(":/launch.png"));

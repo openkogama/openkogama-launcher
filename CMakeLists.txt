@@ -17,6 +17,9 @@ qt_add_executable(openkogama-launcher
     launchdialog.h launchdialog.cpp launchdialog.ui
     worldsdialog.h worldsdialog.cpp worldsdialog.ui
     webplayerruntime.h webplayerruntime.cpp
+    settings.h settings.cpp
+    settingsdialog.h settingsdialog.cpp settingsdialog.ui
+    consolewindow.h consolewindow.cpp
     centereddelegate.h
 )
 

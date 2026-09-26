@@ -3,6 +3,8 @@
 #include "launchdialog.h"
 #include "centereddelegate.h"
 #include "webplayerruntime.h"
+#include "consolewindow.h"
+#include "settings.h"
 #include <QPixmap>
 #include <QTimer>
 
@@ -10,6 +12,7 @@ static const QSize ThumbnailSize(200, 80);
 static constexpr int NameRole = Qt::UserRole + 1;
 #include <QDateTime>
 #include <QDir>
+#include <QStandardPaths>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
@@ -28,11 +31,26 @@ static constexpr int NameRole = Qt::UserRole + 1;
 #include <QPointer>
 #include <QUrlQuery>
 
+static QString instanceTitle(const QString &path)
+{
+    QFile file(QDir(path).filePath("instance.json"));
+    QJsonObject info;
+    if (file.open(QIODevice::ReadOnly))
+        info = QJsonDocument::fromJson(file.readAll()).object();
+    for (const char *key : {"name", "version"}) {
+        QString value = info.value(key).toString().trimmed();
+        if (!value.isEmpty())
+            return "KoGaMa " + value;
+    }
+    return "KoGaMa";
+}
+
 WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *server, QWidget *parent)
     : QDialog(nullptr)
     , ui(new Ui::WorldsDialog)
     , m_owner(parent)
     , m_path(path)
+    , m_title(instanceTitle(path))
     , m_exe(exe)
     , m_server(server)
     , m_net(new QNetworkAccessManager(this))
@@ -40,7 +58,7 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     ui->setupUi(this);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
     setWindowIcon(QIcon(":/launch.png"));
-    setWindowTitle("Worlds - KoGaMa " + QDir(path).dirName());
+    setWindowTitle("Worlds - " + m_title);
 
     connect(ui->playButton, &QPushButton::clicked, this, [this]() { launch("play", selectedWorld()); });
     connect(ui->buildButton, &QPushButton::clicked, this, [this]() { launch("edit", selectedWorld()); });
@@ -337,21 +355,58 @@ void WorldsDialog::launch(const QString &mode, int world) {
     if (WebPlayerRuntime::isWebPlayerFile(m_exe)) {
         QFile meta(QDir(m_path).filePath("instance.json"));
         meta.open(QIODevice::ReadOnly);
-        QString version = QJsonDocument::fromJson(meta.readAll()).object().value("version").toString();
+        QJsonObject info = QJsonDocument::fromJson(meta.readAll()).object();
+        QString version = info.value("version").toString();
+        QString file = QDir::toNativeSeparators(QDir(m_path).filePath(m_exe));
+        QString title = m_title;
         client->setProgram(WebPlayerRuntime::playerPath());
-        client->setArguments({QDir::toNativeSeparators(QDir(m_path).filePath(m_exe)), "--version", version,
-            "--reply", "sendPlayerParams=" + session, "--title", "KoGaMa " + QDir(m_path).dirName(), "--log", QDir::toNativeSeparators(log)});
+        if (info.value("unityVersion").toString().startsWith("3.4")) {
+            if (mode == "avatar") {
+                client->deleteLater();
+                QMessageBox::information(this, "Worlds", "This version has no avatar editor");
+                return;
+            }
+            QString query = "?Username=1&Password=&PlanetName=" + QString::number(world) + "&EditMode=" + (mode == "play" ? "false" : "true");
+            client->setArguments({file + query, "--serve-as", ServerUrl + "/kogama2012/WebPlayer.unity3d",
+                "--title", title, "--log", QDir::toNativeSeparators(log)});
+        } else {
+            client->setArguments({file, "--version", version,
+                "--reply", "sendPlayerParams=" + session + "&client=" + version, "--title", title, "--log", QDir::toNativeSeparators(log)});
+        }
     } else {
         client->setProgram(QDir(m_path).filePath(m_exe));
         client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
     }
     client->setWorkingDirectory(m_path);
     client->setProcessEnvironment(env);
+
+    auto *console = new ConsoleWindow("Console - " + m_title);
+    console->setAttribute(Qt::WA_DeleteOnClose);
+    console->setAttribute(Qt::WA_QuitOnClose, false);
+    console->follow("Game", log);
+    if (WebPlayerRuntime::isWebPlayerFile(m_exe))
+        console->followNewest("Unity", QDir::tempPath() + "/UnityWebPlayer/log");
+    console->followNewest("Server", QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/server/logs", true);
+    connect(console, &ConsoleWindow::crashed, console, [console]() {
+        if (!Settings::consoleOnCrash())
+            return;
+        console->show();
+        console->raise();
+    });
+    connect(client, &QProcess::finished, console, [console](int exitCode, QProcess::ExitStatus status) {
+        console->gameFinished(exitCode, status);
+        if (!console->isVisible())
+            console->deleteLater();
+    });
     connect(client, &QProcess::finished, client, &QObject::deleteLater);
     client->start();
 
     if (!client->waitForStarted()) {
         client->deleteLater();
+        console->deleteLater();
         QMessageBox::warning(this, "Worlds", "Could not start " + m_exe);
+        return;
     }
+    if (Settings::consoleOnLaunch())
+        console->show();
 }

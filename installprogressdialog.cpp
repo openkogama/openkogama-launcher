@@ -112,7 +112,8 @@ void InstallProgressDialog::onFinished() {
 
 void InstallProgressDialog::extract() {
     QString base = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + "/instances/";
-    m_dest = uniqueDir(base, sanitize(m_name));
+    QString folder = sanitize(m_name);
+    m_dest = uniqueDir(base, folder.isEmpty() ? "KoGaMa" : folder);
     QDir().mkpath(m_dest);
 
     ui->statusLabel->setText("Extracting...");
