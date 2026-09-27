@@ -1,5 +1,7 @@
 #include "installdialog.h"
 #include "ui_installdialog.h"
+#include "webplayerruntime.h"
+#include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -54,6 +56,10 @@ void InstallDialog::populate(const QByteArray &data) {
 
         const auto array = document.object().value("versions").toArray();
 
+        QFile file(WebPlayerRuntime::bundledDir("server") + "/data/support.json");
+        file.open(QIODevice::ReadOnly);
+        const QJsonObject support = QJsonDocument::fromJson(file.readAll()).object();
+
         for (const auto& entry : array) {
             auto object = entry.toObject();
             QString version = object.value("version").toString();
@@ -76,8 +82,10 @@ void InstallDialog::populate(const QByteArray &data) {
             versions.append({version, date, unity, backend, download, installed,
                              sha256.left(7), urls, sha256, zipSize, id});
 
+            QJsonValue percent = support.value(version);
             model->appendRow({new QStandardItem(version),
-                new QStandardItem(date),});
+                new QStandardItem(date),
+                new QStandardItem(percent.isDouble() ? QString::number(percent.toInt()) + "%" : QString())});
         }
     }
     ui->versionsTreeView->setCurrentIndex(proxy->index(0,0));
@@ -85,7 +93,7 @@ void InstallDialog::populate(const QByteArray &data) {
 
 void InstallDialog::loadVersions() {
     model = new QStandardItemModel(this);
-    model->setHorizontalHeaderLabels({"Version", "Released"});
+    model->setHorizontalHeaderLabels({"Version", "Released", "Support"});
 
     proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(model);
