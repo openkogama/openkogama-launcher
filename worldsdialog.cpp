@@ -240,6 +240,11 @@ void WorldsDialog::importWorld() {
     QUrl url(ServerUrl + "/api/worlds/import");
     QUrlQuery query;
     query.addQueryItem("name", QFileInfo(path).completeBaseName());
+    QFile meta(QDir(m_path).filePath("instance.json"));
+    meta.open(QIODevice::ReadOnly);
+    QString version = QJsonDocument::fromJson(meta.readAll()).object().value("version").toString();
+    if (!version.isEmpty())
+        query.addQueryItem("client", version);
     url.setQuery(query);
 
     QNetworkRequest request(url);
