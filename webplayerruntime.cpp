@@ -1,15 +1,18 @@
 #include "webplayerruntime.h"
+#include <QBuffer>
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QFileInfo>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QProgressDialog>
+#include <QSet>
+#include <QSettings>
 #include <QStandardPaths>
-#include <QTemporaryFile>
 #include <QtCore/private/qzipreader_p.h>
 
 namespace {
@@ -24,6 +27,15 @@ QString runtimeRoot() {
 bool installed() {
     QDir root(runtimeRoot());
     return root.exists("loader/npUnity3D32.dll") && root.exists("player/Stable3.x.x/webplayer_win.dll") && root.exists("mono/Stable3.x.x/mono-1-vc.dll");
+}
+
+void registerRuntime() {
+    QSettings settings("HKEY_CURRENT_USER\\Software\\Unity\\WebPlayer", QSettings::NativeFormat);
+    if (!settings.value("Directory").toString().isEmpty())
+        return;
+    settings.setValue("Directory", QDir::toNativeSeparators(runtimeRoot()));
+    settings.setValue("UnityWebPlayerReleaseChannel", "Stable");
+    settings.setValue("UnityWebPlayerDevelopment", "no");
 }
 
 }
@@ -44,8 +56,10 @@ QString WebPlayerRuntime::playerPath() {
 }
 
 bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
-    if (installed())
+    if (installed()) {
+        registerRuntime();
         return true;
+    }
 
     QProgressDialog progress("Downloading Unity Web Player...", "Cancel", 0, 100, parent);
     progress.setWindowTitle("Unity Web Player");
@@ -81,21 +95,41 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
     progress.setLabelText("Installing Unity Web Player...");
     progress.setCancelButton(nullptr);
 
-    QTemporaryFile archive;
-    if (!archive.open() || archive.write(data) != data.size()) {
-        QMessageBox::warning(parent, "Unity Web Player", "Could not save the download.");
-        return false;
-    }
-    archive.close();
+    QBuffer archive(&data);
+    archive.open(QIODevice::ReadOnly);
+    QDir root(runtimeRoot());
+    QZipReader zip(&archive);
+    const QList<QZipReader::FileInfo> entries = zip.fileInfoList();
+    QSet<QString> folders;
+    for (const QZipReader::FileInfo &entry : entries)
+        for (qsizetype slash = entry.filePath.indexOf(u'/'); slash > 0; slash = entry.filePath.indexOf(u'/', slash + 1))
+            folders.insert(entry.filePath.left(slash));
 
-    QDir().mkpath(runtimeRoot());
-    QZipReader zip(archive.fileName());
-    bool extracted = zip.extractAll(runtimeRoot());
+    QString failed;
+    for (const QZipReader::FileInfo &entry : entries) {
+        QString path = root.filePath(entry.filePath);
+        bool isDir = entry.isDir || folders.contains(entry.filePath);
+        QString folder = isDir ? path : QFileInfo(path).absolutePath();
+        if (!QDir().mkpath(folder)) {
+            failed = "Could not create the folder " + folder + ", check the folder permissions or run the launcher as administrator.";
+        } else if (!isDir && entry.isFile) {
+            QByteArray content = zip.fileData(entry.filePath);
+            if (content.size() != entry.size)
+                content = zip.fileData(QString(entry.filePath).replace(u'/', u'\\'));
+            QFile file(path);
+            if (content.size() != entry.size)
+                failed = "Could not unpack " + entry.filePath + " from the download.";
+            else if (!file.open(QIODevice::WriteOnly) || file.write(content) != content.size())
+                failed = "Could not write " + path + " (" + file.errorString() + "), check your antivirus.";
+        }
+        if (!failed.isEmpty()) break;
+    }
     zip.close();
 
-    if (!extracted || !installed()) {
-        QMessageBox::warning(parent, "Unity Web Player", "Could not install to " + runtimeRoot());
+    if (!failed.isEmpty() || !installed()) {
+        QMessageBox::warning(parent, "Unity Web Player", "Could not install to " + runtimeRoot() + "\n" + (failed.isEmpty() ? "Files were removed after installing, check your antivirus." : failed));
         return false;
     }
+    registerRuntime();
     return true;
 }

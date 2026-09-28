@@ -20,6 +20,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QSslError>
 #include <QMessageBox>
 #include <QMenu>
 #include <QShortcut>
@@ -118,13 +119,29 @@ MainWindow::MainWindow(QWidget *parent)
 
     loadInstances();
 
+    fetchVersions();
+}
+
+void MainWindow::fetchVersions(std::function<void()> done) {
     auto *nam = new QNetworkAccessManager(this);
     QNetworkReply *reply = nam->get(QNetworkRequest(QUrl("https://cdn.openkogama.org/versions.json")));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, nam]() {
+    auto sslErrors = std::make_shared<QStringList>();
+    connect(reply, &QNetworkReply::sslErrors, this, [sslErrors](const QList<QSslError> &errors) {
+        for (const QSslError &error : errors)
+            sslErrors->append(error.errorString());
+    });
+    connect(reply, &QNetworkReply::finished, this, [this, reply, nam, sslErrors, done]() {
         reply->deleteLater();
         nam->deleteLater();
-        if (reply->error() == QNetworkReply::NoError)
+        if (reply->error() == QNetworkReply::NoError) {
             m_versionsJson = reply->readAll();
+            m_versionsError.clear();
+        } else {
+            m_versionsError = reply->errorString();
+            if (!sslErrors->isEmpty())
+                m_versionsError += "\n" + sslErrors->join("\n");
+        }
+        if (done) done();
     });
 }
 
@@ -169,7 +186,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::onInstallTriggered() {
     if (m_versionsJson.isEmpty()) {
-        QMessageBox::warning(this, "Error", "Version list not loaded yet");
+        ui->actionInstall->setEnabled(false);
+        fetchVersions([this]() {
+            ui->actionInstall->setEnabled(true);
+            if (m_versionsJson.isEmpty())
+                QMessageBox::warning(this, "Error", "Could not load the version list:\n" + m_versionsError);
+            else
+                onInstallTriggered();
+        });
         return;
     }
 

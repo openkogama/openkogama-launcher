@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QStandardItemModel>
 #include <QUrl>
+#include <functional>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,6 +24,8 @@ private:
     Ui::MainWindow *ui;
     QStandardItemModel *instances;
     QByteArray m_versionsJson;
+    QString m_versionsError;
+    void fetchVersions(std::function<void()> done = {});
     void loadInstances();
     void onInstallTriggered();
     void onDiscordTriggered();
