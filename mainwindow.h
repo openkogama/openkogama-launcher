@@ -3,13 +3,14 @@
 
 #include <QMainWindow>
 #include <QStandardItemModel>
-#include <QUrl>
+#include <QStandardItem>
+#include <QModelIndex>
+#include <QEvent>
+#include <QObject>
 #include <functional>
 
 QT_BEGIN_NAMESPACE
-namespace Ui {
-class MainWindow;
-}
+namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -17,24 +18,31 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
+    MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
 
-private:
-    Ui::MainWindow *ui;
-    QStandardItemModel *instances;
-    QByteArray m_versionsJson;
-    QString m_versionsError;
-    void fetchVersions(std::function<void()> done = {});
-    void loadInstances();
+private slots:
     void onInstallTriggered();
     void onDiscordTriggered();
     void onLaunchTriggered();
     void showInstanceMenu(const QPoint &pos);
-    void launchInstance(const QString &path);
     void renameInstance();
+    void onInstanceRenamed(QStandardItem *item);
     void duplicateInstance();
     void deleteInstance();
-    void onInstanceRenamed(QStandardItem *item);
+
+private:
+    void loadInstances();
+    void fetchVersions(std::function<void()> done = nullptr);
+    void launchInstance(const QString &path);
+
+    Ui::MainWindow *ui;
+    QStandardItemModel *instances;
+    QByteArray m_versionsJson;
+    QString m_versionsError;
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 };
+
 #endif // MAINWINDOW_H

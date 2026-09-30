@@ -21,6 +21,7 @@ qt_add_executable(openkogama-launcher
     settingsdialog.h settingsdialog.cpp settingsdialog.ui
     consolewindow.h consolewindow.cpp
     centereddelegate.h
+    lemonplus.png
 )
 
 qt_add_resources(openkogama-launcher "resources"
@@ -30,6 +31,7 @@ qt_add_resources(openkogama-launcher "resources"
     FILES install.png
     FILES unknown.png
     FILES launch.png
+    FILES lemonplus.png
 )
 
 target_link_libraries(openkogama-launcher

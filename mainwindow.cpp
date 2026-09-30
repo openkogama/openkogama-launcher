@@ -89,17 +89,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->instancesView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->instancesView->setViewMode(QListView::IconMode);
     ui->instancesView->setIconSize(QSize(64, 64));
-    ui->instancesView->setGridSize(QSize(120, 100));
+    ui->instancesView->setGridSize(QSize(140, 100));
     ui->instancesView->setResizeMode(QListView::Adjust);
     ui->instancesView->setMovement(QListView::Static);
     ui->instancesView->setWordWrap(true);
     ui->instancesView->setUniformItemSizes(true);
     ui->instancesView->setFrameShape(QFrame::NoFrame);
     ui->instancesView->setFocusPolicy(Qt::NoFocus);
+    ui->instancesView->setTextElideMode(Qt::ElideNone);
     ui->instancesView->setStyleSheet(
         "QListView { border: 0; outline: 0; background: #2b2b2b; }"
-        "QListView::item { color: #dddddd; padding: 4px; }"
-        "QListView::item:selected { background: #232323; border-radius: 6px; color: #ffffff; }");
+        "QListView::item { color: #dddddd; padding: 4px; border-radius: 6px; }"
+        "QListView::item:hover { background: #1f1f1f; color: #ffffff; }"
+        "QListView::item:selected { background: #181818; border-radius: 6px; color: #ffffff; }");
     ui->instancesView->setItemDelegate(new CenteredDelegate(ui->instancesView));
     ui->instancesView->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->instancesView, &QListView::customContextMenuRequested, this, &MainWindow::showInstanceMenu);
@@ -108,9 +110,18 @@ MainWindow::MainWindow(QWidget *parent)
     connect(instances, &QStandardItemModel::itemChanged, this, &MainWindow::onInstanceRenamed);
     auto *deleteShortcut = new QShortcut(QKeySequence::Delete, ui->instancesView);
     connect(deleteShortcut, &QShortcut::activated, this, &MainWindow::deleteInstance);
+
     connect(ui->instancesView, &QListView::doubleClicked, this, [this](const QModelIndex &index) {
-        launchInstance(index.data(Qt::UserRole).toString());
+        QString dataPath = index.data(Qt::UserRole).toString();
+        if (dataPath == "action_add_instance") {
+            onInstallTriggered();
+        } else {
+            launchInstance(dataPath);
+        }
     });
+
+    ui->instancesView->setMouseTracking(true);
+    ui->instancesView->viewport()->installEventFilter(this);
 
     ui->menuBar->setStyleSheet(
         "QMenuBar { background: #2b2b2b; border-bottom: 1px solid #1a1a1a; }");
@@ -118,7 +129,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->verticalLayout->setContentsMargins(0, 0, 0, 0);
 
     loadInstances();
-
     fetchVersions();
 }
 
@@ -139,7 +149,7 @@ void MainWindow::fetchVersions(std::function<void()> done) {
         } else {
             m_versionsError = reply->errorString();
             if (!sslErrors->isEmpty())
-                m_versionsError += "\n" + sslErrors->join("\n");
+                m_versionsError += "" + sslErrors->join("");
         }
         if (done) done();
     });
@@ -147,6 +157,16 @@ void MainWindow::fetchVersions(std::function<void()> done) {
 
 void MainWindow::loadInstances() {
     instances->clear();
+
+    QIcon plusIcon;
+    QPixmap plusPix(":/lemonplus.png");
+    plusIcon.addPixmap(plusPix, QIcon::Normal);
+    plusIcon.addPixmap(plusPix, QIcon::Selected);
+
+    auto *plusItem = new QStandardItem(plusIcon, "Add New");
+    plusItem->setToolTip("Click here to install new KoGaMa instance.");
+    plusItem->setData("action_add_instance", Qt::UserRole);
+    instances->appendRow(plusItem);
 
     QDir dir(instancesBase());
 
@@ -204,6 +224,7 @@ void MainWindow::onInstallTriggered() {
     if (progress.exec() == QDialog::Accepted)
         loadInstances();
 }
+
 void MainWindow::onDiscordTriggered() {
     QDesktopServices::openUrl(QUrl("https://discord.gg/u6tKuP3k4M"));
 }
@@ -214,11 +235,20 @@ void MainWindow::onLaunchTriggered() {
         QMessageBox::information(this, "Launch", "Select an instance first");
         return;
     }
-    launchInstance(index.data(Qt::UserRole).toString());
+    if (index.data(Qt::UserRole).toString() == "action_add_instance") {
+        onInstallTriggered();
+    } else {
+        launchInstance(index.data(Qt::UserRole).toString());
+    }
 }
 
 void MainWindow::showInstanceMenu(const QPoint &pos) {
     QModelIndex index = ui->instancesView->indexAt(pos);
+
+    if (index.isValid() && index.data(Qt::UserRole).toString() == "action_add_instance") {
+        return;
+    }
+
     if (!index.isValid()) {
         ui->instancesView->clearSelection();
         QMenu menu(this);
@@ -248,6 +278,8 @@ void MainWindow::showInstanceMenu(const QPoint &pos) {
 
 void MainWindow::renameInstance() {
     QModelIndex index = ui->instancesView->currentIndex();
+    if (index.isValid() && index.data(Qt::UserRole).toString() == "action_add_instance") return;
+
     if (index.isValid())
         ui->instancesView->edit(index);
 }
@@ -271,7 +303,7 @@ void MainWindow::onInstanceRenamed(QStandardItem *item) {
 
 void MainWindow::duplicateInstance() {
     QModelIndex index = ui->instancesView->currentIndex();
-    if (!index.isValid()) return;
+    if (!index.isValid() || index.data(Qt::UserRole).toString() == "action_add_instance") return;
 
     QString source = index.data(Qt::UserRole).toString();
     QString name = index.data(NameRole).toString() + " (copy)";
@@ -302,11 +334,11 @@ void MainWindow::duplicateInstance() {
 
 void MainWindow::deleteInstance() {
     QModelIndex index = ui->instancesView->currentIndex();
-    if (!index.isValid()) return;
+    if (!index.isValid() || index.data(Qt::UserRole).toString() == "action_add_instance") return;
 
     auto answer = QMessageBox::question(this, "Delete Instance",
-        "Delete \"" + index.data().toString() + "\" and all its files? This can't be undone.",
-        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+                                        "Delete \"" + index.data().toString() + "\" and all its files? This can't be undone.",
+                                        QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
     QDir dir(index.data(Qt::UserRole).toString());
@@ -351,4 +383,17 @@ void MainWindow::launchInstance(const QString &path) {
     worlds->setAttribute(Qt::WA_DeleteOnClose);
     worlds->setModal(false);
     worlds->show();
+}
+
+bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
+    if (watched == ui->instancesView->viewport() && event->type() == QEvent::MouseMove) {
+        QPoint pos = ui->instancesView->viewport()->mapFromGlobal(QCursor::pos());
+        QModelIndex index = ui->instancesView->indexAt(pos);
+        if (index.isValid()) {
+            ui->instancesView->viewport()->setCursor(Qt::PointingHandCursor);
+        } else {
+            ui->instancesView->viewport()->setCursor(Qt::ArrowCursor);
+        }
+    }
+    return QMainWindow::eventFilter(watched, event);
 }
