@@ -15,12 +15,14 @@ qt_add_executable(openkogama-launcher
     installdialog.h installdialog.cpp installdialog.ui
     installprogressdialog.h installprogressdialog.cpp installprogressdialog.ui
     launchdialog.h launchdialog.cpp launchdialog.ui
+    assetinstaller.h assetinstaller.cpp
     worldsdialog.h worldsdialog.cpp worldsdialog.ui
     webplayerruntime.h webplayerruntime.cpp
     settings.h settings.cpp
     settingsdialog.h settingsdialog.cpp settingsdialog.ui
     consolewindow.h consolewindow.cpp
     centereddelegate.h
+    creditsdialog.h creditsdialog.cpp
     lemonplus.png
 )
 
@@ -32,6 +34,8 @@ qt_add_resources(openkogama-launcher "resources"
     FILES unknown.png
     FILES launch.png
     FILES lemonplus.png
+    FILES logo.png
+    FILES openkogama-font.ttf
 )
 
 target_link_libraries(openkogama-launcher

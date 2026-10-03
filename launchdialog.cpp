@@ -1,4 +1,5 @@
 #include "launchdialog.h"
+#include "assetinstaller.h"
 #include "webplayerruntime.h"
 #include "ui_launchdialog.h"
 #include <QDialogButtonBox>
@@ -11,6 +12,7 @@
 static constexpr unsigned long CreateNoWindow = 0x08000000;
 static constexpr int PingAttempts = 200;
 static constexpr int PingTimeout = 150;
+static constexpr int AssetsEnd = 50;
 
 static QNetworkRequest pingRequest() {
     QNetworkRequest request(QUrl(ServerUrl + "/ping"));
@@ -18,10 +20,11 @@ static QNetworkRequest pingRequest() {
     return request;
 }
 
-LaunchDialog::LaunchDialog(QWidget *parent)
+LaunchDialog::LaunchDialog(const QString &version, QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::LaunchDialog)
     , m_net(new QNetworkAccessManager(this))
+    , m_assets(new AssetInstaller(this))
 {
     ui->setupUi(this);
     setWindowIcon(QIcon(":/launch.png"));
@@ -29,7 +32,20 @@ LaunchDialog::LaunchDialog(QWidget *parent)
     ui->nameLabel->setText("Starting OpenKogama server");
     ui->progressBar->setRange(0, 100);
 
-    setStep("Checking server...", 0);
+    connect(m_assets, &AssetInstaller::progress, this, [this](qint64 done, qint64 total) {
+        if (total > 0) setStep("Checking game assets...", int(done * AssetsEnd / total));
+    });
+    connect(m_assets, &AssetInstaller::finished, this, [this](bool ok) {
+        if (m_cancelled) return;
+        m_offline = ok;
+        checkServer();
+    });
+    setStep("Checking game assets...", 0);
+    m_assets->start(version);
+}
+
+void LaunchDialog::checkServer() {
+    setStep("Checking server...", AssetsEnd);
     QNetworkReply *reply = m_net->get(pingRequest());
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
@@ -48,6 +64,7 @@ LaunchDialog::~LaunchDialog()
 
 void LaunchDialog::reject() {
     m_cancelled = true;
+    m_assets->cancel();
     if (m_server) {
         stopServer(m_server);
         m_server = nullptr;
@@ -62,10 +79,11 @@ void LaunchDialog::startServer() {
         return;
     }
 
-    setStep("Starting server...", 10);
+    setStep("Starting server...", AssetsEnd + 5);
     m_server = new QProcess(parentWidget());
     m_server->setProgram(dir.filePath("openkogama-server.exe"));
     m_server->setWorkingDirectory(dir.path());
+    if (m_offline) m_server->setArguments({"--offline"});
     m_server->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args) {
         args->flags |= CreateNoWindow;
     });
@@ -84,7 +102,7 @@ void LaunchDialog::waitForServer(int attempts) {
         return;
     }
 
-    setStep("Waiting for server...", 20 + 80 * (PingAttempts - attempts) / PingAttempts);
+    setStep("Waiting for server...", AssetsEnd + 10 + (90 - AssetsEnd) * (PingAttempts - attempts) / PingAttempts);
     QNetworkReply *reply = m_net->get(pingRequest());
     connect(reply, &QNetworkReply::finished, this, [this, reply, attempts]() {
         reply->deleteLater();
@@ -104,7 +122,7 @@ void LaunchDialog::fail(const QString &message) {
 
 void LaunchDialog::setStep(const QString &status, int progress) {
     ui->statusLabel->setText(status);
-    ui->progressBar->setValue(progress);
+    ui->progressBar->setValue(qMax(ui->progressBar->value(), progress));
 }
 
 void LaunchDialog::stopServer(QProcess *server) {

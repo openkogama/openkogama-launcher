@@ -5,6 +5,8 @@
 #include <QNetworkAccessManager>
 #include <QProcess>
 
+class AssetInstaller;
+
 inline const QString ServerUrl = "http://127.0.0.1:8080";
 
 namespace Ui {
@@ -16,7 +18,7 @@ class LaunchDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit LaunchDialog(QWidget *parent = nullptr);
+    explicit LaunchDialog(const QString &version, QWidget *parent = nullptr);
     ~LaunchDialog();
 
     QProcess *server() const { return m_server; }
@@ -26,6 +28,7 @@ protected:
     void reject() override;
 
 private:
+    void checkServer();
     void startServer();
     void waitForServer(int attempts);
     void fail(const QString &message);
@@ -34,6 +37,8 @@ private:
     Ui::LaunchDialog *ui;
     QNetworkAccessManager *m_net;
     QProcess *m_server = nullptr;
+    AssetInstaller *m_assets;
+    bool m_offline = false;
     bool m_cancelled = false;
 };
 

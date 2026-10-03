@@ -3,9 +3,11 @@
 #include "installdialog.h"
 #include "installprogressdialog.h"
 #include "launchdialog.h"
+#include "assetinstaller.h"
 #include "settingsdialog.h"
 #include "worldsdialog.h"
 #include "centereddelegate.h"
+#include "creditsdialog.h"
 #include "webplayerruntime.h"
 #include <QDesktopServices>
 #include <QStandardPaths>
@@ -76,6 +78,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->actionInstall, &QAction::triggered, this, &MainWindow::onInstallTriggered);
     connect(ui->actionDiscord, &QAction::triggered, this, &MainWindow::onDiscordTriggered);
+    connect(ui->actionCredits, &QAction::triggered, this, [this]() { CreditsDialog(this).exec(); });
     connect(ui->actionLaunch, &QAction::triggered, this, &MainWindow::onLaunchTriggered);
     connect(ui->actionSettings, &QAction::triggered, this, [this]() { SettingsDialog(this).exec(); });
     ui->actionDiscord->setIcon(QIcon(":/discord.png"));
@@ -124,7 +127,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->instancesView->viewport()->installEventFilter(this);
 
     ui->menuBar->setStyleSheet(
-        "QMenuBar { background: #2b2b2b; border-bottom: 1px solid #1a1a1a; }");
+        "QMenuBar { background: #2b2b2b; border-bottom: 1px solid #1a1a1a; }"
+        "QMenuBar::item { background: transparent; color: #dddddd; padding: 4px 8px; border-radius: 4px; }"
+        "QMenuBar::item:selected { background: #3d3d3d; color: #ffffff; }"
+        "QMenuBar::item:pressed { background: #1f1f1f; }");
 
     ui->verticalLayout->setContentsMargins(0, 0, 0, 0);
 
@@ -376,7 +382,7 @@ void MainWindow::launchInstance(const QString &path) {
         }
     }
 
-    LaunchDialog launch(this);
+    LaunchDialog launch(AssetInstaller::versionOf(path), this);
     if (launch.exec() != QDialog::Accepted) return;
 
     auto *worlds = new WorldsDialog(path, exe, launch.server(), this);

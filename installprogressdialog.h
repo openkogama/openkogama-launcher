@@ -9,6 +9,8 @@
 #include <QFutureWatcher>
 #include "installdialog.h"
 
+class AssetInstaller;
+
 namespace Ui {
 class InstallProgressDialog;
 }
@@ -31,6 +33,8 @@ private:
     void onFinished();
     void extract();
     void onExtracted();
+    void installAssets();
+    void setProgress(int value);
 
     Ui::InstallProgressDialog *ui;
     Version m_version;
@@ -41,6 +45,7 @@ private:
     QFile m_file;
     QCryptographicHash m_hash{QCryptographicHash::Sha256};
     QFutureWatcher<bool> *m_watcher;
+    AssetInstaller *m_assets;
     int m_urlIndex = 0;
     bool m_cancelled = false;
 };
