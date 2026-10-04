@@ -5,17 +5,34 @@
 #include "webplayerruntime.h"
 #include "consolewindow.h"
 #include "settings.h"
+#include <QEvent>
+#include <QStyle>
 #include <QPixmap>
 #include <QTimer>
+#include <algorithm>
 
-static const QSize ThumbnailSize(200, 80);
+static const QSize ThumbnailSize(400, 160);
+static const QSize AvatarSize(240, 240);
+static const QSize WorldIconSize(190, 76);
+static const QSize AvatarIconSize(120, 120);
+static constexpr int TileSpacing = 16;
+static constexpr int GridSlack = 4;
+static constexpr int TileTextHeight = 40;
 static constexpr int NameRole = Qt::UserRole + 1;
+static constexpr int ImageRole = Qt::UserRole + 2;
+
+static QPixmap cover(const QPixmap &image, const QSize &size)
+{
+    QPixmap scaled = image.scaled(size, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
+    return scaled.copy((scaled.width() - size.width()) / 2, (scaled.height() - size.height()) / 2, size.width(), size.height());
+}
 #include <QDateTime>
 #include <QDir>
 #include <QStandardPaths>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
 #include <QIcon>
 #include <QComboBox>
 #include <QDialogButtonBox>
@@ -29,6 +46,7 @@ static constexpr int NameRole = Qt::UserRole + 1;
 #include <QMessageBox>
 #include <QNetworkReply>
 #include <QPointer>
+#include <QRegularExpression>
 #include <QUrlQuery>
 
 static QString instanceTitle(const QString &path)
@@ -58,41 +76,39 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     ui->setupUi(this);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
     setWindowIcon(QIcon(":/launch.png"));
-    setWindowTitle("Worlds - " + m_title);
+    setWindowTitle(m_title);
 
     connect(ui->playButton, &QPushButton::clicked, this, [this]() { launch("play", selectedWorld()); });
     connect(ui->buildButton, &QPushButton::clicked, this, [this]() { launch("edit", selectedWorld()); });
     connect(ui->avatarButton, &QPushButton::clicked, this, [this]() { launch("avatar", 0); });
     connect(ui->newButton, &QPushButton::clicked, this, &WorldsDialog::createWorld);
     connect(ui->importButton, &QPushButton::clicked, this, &WorldsDialog::importWorld);
+    connect(ui->exportButton, &QPushButton::clicked, this, &WorldsDialog::exportWorld);
     auto *renameShortcut = new QShortcut(QKeySequence(Qt::Key_F2), ui->worldsList);
     connect(renameShortcut, &QShortcut::activated, this, &WorldsDialog::renameWorld);
     connect(ui->worldsList, &QListWidget::itemChanged, this, &WorldsDialog::onWorldRenamed);
     auto *deleteShortcut = new QShortcut(QKeySequence::Delete, ui->worldsList);
     connect(deleteShortcut, &QShortcut::activated, this, &WorldsDialog::deleteWorld);
-    ui->worldsList->setItemDelegate(new CenteredDelegate(ui->worldsList));
-    ui->worldsList->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->worldsList, &QListWidget::customContextMenuRequested, this, &WorldsDialog::showWorldMenu);
     connect(ui->closeButton, &QPushButton::clicked, this, &WorldsDialog::reject);
-    ui->worldsList->setEditTriggers(QAbstractItemView::NoEditTriggers);
     connect(ui->worldsList, &QListWidget::itemDoubleClicked, this, [this]() { launch("play", selectedWorld()); });
 
-    ui->worldsList->setViewMode(QListView::IconMode);
-    ui->worldsList->setIconSize(ThumbnailSize);
-    ui->worldsList->setGridSize(QSize(ThumbnailSize.width() + 20, ThumbnailSize.height() + 40));
-    ui->worldsList->setResizeMode(QListView::Adjust);
-    ui->worldsList->setMovement(QListView::Static);
-    ui->worldsList->setWordWrap(true);
-    ui->worldsList->setUniformItemSizes(true);
-    ui->worldsList->setFrameShape(QFrame::NoFrame);
-    ui->worldsList->setFocusPolicy(Qt::NoFocus);
-    ui->worldsList->setStyleSheet(
-        "QListView { border: 0; outline: 0; background: #2b2b2b; }"
-        "QListView::item { color: #dddddd; padding: 4px; }"
-        "QListView::item:selected { background: #232323; border-radius: 6px; color: #ffffff; }");
+    connect(ui->useAvatarButton, &QPushButton::clicked, this, &WorldsDialog::useAvatar);
+    connect(ui->importAvatarButton, &QPushButton::clicked, this, &WorldsDialog::importAvatar);
+    connect(ui->exportAvatarButton, &QPushButton::clicked, this, &WorldsDialog::exportAvatar);
+    connect(ui->avatarsList, &QListWidget::itemDoubleClicked, this, &WorldsDialog::useAvatar);
+    connect(ui->avatarsList, &QListWidget::customContextMenuRequested, this, &WorldsDialog::showAvatarMenu);
+
+    setupGrid(ui->worldsList);
+    setupGrid(ui->avatarsList);
+    connect(ui->tabs, &QTabWidget::currentChanged, this, [this](int index) {
+        if (ui->tabs->widget(index) == ui->avatarsTab)
+            loadAvatars(selectedAvatar());
+    });
 
     loadWorlds();
     loadTemplates();
+    loadAvatars();
 
     auto *poll = new QTimer(this);
     connect(poll, &QTimer::timeout, this, &WorldsDialog::checkRevision);
@@ -114,29 +130,46 @@ void WorldsDialog::loadWorlds(int select) {
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/api/worlds")));
     connect(reply, &QNetworkReply::finished, this, [this, reply, select]() {
         reply->deleteLater();
-        QSignalBlocker blocker(ui->worldsList);
-        ui->worldsList->clear();
-
-        QPixmap empty(ThumbnailSize);
-        empty.fill(QColor("#3a3a3a"));
-
+        if (reply->error() != QNetworkReply::NoError) return;
         const QJsonArray worlds = QJsonDocument::fromJson(reply->readAll()).array();
-        for (const QJsonValue &value : worlds) {
-            QJsonObject world = value.toObject();
-            int id = world["id"].toInt();
-            auto *item = new QListWidgetItem(thumbnail(empty), world["name"].toString(), ui->worldsList);
-            item->setFlags(item->flags() | Qt::ItemIsEditable);
-            item->setData(Qt::UserRole, id);
-            item->setData(NameRole, world["name"].toString());
-            auto date = [](const QJsonValue &value) {
-                return QDateTime::fromString(value.toString(), Qt::ISODateWithMs).toLocalTime().toString("yyyy-MM-dd HH:mm");
-            };
-            item->setToolTip("Last played: " + (world["playedAt"].isString() ? date(world["playedAt"]) : QString("never")) + "\n"
+        QSignalBlocker blocker(ui->worldsList);
+
+        QList<int> ids;
+        for (const QJsonValue &value : worlds)
+            ids.append(value.toObject()["id"].toInt());
+        QList<int> shown;
+        for (int i = 0; i < ui->worldsList->count(); ++i)
+            shown.append(ui->worldsList->item(i)->data(Qt::UserRole).toInt());
+        if (ids != shown) {
+            ui->worldsList->clear();
+            QPixmap empty(ThumbnailSize);
+            empty.fill(QColor("#3a3a3a"));
+            for (int id : std::as_const(ids)) {
+                auto *item = new QListWidgetItem(thumbnail(empty), QString(), ui->worldsList);
+                item->setFlags(item->flags() | Qt::ItemIsEditable);
+                item->setData(Qt::UserRole, id);
+            }
+        }
+
+        auto date = [](const QJsonValue &value) {
+            return QDateTime::fromString(value.toString(), Qt::ISODateWithMs).toLocalTime().toString("yyyy-MM-dd HH:mm");
+        };
+        for (int i = 0; i < worlds.size(); ++i) {
+            QJsonObject world = worlds[i].toObject();
+            QListWidgetItem *item = ui->worldsList->item(i);
+            QString name = world["name"].toString();
+            if (item->data(NameRole).toString() != name) {
+                item->setText(name);
+                item->setData(NameRole, name);
+            }
+            QString tip = "Last played: " + (world["playedAt"].isString() ? date(world["playedAt"]) : QString("never")) + "\n"
                 + "Saved: " + date(world["savedAt"]) + "\n"
-                + (world["publishedAt"].isString() ? "Published: " + date(world["publishedAt"]) : QString("Not published")));
-            if (id == select)
+                + (world["publishedAt"].isString() ? "Published: " + date(world["publishedAt"]) : QString("Not published"));
+            if (item->toolTip() != tip)
+                item->setToolTip(tip);
+            if (ids[i] == select)
                 ui->worldsList->setCurrentItem(item);
-            loadThumbnail(item, id);
+            loadThumbnail(item, ids[i]);
         }
         if (!ui->worldsList->currentItem() && ui->worldsList->count() > 0)
             ui->worldsList->setCurrentRow(0);
@@ -165,11 +198,15 @@ void WorldsDialog::loadThumbnail(QListWidgetItem *item, int world) {
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/images/0/" + QString::number(world) + ".png?v=" + QString::number(m_revision))));
     connect(reply, &QNetworkReply::finished, this, [reply, list, item, world]() {
         reply->deleteLater();
+        QByteArray data = reply->readAll();
         QPixmap image;
-        if (reply->error() != QNetworkReply::NoError || !image.loadFromData(reply->readAll()) || !list) return;
-        for (int i = 0; i < list->count(); ++i)
-            if (list->item(i) == item && item->data(Qt::UserRole).toInt() == world)
-                item->setIcon(thumbnail(image.scaled(ThumbnailSize, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation)));
+        if (reply->error() != QNetworkReply::NoError || !list) return;
+        for (int i = 0; i < list->count(); ++i) {
+            if (list->item(i) != item || item->data(Qt::UserRole).toInt() != world || item->data(ImageRole).toByteArray() == data) continue;
+            if (!image.loadFromData(data)) return;
+            item->setData(ImageRole, data);
+            item->setIcon(thumbnail(cover(image, ThumbnailSize)));
+        }
     });
 }
 
@@ -178,6 +215,44 @@ QIcon WorldsDialog::thumbnail(const QPixmap &pixmap) {
     icon.addPixmap(pixmap, QIcon::Normal);
     icon.addPixmap(pixmap, QIcon::Selected);
     return icon;
+}
+
+void WorldsDialog::setupGrid(QListWidget *list) {
+    list->setItemDelegate(new CenteredDelegate(list));
+    list->setViewMode(QListView::IconMode);
+    list->setResizeMode(QListView::Adjust);
+    list->setMovement(QListView::Static);
+    list->setWordWrap(true);
+    list->setUniformItemSizes(true);
+    list->setFrameShape(QFrame::NoFrame);
+    list->setFocusPolicy(Qt::NoFocus);
+    list->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    list->setContextMenuPolicy(Qt::CustomContextMenu);
+    list->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    list->setTextElideMode(Qt::ElideRight);
+    list->setStyleSheet(
+        "QListView { border: 0; outline: 0; background: #2b2b2b; }"
+        "QListView::item { color: #dddddd; padding: 4px; border-radius: 6px; }"
+        "QListView::item:hover { background: #1f1f1f; color: #ffffff; }"
+        "QListView::item:selected { background: #181818; color: #ffffff; }");
+    list->installEventFilter(this);
+}
+
+void WorldsDialog::fitGrid(QListWidget *list, const QSize &icon) {
+    int width = list->contentsRect().width() - list->style()->pixelMetric(QStyle::PM_ScrollBarExtent, nullptr, list) - GridSlack;
+    int tile = icon.width() + TileSpacing;
+    int columns = std::max(1, width / tile);
+    QSize grid(std::max(tile, width / columns), icon.height() + TileTextHeight);
+    if (list->iconSize() != icon) list->setIconSize(icon);
+    if (list->gridSize() != grid) list->setGridSize(grid);
+}
+
+bool WorldsDialog::eventFilter(QObject *watched, QEvent *event) {
+    if (event->type() == QEvent::Resize && (watched == ui->worldsList || watched == ui->avatarsList)) {
+        auto *list = static_cast<QListWidget *>(watched);
+        fitGrid(list, list == ui->worldsList ? WorldIconSize : AvatarIconSize);
+    }
+    return QDialog::eventFilter(watched, event);
 }
 
 void WorldsDialog::loadTemplates() {
@@ -258,6 +333,29 @@ void WorldsDialog::importWorld() {
     });
 }
 
+void WorldsDialog::exportWorld() {
+    QListWidgetItem *item = ui->worldsList->currentItem();
+    if (!item) return;
+
+    QString name = item->data(NameRole).toString();
+    name.replace(QRegularExpression(R"([\\/:*?"<>|])"), "_");
+    QString path = QFileDialog::getSaveFileName(this, "Export World", name + ".kgmap", "KoGaMa maps (*.kgmap)");
+    if (path.isEmpty()) return;
+
+    QUrl url(ServerUrl + "/api/worlds/export");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
+    url.setQuery(query);
+
+    QNetworkReply *reply = m_net->get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, path]() {
+        reply->deleteLater();
+        QFile file(path);
+        if (reply->error() != QNetworkReply::NoError || !file.open(QIODevice::WriteOnly) || file.write(reply->readAll()) < 0)
+            QMessageBox::warning(this, "Export", "Could not export this world");
+    });
+}
+
 void WorldsDialog::renameWorld() {
     if (QListWidgetItem *item = ui->worldsList->currentItem())
         ui->worldsList->editItem(item);
@@ -326,14 +424,160 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
     QAction *play = menu.addAction("Play");
     QAction *build = menu.addAction("Build");
     menu.addSeparator();
+    QAction *exported = menu.addAction("Export...");
     QAction *rename = menu.addAction("Rename");
     QAction *remove = menu.addAction("Delete");
 
     QAction *chosen = menu.exec(ui->worldsList->viewport()->mapToGlobal(pos));
     if (chosen == play) launch("play", selectedWorld());
     else if (chosen == build) launch("edit", selectedWorld());
+    else if (chosen == exported) exportWorld();
     else if (chosen == rename) renameWorld();
     else if (chosen == remove) deleteWorld();
+}
+
+void WorldsDialog::loadAvatars(int select) {
+    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/api/avatars")));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, select]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError) return;
+        const QJsonArray avatars = QJsonDocument::fromJson(reply->readAll()).array();
+        QString version = QString::number(QDateTime::currentMSecsSinceEpoch());
+
+        QList<int> ids;
+        for (const QJsonValue &value : avatars)
+            ids.append(value.toObject()["id"].toInt());
+        QList<int> shown;
+        for (int i = 0; i < ui->avatarsList->count(); ++i)
+            shown.append(ui->avatarsList->item(i)->data(Qt::UserRole).toInt());
+        if (ids != shown) {
+            ui->avatarsList->clear();
+            QPixmap empty(AvatarSize);
+            empty.fill(QColor("#3a3a3a"));
+            for (int id : std::as_const(ids)) {
+                auto *item = new QListWidgetItem(thumbnail(empty), QString(), ui->avatarsList);
+                item->setData(Qt::UserRole, id);
+                item->setToolTip("No picture yet, take one with the camera in the avatar editor");
+            }
+        }
+
+        for (int i = 0; i < avatars.size(); ++i) {
+            bool active = avatars[i].toObject()["active"].toBool();
+            QListWidgetItem *item = ui->avatarsList->item(i);
+            QString text = "Avatar " + QString::number(ids[i]) + (active ? "\n(in use)" : QString());
+            if (item->text() != text)
+                item->setText(text);
+            QFont font = item->font();
+            if (font.bold() != active) {
+                font.setBold(active);
+                item->setFont(font);
+            }
+            loadAvatarPicture(item, ids[i], version);
+            if (ids[i] == select || (select == 0 && active))
+                ui->avatarsList->setCurrentItem(item);
+        }
+        if (!ui->avatarsList->currentItem() && ui->avatarsList->count() > 0)
+            ui->avatarsList->setCurrentRow(0);
+    });
+}
+
+void WorldsDialog::loadAvatarPicture(QListWidgetItem *item, int avatar, const QString &version) {
+    QPointer<QListWidget> list = ui->avatarsList;
+    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(ServerUrl + "/images/1/" + QString::number(avatar) + ".png?v=" + version)));
+    connect(reply, &QNetworkReply::finished, this, [reply, list, item, avatar]() {
+        reply->deleteLater();
+        QByteArray data = reply->readAll();
+        QPixmap image;
+        if (reply->error() != QNetworkReply::NoError || !list) return;
+        for (int i = 0; i < list->count(); ++i) {
+            if (list->item(i) != item || item->data(Qt::UserRole).toInt() != avatar || item->data(ImageRole).toByteArray() == data) continue;
+            if (!image.loadFromData(data)) return;
+            item->setData(ImageRole, data);
+            item->setIcon(thumbnail(cover(image, AvatarSize)));
+            item->setToolTip(QString());
+        }
+    });
+}
+
+void WorldsDialog::useAvatar() {
+    int avatar = selectedAvatar();
+    if (avatar == 0) return;
+
+    QUrl url(ServerUrl + "/api/avatars/active");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(avatar));
+    url.setQuery(query);
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = m_net->post(request, QByteArray());
+    connect(reply, &QNetworkReply::finished, this, [this, reply, avatar]() {
+        reply->deleteLater();
+        if (reply->error() != QNetworkReply::NoError)
+            QMessageBox::warning(this, "Avatars", "Could not switch to this avatar");
+        loadAvatars(avatar);
+    });
+}
+
+void WorldsDialog::importAvatar() {
+    QString path = QFileDialog::getOpenFileName(this, "Import Avatar", QString(), "KoGaMa avatars (*.kgavatar *.json)");
+    if (path.isEmpty()) return;
+
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::warning(this, "Import", "Could not read " + path);
+        return;
+    }
+
+    QNetworkRequest request(QUrl(ServerUrl + "/api/avatars/import"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    QNetworkReply *reply = m_net->post(request, file.readAll());
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        int id = QJsonDocument::fromJson(reply->readAll()).object()["id"].toInt();
+        if (id == 0) QMessageBox::warning(this, "Import", "This file is not an avatar");
+        loadAvatars(id);
+    });
+}
+
+void WorldsDialog::exportAvatar() {
+    int avatar = selectedAvatar();
+    if (avatar == 0) return;
+
+    QString path = QFileDialog::getSaveFileName(this, "Export Avatar", "Avatar " + QString::number(avatar) + ".kgavatar", "KoGaMa avatars (*.kgavatar)");
+    if (path.isEmpty()) return;
+
+    QUrl url(ServerUrl + "/api/avatars/export");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(avatar));
+    url.setQuery(query);
+
+    QNetworkReply *reply = m_net->get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, path]() {
+        reply->deleteLater();
+        QFile file(path);
+        if (reply->error() != QNetworkReply::NoError || !file.open(QIODevice::WriteOnly) || file.write(reply->readAll()) < 0)
+            QMessageBox::warning(this, "Export", "Could not export this avatar");
+    });
+}
+
+void WorldsDialog::showAvatarMenu(const QPoint &pos) {
+    QListWidgetItem *item = ui->avatarsList->itemAt(pos);
+    if (!item) return;
+    ui->avatarsList->setCurrentItem(item);
+
+    QMenu menu(this);
+    QAction *use = menu.addAction("Use");
+    QAction *exported = menu.addAction("Export...");
+
+    QAction *chosen = menu.exec(ui->avatarsList->viewport()->mapToGlobal(pos));
+    if (chosen == use) useAvatar();
+    else if (chosen == exported) exportAvatar();
+}
+
+int WorldsDialog::selectedAvatar() const {
+    QListWidgetItem *item = ui->avatarsList->currentItem();
+    return item ? item->data(Qt::UserRole).toInt() : 0;
 }
 
 int WorldsDialog::selectedWorld() const {

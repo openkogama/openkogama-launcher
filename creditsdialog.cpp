@@ -17,6 +17,8 @@ struct Credit {
 const Credit Thanks[] = {
     {"Becko", "Huge thanks. The main inspiration for this project, and the packet captures that made it possible."},
     {"LazyLemon", "Info on how things looked in old versions, and help with the launcher."},
+    {"bustersky", "Archiving the standalone builds."},
+    {"kamilslimak", "Finding the 2012 build."},
 };
 
 QFont brandFont(int pointSize)
