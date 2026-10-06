@@ -175,7 +175,7 @@ void InstallProgressDialog::installAssets() {
         ui->statusLabel->setText(ok ? "Installed to " + m_dest : "Installed, some game assets will download on launch");
         QTimer::singleShot(ok ? 800 : 2500, this, &QDialog::accept);
     });
-    m_assets->start(m_version.version);
+    m_assets->start(m_version.version + "@" + m_version.unity);
 }
 
 void InstallProgressDialog::reject() {

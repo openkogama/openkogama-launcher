@@ -627,9 +627,13 @@ void WorldsDialog::launch(const QString &mode, int world) {
         client->setProgram(QDir(m_path).filePath(m_exe));
         QFile meta(QDir(m_path).filePath("instance.json"));
         meta.open(QIODevice::ReadOnly);
-        QString version = QJsonDocument::fromJson(meta.readAll()).object().value("version").toString();
+        QJsonObject info = QJsonDocument::fromJson(meta.readAll()).object();
+        QString version = info.value("version").toString();
         if (!version.isEmpty())
             session += "&client=" + version;
+        QString unity = info.value("unityVersion").toString();
+        if (!unity.isEmpty())
+            session += "&unity=" + unity;
         client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
     }
     client->setWorkingDirectory(m_path);

@@ -15,7 +15,10 @@ AssetInstaller::AssetInstaller(QObject *parent)
 QString AssetInstaller::versionOf(const QString &instancePath) {
     QFile file(QDir(instancePath).filePath("instance.json"));
     if (!file.open(QIODevice::ReadOnly)) return {};
-    return QJsonDocument::fromJson(file.readAll()).object().value("version").toString();
+    QJsonObject info = QJsonDocument::fromJson(file.readAll()).object();
+    QString version = info.value("version").toString();
+    QString unity = info.value("unityVersion").toString();
+    return version.isEmpty() || unity.isEmpty() ? version : version + "@" + unity;
 }
 
 void AssetInstaller::start(const QString &version) {
