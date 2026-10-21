@@ -19,6 +19,7 @@ public:
     void follow(const QString &label, const QString &path);
     void followNewest(const QString &label, const QString &directory, bool onlyNewLines = false);
     void gameFinished(int exitCode, QProcess::ExitStatus status);
+    void note(const QString &text);
 
 signals:
     void crashed();

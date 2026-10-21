@@ -106,6 +106,53 @@ void setNickname(const QString &name)
     store().setValue("player/nickname", name);
 }
 
+QString accountsUrl()
+{
+    QString url = store().value("account/url", "https://accounts.openkogama.org").toString().trimmed();
+    while (url.endsWith('/')) url.chop(1);
+    return url;
+}
+
+QString accountsSite()
+{
+    return store().value("account/site", "https://openkogama.org/account/").toString().trimmed();
+}
+
+QString accountVerifier()
+{
+    return store().value("account/verifier").toString();
+}
+
+void setAccountVerifier(const QString &verifier)
+{
+    if (verifier.isEmpty()) store().remove("account/verifier");
+    else store().setValue("account/verifier", verifier);
+}
+
+QString accountName()
+{
+    return store().value("account/name").toString();
+}
+
+QByteArray accountToken()
+{
+    return store().value("account/token").toByteArray();
+}
+
+void setAccount(const QString &name, const QByteArray &token)
+{
+    QSettings settings = store();
+    settings.setValue("account/name", name);
+    settings.setValue("account/token", token);
+}
+
+void forgetAccount()
+{
+    QSettings settings = store();
+    settings.remove("account/name");
+    settings.remove("account/token");
+}
+
 QString rendezvous()
 {
     return store().value("p2p/rendezvous").toString();
@@ -162,6 +209,16 @@ bool discordPresence()
 void setDiscordPresence(bool enabled)
 {
     store().setValue("discord/presence", enabled);
+}
+
+bool clientPatch(const QString &id)
+{
+    return store().value("clientPatches/" + id, true).toBool();
+}
+
+void setClientPatch(const QString &id, bool enabled)
+{
+    store().setValue("clientPatches/" + id, enabled);
 }
 
 }

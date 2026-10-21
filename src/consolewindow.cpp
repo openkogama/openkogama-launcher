@@ -108,6 +108,12 @@ void ConsoleWindow::gameFinished(int exitCode, QProcess::ExitStatus status)
         reportCrash(0);
 }
 
+void ConsoleWindow::note(const QString &text)
+{
+    if (!m_sources.isEmpty())
+        append(0, "[launcher] " + text);
+}
+
 void ConsoleWindow::poll()
 {
     for (int index = 0; index < m_sources.size(); index++) {

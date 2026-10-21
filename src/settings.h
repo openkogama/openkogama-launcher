@@ -33,6 +33,15 @@ void setLastInstance(const QString &path);
 QString nickname();
 void setNickname(const QString &name);
 
+QString accountsUrl();
+QString accountsSite();
+QString accountVerifier();
+void setAccountVerifier(const QString &verifier);
+QString accountName();
+QByteArray accountToken();
+void setAccount(const QString &name, const QByteArray &token);
+void forgetAccount();
+
 QString rendezvous();
 QString hostSecret();
 int hostWorld();
@@ -45,5 +54,8 @@ void setConsoleOnCrash(bool enabled);
 
 bool discordPresence();
 void setDiscordPresence(bool enabled);
+
+bool clientPatch(const QString &id);
+void setClientPatch(const QString &id, bool enabled);
 
 }

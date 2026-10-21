@@ -22,6 +22,7 @@ const QStringList Fixed = {"httpPort", "photonPort", "publicUrl", "listenHost"};
 const QString Starter = R"({
     "title": "",
     "joinMode": "play",
+    "accounts": "optional",
     "clients": [],
     "mixedClients": false,
     "keepPlayChanges": false,
@@ -60,7 +61,7 @@ QString withDefaults(QString text)
 {
     for (const auto &[name, value] : Defaults)
         text = withKey(text, name, value ? "true" : "false");
-    return text;
+    return withKey(text, "accounts", "\"optional\"");
 }
 
 QString jsonList(const QStringList &values)

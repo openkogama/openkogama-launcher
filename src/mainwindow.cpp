@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "account.h"
 #include "admindialog.h"
 #include "ui_mainwindow.h"
 #include "installdialog.h"
@@ -681,7 +682,7 @@ void MainWindow::joinServer(const QString &address) {
     if (path.isEmpty()) return;
     QString exe;
     if (!prepareInstance(path, &exe)) return;
-    QProcess *client = GameLauncher::start(path, exe, address, "play", 0, this, this);
+    QProcess *client = GameLauncher::start(path, exe, address, "play", 0, this, this, false, [this, address]() { joinServer(address); });
     if (!client) return;
     if (m_servers->isPublic(address)) {
         DiscordPresence::join(client, address, m_servers->titleOf(address));
@@ -726,6 +727,13 @@ void MainWindow::openLink(const QString &link) {
     if (isMinimized()) showNormal();
     raise();
     activateWindow();
+    if (const QString code = Links::signInCodeOf(link); !code.isEmpty()) {
+        const Account::Reply reply = Account::finishSignIn(code);
+        if (reply.ok() && !GameLauncher::resumeJoin())
+            QMessageBox::information(this, "Account", "Signed in as " + reply.body.value("name").toString() + ".");
+        else if (!reply.ok()) QMessageBox::warning(this, "Account", "Could not sign in. " + reply.error());
+        return;
+    }
     const QString address = Links::serverOf(link);
     if (address.isEmpty()) return;
     ui->mainTabs->setCurrentWidget(m_servers);

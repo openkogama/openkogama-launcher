@@ -36,6 +36,13 @@ QString serverOf(const QString &link)
     return GameServer::addressOf(QUrlQuery(url).queryItemValue("server", QUrl::FullyDecoded));
 }
 
+QString signInCodeOf(const QString &link)
+{
+    const QUrl url(link);
+    if (url.scheme().compare(Scheme, Qt::CaseInsensitive) != 0 || url.host().compare("signed-in", Qt::CaseInsensitive) != 0) return {};
+    return QUrlQuery(url).queryItemValue("code", QUrl::FullyDecoded).trimmed();
+}
+
 bool forward(const QString &link)
 {
     QLocalSocket socket;

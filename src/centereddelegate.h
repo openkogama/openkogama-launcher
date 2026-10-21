@@ -34,6 +34,13 @@ public:
         QStyledItemDelegate::paint(painter, fit, index);
 
         painter->save();
+        painter->setRenderHint(QPainter::Antialiasing);
+        QPainterPath corners;
+        corners.addRect(QRectF(fit.rect));
+        QPainterPath rounded;
+        rounded.addRoundedRect(QRectF(fit.rect), Radius + 1, Radius + 1);
+        painter->fillPath(corners.subtracted(rounded), option.palette.color(QPalette::Window));
+
         const QString subtitle = index.data(SubtitleRole).toString();
         if (!subtitle.isEmpty()) {
             const QRect label = fit.rect.adjusted(4, fit.decorationSize.height(), -4, 0);
@@ -50,10 +57,10 @@ public:
         const QRectF frame = QRectF(fit.rect).adjusted(1, 1, -1, -1);
         if (selected) {
             painter->setPen(QPen(accent, 2));
-            painter->drawRoundedRect(frame, 4, 4);
+            painter->drawRoundedRect(frame, Radius, Radius);
         } else if (hovered) {
             painter->setPen(QPen(option.palette.color(QPalette::Mid), 1));
-            painter->drawRoundedRect(frame, 4, 4);
+            painter->drawRoundedRect(frame, Radius, Radius);
         }
 
         if (m_badgeRole >= 0 && index.data(m_badgeRole).toBool()) {
@@ -115,6 +122,7 @@ private:
     }
 
     static constexpr int Gap = 16;
+    static constexpr int Radius = 4;
     int m_badgeRole = -1;
 };
 

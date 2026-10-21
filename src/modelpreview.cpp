@@ -263,9 +263,14 @@ int cubeCount(const QByteArray &file)
     return std::max(qFromBigEndian<qint32>(file.constData() + start), 0);
 }
 
+bool hasScale(const QByteArray &file)
+{
+    return cubesStart(file) != 0 && file.size() >= 8;
+}
+
 float scale(const QByteArray &file)
 {
-    if (cubesStart(file) == 0 || file.size() < 8) return 1;
+    if (!hasScale(file)) return 1;
     const float value = qFromBigEndian<float>(file.constData() + 4);
     return std::isfinite(value) && value > 0 ? value : 1;
 }

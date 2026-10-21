@@ -19,7 +19,8 @@ qt_add_executable(openkogama-launcher
     src/worldsdialog.h src/worldsdialog.cpp src/worldsdialog.ui
     src/gamelauncher.h src/gamelauncher.cpp
     src/singleinstance.h src/singleinstance.cpp
-    src/clientcontent.h src/clientcontent.cpp
+    src/clientpatches.h src/clientpatches.cpp
+    src/serverfeatures.h src/serverfeatures.cpp
     src/playerprofile.h src/playerprofile.cpp
     src/discordpresence.h src/discordpresence.cpp
     src/links.h src/links.cpp
@@ -36,6 +37,7 @@ qt_add_executable(openkogama-launcher
     src/theme.h src/theme.cpp
     src/settings.h src/settings.cpp
     src/settingsdialog.h src/settingsdialog.cpp src/settingsdialog.ui
+    src/account.h src/account.cpp
     src/consolewindow.h src/consolewindow.cpp
     src/centereddelegate.h
     src/creditsdialog.h src/creditsdialog.cpp
@@ -85,6 +87,7 @@ target_link_libraries(openkogama-launcher
         Qt::CorePrivate
         Qt::Concurrent
         velopack
+        crypt32
 )
 
 add_custom_command(TARGET openkogama-launcher POST_BUILD
@@ -110,10 +113,10 @@ include(CTest)
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
     qt_add_executable(launcher-tests tests/serverspage_test.cpp src/serverspage.cpp src/serverspage.h src/tilegrid.cpp src/tilegrid.h src/settings.cpp src/settings.h src/tunnel.cpp src/tunnel.h src/sharebar.cpp src/sharebar.h src/serverconfigdialog.cpp src/serverconfigdialog.h
-        src/gamelauncher.cpp src/gamelauncher.h src/singleinstance.cpp src/singleinstance.h src/clientcontent.cpp src/clientcontent.h src/playerprofile.cpp src/playerprofile.h src/discordpresence.cpp src/discordpresence.h src/consolewindow.cpp src/consolewindow.h src/webplayerruntime.cpp src/webplayerruntime.h src/paths.cpp src/paths.h src/theme.cpp src/theme.h
+        src/gamelauncher.cpp src/gamelauncher.h src/singleinstance.cpp src/singleinstance.h src/clientpatches.cpp src/clientpatches.h src/serverfeatures.cpp src/serverfeatures.h src/account.cpp src/account.h src/playerprofile.cpp src/playerprofile.h src/discordpresence.cpp src/discordpresence.h src/consolewindow.cpp src/consolewindow.h src/webplayerruntime.cpp src/webplayerruntime.h src/paths.cpp src/paths.h src/theme.cpp src/theme.h
         src/launchdialog.cpp src/launchdialog.h src/launchdialog.ui src/assetinstaller.cpp src/assetinstaller.h)
     target_include_directories(launcher-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
-    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate)
+    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate crypt32)
     qt_add_resources(launcher-tests "test_resources" PREFIX "/" BASE resources FILES resources/logo.png)
     add_test(NAME launcher-servers COMMAND launcher-tests -o ${CMAKE_CURRENT_BINARY_DIR}/launcher-tests.txt,txt)
     set_tests_properties(launcher-servers PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

@@ -1,8 +1,12 @@
 #include "playerprofile.h"
 #include "paths.h"
+#include "serverfeatures.h"
 #include <QDir>
 #include <QEventLoop>
+#include <QCursor>
 #include <QFile>
+#include <QGuiApplication>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
@@ -13,7 +17,10 @@
 
 namespace {
 
-constexpr int SendTimeout = 5000;
+constexpr int SendTimeout = 60000;
+constexpr int Rejected = 400;
+constexpr int Missing = 404;
+constexpr int Accepted = 200;
 constexpr int FetchTimeout = 5000;
 constexpr int ExportTimeout = 3000;
 
@@ -84,12 +91,30 @@ void exportNow()
         keepExport(document.object());
 }
 
+int post(const QString &url, const QString &key, const QByteArray &body, const QByteArray &encoding)
+{
+    QNetworkAccessManager net;
+    QNetworkRequest request(QUrl(url + "/api/player?key=" + key));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    if (!encoding.isEmpty()) request.setRawHeader("Content-Encoding", encoding);
+    request.setTransferTimeout(SendTimeout);
+    QNetworkReply *reply = net.post(request, body);
+    QEventLoop loop;
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    loop.exec(QEventLoop::ExcludeUserInputEvents);
+    const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    reply->deleteLater();
+    return status;
+}
+
 }
 
 namespace PlayerProfile {
 
-void send(const QString &url, const QString &key, bool everything)
+QString send(const QString &url, const QString &key, bool everything, const std::optional<QStringList> &features)
 {
+    if (!ServerFeatures::allows(features, "player"))
+        return everything ? "this server cannot take your avatar and models" : QString();
     QJsonObject package{{"settings", read("settings")}};
     if (everything) {
         exportNow();
@@ -97,16 +122,22 @@ void send(const QString &url, const QString &key, bool everything)
         package["inventory"] = read("inventory");
     }
     if (std::none_of(package.constBegin(), package.constEnd(), [](const QJsonValue &value) { return value.isObject(); }))
-        return;
+        return {};
 
-    QNetworkAccessManager net;
-    QNetworkRequest request(QUrl(url + "/api/player?key=" + key));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    request.setTransferTimeout(SendTimeout);
-    QNetworkReply *reply = net.post(request, QJsonDocument(package).toJson(QJsonDocument::Compact));
-    QEventLoop loop;
-    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    loop.exec(QEventLoop::ExcludeUserInputEvents);
+    const QByteArray json = QJsonDocument(package).toJson(QJsonDocument::Compact);
+    QGuiApplication::setOverrideCursor(Qt::WaitCursor);
+    const bool compress = ServerFeatures::allows(features, "player-deflate");
+    int status = compress ? post(url, key, qCompress(json, 9).mid(4), "deflate") : post(url, key, json, {});
+    if (compress && status == Rejected) status = post(url, key, json, {});
+    QGuiApplication::restoreOverrideCursor();
+    if (!everything) return {};
+
+    const qsizetype models = package.value("inventory").toObject().value("items").toArray().size();
+    if (status == Accepted)
+        return QString("your avatar and %1 model%2 went to the server").arg(models).arg(models == 1 ? "" : "s");
+    if (status == Missing) return "this server is too old to take your avatar and models";
+    if (status == 0) return "your avatar and models did not reach the server in time";
+    return "the server did not take your avatar and models";
 }
 
 void keep(const QString &url, const QString &key, bool local, QObject *owner)

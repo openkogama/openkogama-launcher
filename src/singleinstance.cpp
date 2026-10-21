@@ -54,12 +54,13 @@ QString objectText(NtQuery queryObject, HANDLE handle, ULONG kind) {
 
 bool isGuard(NtQuery queryObject, HANDLE handle) {
     return objectText(queryObject, handle, ObjectTypeInformation) == "Mutant"
-        && objectText(queryObject, handle, ObjectNameInformation).endsWith(GuardSuffix);
+        && objectText(queryObject, handle, ObjectNameInformation).contains(GuardSuffix);
 }
 
-void releaseIn(DWORD pid, NtQuery queryProcess, NtQuery queryObject) {
+int releaseIn(DWORD pid, NtQuery queryProcess, NtQuery queryObject) {
     HANDLE process = OpenProcess(PROCESS_DUP_HANDLE | PROCESS_QUERY_INFORMATION, FALSE, pid);
-    if (!process) return;
+    if (!process) return 0;
+    int released = 0;
     std::vector<char> buffer(64 * 1024);
     ULONG needed = 0;
     LONG status;
@@ -73,10 +74,11 @@ void releaseIn(DWORD pid, NtQuery queryProcess, NtQuery queryObject) {
             if (!DuplicateHandle(process, remote, GetCurrentProcess(), &local, 0, FALSE, DUPLICATE_SAME_ACCESS)) continue;
             const bool guard = isGuard(queryObject, local);
             CloseHandle(local);
-            if (guard) DuplicateHandle(process, remote, nullptr, nullptr, 0, FALSE, DUPLICATE_CLOSE_SOURCE);
+            if (guard && DuplicateHandle(process, remote, nullptr, nullptr, 0, FALSE, DUPLICATE_CLOSE_SOURCE)) released++;
         }
     }
     CloseHandle(process);
+    return released;
 }
 
 QString imagePath(DWORD pid) {
@@ -91,23 +93,25 @@ QString imagePath(DWORD pid) {
 
 }
 
-void SingleInstance::release(const QString &instances) {
+int SingleInstance::release(const QString &instances) {
     const NtQuery queryProcess = ntdll("NtQueryInformationProcess");
     const NtQuery queryObject = ntdll("NtQueryObject");
-    if (!queryProcess || !queryObject) return;
+    if (!queryProcess || !queryObject) return 0;
     HANDLE processes = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (processes == INVALID_HANDLE_VALUE) return;
+    if (processes == INVALID_HANDLE_VALUE) return 0;
+    int released = 0;
     const QString root = QDir::cleanPath(instances) + "/";
     PROCESSENTRY32W entry{};
     entry.dwSize = sizeof(entry);
     for (BOOL more = Process32FirstW(processes, &entry); more; more = Process32NextW(processes, &entry))
         if (imagePath(entry.th32ProcessID).startsWith(root, Qt::CaseInsensitive))
-            releaseIn(entry.th32ProcessID, queryProcess, queryObject);
+            released += releaseIn(entry.th32ProcessID, queryProcess, queryObject);
     CloseHandle(processes);
+    return released;
 }
 
 #else
 
-void SingleInstance::release(const QString &) {}
+int SingleInstance::release(const QString &) { return 0; }
 
 #endif

@@ -526,7 +526,7 @@ void WorldsDialog::createWorld() {
 }
 
 void WorldsDialog::importWorld() {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import worlds", QString(), "KoGaMa maps (*.kgmap *.kgm)");
+    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import worlds", QString(), "KoGaMa and ReGaMa maps (*.kgmap *.kgm *.json *.bin);;All files (*)");
     if (!paths.isEmpty()) importWorlds(paths, {});
 }
 
@@ -822,7 +822,7 @@ void WorldsDialog::activateAvatar(int avatar, std::function<void()> done) {
 }
 
 void WorldsDialog::importAvatar() {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import avatars", QString(), "KoGaMa avatars (*.kgavatar *.json)");
+    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import avatars", QString(), "KoGaMa and ReGaMa avatars (*.kgavatar *.json *.bin);;All files (*)");
     if (!paths.isEmpty()) importAvatars(paths, {});
 }
 
@@ -1084,17 +1084,19 @@ void WorldsDialog::updateInventoryActions() {
 }
 
 void WorldsDialog::importModel() {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import models", QString(), "Models (*.kgmodel *.kscubes)");
+    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import models", QString(), "Models (*.kgmodel *.kscubes *.json *.bin);;All files (*)");
     if (paths.isEmpty()) return;
 
-    QList<float> scales;
+    QList<std::optional<float>> scales;
     for (const QString &path : paths) {
         QFile file(path);
-        scales.append(file.open(QIODevice::ReadOnly) ? ModelPreview::scale(file.read(8)) : 1.0f);
+        const QByteArray head = file.open(QIODevice::ReadOnly) ? file.read(8) : QByteArray();
+        scales.append(ModelPreview::hasScale(head) ? std::optional(ModelPreview::scale(head)) : std::nullopt);
     }
-    const bool same = std::all_of(scales.cbegin(), scales.cend(), [&](float scale) { return scale == scales.first(); });
+    const bool same = scales.first() && std::all_of(scales.cbegin(), scales.cend(), [&](const std::optional<float> &scale) { return scale == scales.first(); });
     const QString title = paths.size() == 1 ? "Import " + QFileInfo(paths.first()).completeBaseName() : "Import " + QString::number(paths.size()) + " models";
-    if (const auto scale = askScale(this, title, "Import", same ? QString::number(scales.first()) : QString(), same ? QString() : "Each file's own scale"))
+    const QString own = paths.size() == 1 ? "The file's own scale" : "Each file's own scale";
+    if (const auto scale = askScale(this, title, "Import", same ? QString::number(*scales.first()) : QString(), same ? QString() : own))
         importModels(paths, *scale, {});
 }
 
