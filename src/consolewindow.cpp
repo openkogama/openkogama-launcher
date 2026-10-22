@@ -19,6 +19,8 @@
 
 namespace {
 
+constexpr qint64 QuickExitSecs = 15;
+
 QColor errorColor()
 {
     return Theme::dark() ? QColor("#e06c75") : QColor("#c0392b");
@@ -104,7 +106,10 @@ void ConsoleWindow::gameFinished(int exitCode, QProcess::ExitStatus status)
     if (m_sources.isEmpty())
         return;
     append(0, "[launcher] " + tr("game exited with code %1").arg(exitCode));
-    if (status == QProcess::CrashExit || exitCode != 0)
+    const bool quick = m_started.secsTo(QDateTime::currentDateTime()) < QuickExitSecs;
+    if (quick && status == QProcess::NormalExit && exitCode == 0)
+        append(0, "[launcher] " + tr("the game closed right after it started, an antivirus may have removed or blocked some of its files, deleting and installing this version again usually helps"));
+    if (status == QProcess::CrashExit || exitCode != 0 || quick)
         reportCrash(0);
 }
 
