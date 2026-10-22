@@ -6,6 +6,7 @@
 #include <QPair>
 
 class QCheckBox;
+class QComboBox;
 class QLabel;
 class QPushButton;
 
@@ -31,6 +32,7 @@ private:
     QList<QPair<QString, QCheckBox *>> m_patches;
     QLabel *m_account = nullptr;
     QPushButton *m_accountButton = nullptr;
+    QComboBox *m_language = nullptr;
 };
 
 #endif

@@ -73,7 +73,8 @@ static QString clientVersion(const QStandardItem *item) {
 
 static QString versionTitle(const QString &name, const QString &version) {
     if (version.isEmpty()) return name;
-    return name == version ? "KoGaMa " + version : name + " (KoGaMa " + version + ")";
+    return name == version ? QCoreApplication::translate("MainWindow", "KoGaMa %1").arg(version)
+                           : QCoreApplication::translate("MainWindow", "%1 (KoGaMa %2)").arg(name, version);
 }
 
 static QIcon unknownIcon() {
@@ -132,11 +133,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    setWindowTitle("OpenKogama Launcher");
-    ui->versionCombo->setPlaceholderText("No versions installed");
+    setWindowTitle(tr("OpenKogama Launcher"));
+    ui->versionCombo->setPlaceholderText(tr("No versions installed"));
     ui->mainTabs->setCornerWidget(ui->headerBar, Qt::TopRightCorner);
     m_servers = new ServersPage(this);
-    ui->mainTabs->insertTab(1, m_servers, "&Servers");
+    ui->mainTabs->insertTab(1, m_servers, tr("&Servers"));
     connect(m_servers, &ServersPage::joinRequested, this, &MainWindow::joinServer);
     m_share = new ShareBar(this);
     ui->verticalLayout->insertWidget(ui->verticalLayout->indexOf(ui->mainTabs), m_share);
@@ -146,15 +147,15 @@ MainWindow::MainWindow(QWidget *parent)
         DiscordPresence::join(m_hostClient, address, title);
         m_servers->reportPlaying(m_hostClient, address);
     });
-    auto *guide = new QAction("Host a server that stays online...", this);
+    auto *guide = new QAction(tr("Host a server that stays online..."), this);
     connect(guide, &QAction::triggered, this, []() {
         QDesktopServices::openUrl(QUrl("https://github.com/openkogama/openkogama-server/blob/main/HOSTING.md"));
     });
     ui->menuHelp->insertAction(ui->actionCredits, guide);
-    auto *serverSettings = new QAction("Server settings...", this);
+    auto *serverSettings = new QAction(tr("Server settings..."), this);
     connect(serverSettings, &QAction::triggered, this, &MainWindow::editServerSettings);
     ui->menuFile->addAction(serverSettings);
-    auto *admin = new QAction("Admin...", this);
+    auto *admin = new QAction(tr("Admin..."), this);
     connect(admin, &QAction::triggered, this, [this]() { AdminDialog(this).exec(); });
     ui->menuFile->addAction(admin);
     connect(m_share, &ShareBar::settingsRequested, this, &MainWindow::editServerSettings);
@@ -271,7 +272,7 @@ void MainWindow::loadInstances(const QString &selectPath) {
 
         const QIcon icon = instanceIcon(instanceDir, iconProvider);
         auto *item = new QStandardItem(icon, name);
-        item->setToolTip("KoGaMa " + version);
+        item->setToolTip(tr("KoGaMa %1").arg(version));
         item->setData(instanceDir.path(), Qt::UserRole);
         item->setData(name, NameRole);
         item->setData(version, VersionRole);
@@ -313,8 +314,8 @@ void MainWindow::filterInstances() {
     if (!current.isValid() || ui->instancesView->isRowHidden(current.row()))
         ui->instancesView->setCurrentIndex(first >= 0 ? instances->index(first, 0) : QModelIndex());
     int total = instances->rowCount();
-    ui->versionSearchLineEdit->setPlaceholderText(total > 0 ? "Search " + QString::number(total) + (total == 1 ? " version..." : " versions...") : "Search your versions...");
-    ui->versionStatusLabel->setText(total > 0 && visible == 0 ? "No versions match your search." : QString());
+    ui->versionSearchLineEdit->setPlaceholderText(total > 0 ? tr("Search %n version(s)...", nullptr, total) : tr("Search your versions..."));
+    ui->versionStatusLabel->setText(total > 0 && visible == 0 ? tr("No versions match your search.") : QString());
     ui->versionStatusLabel->setVisible(!ui->versionStatusLabel->text().isEmpty());
     updateInstanceActions();
 }
@@ -333,18 +334,18 @@ void MainWindow::updateInstanceActions() {
                 && client->property("instancePath").toString() == index.data(Qt::UserRole).toString();
         }));
     ui->actionDeleteVersion->setEnabled(selected && !active);
-    ui->actionDeleteVersion->setText(active ? "Delete... (switch to another version first)" : "Delete...");
+    ui->actionDeleteVersion->setText(active ? tr("Delete... (switch to another version first)") : tr("Delete..."));
     const QString version = index.data(VersionRole).toString();
-    ui->instanceNameLabel->setText(selected ? index.data(NameRole).toString() : "No version selected");
+    ui->instanceNameLabel->setText(selected ? index.data(NameRole).toString() : tr("No version selected"));
     const QString unity = index.data(UnityRole).toString();
-    ui->instanceVersionLabel->setText(selected && !unity.isEmpty() ? "Unity " + unity : QString());
+    ui->instanceVersionLabel->setText(selected && !unity.isEmpty() ? tr("Unity %1").arg(unity) : QString());
     ui->actionLaunch->setEnabled(ui->mainTabs->currentWidget() == ui->versionsTab ? selected : ui->versionCombo->currentIndex() >= 0);
 }
 
 void MainWindow::updatePlayPage() {
     bool installed = ui->versionCombo->currentIndex() >= 0;
-    ui->welcomeTitle->setText(installed ? "Ready to play?" : "Let's get started");
-    ui->welcomeDescription->setText(installed ? "Open your worlds to play, build or create something new." : "Add a game version, then choose a world to play or build.");
+    ui->welcomeTitle->setText(installed ? tr("Ready to play?") : tr("Let's get started"));
+    ui->welcomeDescription->setText(installed ? tr("Open your worlds to play, build or create something new.") : tr("Add a game version, then choose a world to play or build."));
     ui->openWorldsButton->setVisible(installed);
     ui->firstVersionButton->setVisible(!installed);
     m_servers->setCanJoin(true);
@@ -354,7 +355,7 @@ void MainWindow::onVersionChanged() {
     const QString path = ui->versionCombo->currentData().toString();
     if (path.isEmpty()) return;
     if (hasRemoteGames() && path != Settings::lastInstance()) {
-        QMessageBox::information(this, "Change version", "Close the game before changing its version.");
+        QMessageBox::information(this, tr("Change version"), tr("Close the game before changing its version."));
         QSignalBlocker blocker(ui->versionCombo);
         ui->versionCombo->setCurrentIndex(ui->versionCombo->findData(Settings::lastInstance()));
         return;
@@ -390,7 +391,7 @@ void MainWindow::onInstallTriggered() {
             ui->firstVersionButton->setEnabled(true);
             ui->noVersionsButton->setEnabled(true);
             if (m_versionsJson.isEmpty())
-                QMessageBox::warning(this, "Add version", "Could not load the version list. Check your internet connection and try again.\n" + m_versionsError);
+                QMessageBox::warning(this, tr("Add version"), tr("Could not load the version list. Check your internet connection and try again.\n%1").arg(m_versionsError));
             else
                 onInstallTriggered();
         });
@@ -448,12 +449,12 @@ void MainWindow::showInstanceMenu(const QPoint &pos) {
     ui->instancesView->setCurrentIndex(index);
 
     QMenu menu(this);
-    QAction *launch = menu.addAction("Open worlds");
+    QAction *launch = menu.addAction(tr("Open worlds"));
     menu.addSeparator();
-    QAction *rename = menu.addAction("Rename");
-    QAction *duplicate = menu.addAction("Duplicate");
-    QAction *folder = menu.addAction("Show in Explorer");
-    QAction *remove = menu.addAction("Delete");
+    QAction *rename = menu.addAction(tr("Rename"));
+    QAction *duplicate = menu.addAction(tr("Duplicate"));
+    QAction *folder = menu.addAction(tr("Show in Explorer"));
+    QAction *remove = menu.addAction(tr("Delete"));
 
     QAction *chosen = menu.exec(ui->instancesView->viewport()->mapToGlobal(pos));
     if (chosen == launch)
@@ -484,7 +485,7 @@ void MainWindow::onInstanceRenamed(QStandardItem *item) {
     }
 
     if (!saveInstanceName(item->data(Qt::UserRole).toString(), name)) {
-        QMessageBox::warning(this, "Rename", "Could not save instance.json");
+        QMessageBox::warning(this, tr("Rename"), tr("Could not save instance.json"));
         item->setText(previous);
         return;
     }
@@ -509,14 +510,14 @@ void MainWindow::duplicateInstance() {
     if (!index.isValid()) return;
 
     QString source = index.data(Qt::UserRole).toString();
-    QString name = index.data(NameRole).toString() + " (copy)";
+    QString name = tr("%1 (copy)").arg(index.data(NameRole).toString());
     QString folder = QFileInfo(source).fileName() + " (copy)";
     QString dest = Paths::instances() + "/" + folder;
     for (int n = 2; QDir(dest).exists(); n++)
         dest = Paths::instances() + "/" + folder + " (" + QString::number(n) + ")";
 
-    auto *progress = new QProgressDialog("Duplicating " + index.data(NameRole).toString() + "...", QString(), 0, 0, this);
-    progress->setWindowTitle("Duplicate version");
+    auto *progress = new QProgressDialog(tr("Duplicating %1...").arg(index.data(NameRole).toString()), QString(), 0, 0, this);
+    progress->setWindowTitle(tr("Duplicate version"));
     progress->setWindowModality(Qt::WindowModal);
     progress->setMinimumDuration(0);
     progress->show();
@@ -527,7 +528,7 @@ void MainWindow::duplicateInstance() {
         watcher->deleteLater();
         if (!watcher->result() || !saveInstanceName(dest, name)) {
             QDir(dest).removeRecursively();
-            QMessageBox::warning(this, "Duplicate version", "Could not copy the version files");
+            QMessageBox::warning(this, tr("Duplicate version"), tr("Could not copy the version files"));
             return;
         }
         loadInstances();
@@ -546,17 +547,17 @@ void MainWindow::deleteInstance() {
             return client && client->state() != QProcess::NotRunning
                 && client->property("instancePath").toString() == index.data(Qt::UserRole).toString();
         })) {
-        QMessageBox::information(this, "Delete version", "Switch to another game version before deleting this one's files.");
+        QMessageBox::information(this, tr("Delete version"), tr("Switch to another game version before deleting this one's files."));
         return;
     }
-    auto answer = QMessageBox::question(this, "Delete version",
-                                        "Delete \"" + index.data().toString() + "\" and all its files? This can't be undone.",
+    auto answer = QMessageBox::question(this, tr("Delete version"),
+                                        tr("Delete \"%1\" and all its files? This can't be undone.").arg(index.data().toString()),
                                         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
     QDir dir(index.data(Qt::UserRole).toString());
     if (QDir::cleanPath(dir.absolutePath()).startsWith(QDir::cleanPath(Paths::instances()) + "/") && !dir.removeRecursively())
-        QMessageBox::warning(this, "Delete version", "Some files could not be deleted. Close the game if it is running and try again.");
+        QMessageBox::warning(this, tr("Delete version"), tr("Some files could not be deleted. Close the game if it is running and try again."));
 
     loadInstances();
 }
@@ -567,7 +568,7 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
 
     if (!exe.isEmpty()) {
         if (!QFile::exists(Paths::player())) {
-            QMessageBox::warning(this, "Launch", "OpenKogama Player is missing from " + QDir::toNativeSeparators(Paths::player()));
+            QMessageBox::warning(this, tr("Launch"), tr("OpenKogama Player is missing from %1").arg(QDir::toNativeSeparators(Paths::player())));
             return false;
         }
         if (!WebPlayerRuntime::ensureInstalled(this))
@@ -575,7 +576,7 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
     } else {
         QString data = dir.entryList({"*_Data"}, QDir::Dirs).value(0);
         if (data.isEmpty()) {
-            QMessageBox::warning(this, "Launch", "This version can't be launched yet");
+            QMessageBox::warning(this, tr("Launch"), tr("This version can't be launched yet"));
             return false;
         }
 
@@ -583,7 +584,7 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
         if (!dir.exists(exe)) {
             QString other = dir.entryList({"*.exe"}, QDir::Files).value(0);
             if (other.isEmpty() || !dir.rename(other, exe)) {
-                QMessageBox::warning(this, "Launch", "No game executable in " + path);
+                QMessageBox::warning(this, tr("Launch"), tr("No game executable in %1").arg(path));
                 return false;
             }
         }
@@ -596,7 +597,7 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
 bool MainWindow::launchInstance(const QString &path) {
     if (m_worlds && path == m_activePath) return true;
     if ((m_worlds && m_worlds->hasRunningGames()) || hasRemoteGames()) {
-        QMessageBox::information(this, "Change version", "Close the game before changing its version.");
+        QMessageBox::information(this, tr("Change version"), tr("Close the game before changing its version."));
         return false;
     }
     QString exe;
@@ -658,7 +659,7 @@ bool MainWindow::hasRemoteGames() const {
 void MainWindow::joinServer(const QString &address) {
     if (Settings::nickname().isEmpty()) {
         bool ok = false;
-        const QString name = QInputDialog::getText(this, "Join", "Pick a nickname that other players will see:", QLineEdit::Normal, QString(), &ok).trimmed();
+        const QString name = QInputDialog::getText(this, tr("Join"), tr("Pick a nickname that other players will see:"), QLineEdit::Normal, QString(), &ok).trimmed();
         if (!ok || name.isEmpty()) return;
         Settings::setNickname(name.left(20));
     }
@@ -706,13 +707,13 @@ void MainWindow::offerVersion(const QStringList &clients, const QString &title, 
         if (wanted.accepts(version.version)
             && (!best || QVersionNumber::fromString(version.version) > QVersionNumber::fromString(best->version)))
             best = version;
-    const QString server = title.isEmpty() ? QString("This server") : title;
+    const QString server = title.isEmpty() ? tr("This server") : title;
     if (!best) {
-        QMessageBox::information(this, "Join", server + " plays KoGaMa " + clients.join(", ") + ". Add it on the Versions tab first.");
+        QMessageBox::information(this, tr("Join"), tr("%1 plays KoGaMa %2. Add it on the Versions tab first.").arg(server, clients.join(", ")));
         return;
     }
-    if (QMessageBox::question(this, "Join", server + " plays KoGaMa " + best->version + ", which you don't have yet. Download it now ("
-            + best->download + ")?") != QMessageBox::Yes)
+    if (QMessageBox::question(this, tr("Join"), tr("%1 plays KoGaMa %2, which you don't have yet. Download it now (%3)?")
+            .arg(server, best->version, best->download)) != QMessageBox::Yes)
         return;
     m_installing = true;
     InstallProgressDialog progress(*best, best->version, this);
@@ -730,8 +731,8 @@ void MainWindow::openLink(const QString &link) {
     if (const QString code = Links::signInCodeOf(link); !code.isEmpty()) {
         const Account::Reply reply = Account::finishSignIn(code);
         if (reply.ok() && !GameLauncher::resumeJoin())
-            QMessageBox::information(this, "Account", "Signed in as " + reply.body.value("name").toString() + ".");
-        else if (!reply.ok()) QMessageBox::warning(this, "Account", "Could not sign in. " + reply.error());
+            QMessageBox::information(this, tr("Account"), tr("Signed in as %1.").arg(reply.body.value("name").toString()));
+        else if (!reply.ok()) QMessageBox::warning(this, tr("Account"), tr("Could not sign in. %1").arg(reply.error()));
         return;
     }
     const QString address = Links::serverOf(link);
@@ -740,7 +741,7 @@ void MainWindow::openLink(const QString &link) {
     const QString title = m_servers->titleOf(address);
     const QString shown = !title.isEmpty() ? title
         : Tunnel::isAddress(address) ? Tunnel::display(Tunnel::code(address)) : QUrl(address).host();
-    if (QMessageBox::question(this, "Join", "Join " + shown + "?") != QMessageBox::Yes) return;
+    if (QMessageBox::question(this, tr("Join"), tr("Join %1?").arg(shown)) != QMessageBox::Yes) return;
     joinServer(address);
 }
 
@@ -748,8 +749,8 @@ void MainWindow::editServerSettings() {
     ServerConfigDialog dialog(this);
     if (dialog.exec() != QDialog::Accepted || !m_localReady || !m_worlds) return;
     if ((m_worlds->hasRunningGames() || hasRemoteGames())
-        && QMessageBox::question(this, "Server settings", "Restart the server now? Games on it get disconnected. "
-            "Otherwise the settings apply the next time it starts.") != QMessageBox::Yes)
+        && QMessageBox::question(this, tr("Server settings"), tr("Restart the server now? Games on it get disconnected. "
+            "Otherwise the settings apply the next time it starts.")) != QMessageBox::Yes)
         return;
     m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/shutdown")));
     QTimer::singleShot(300, this, [this]() { waitForServerToStop(50); });
@@ -780,8 +781,9 @@ void MainWindow::updateHostVersion() {
 
 void MainWindow::closeEvent(QCloseEvent *event) {
     const int players = m_share->players();
-    if (players > 0 && QMessageBox::question(this, "Close launcher",
-            QString(players == 1 ? "A player is" : "Players are") + " in your world. Closing the launcher disconnects them. Close anyway?")
+    if (players > 0 && QMessageBox::question(this, tr("Close launcher"),
+            players == 1 ? tr("A player is in your world. Closing the launcher disconnects them. Close anyway?")
+                         : tr("Players are in your world. Closing the launcher disconnects them. Close anyway?"))
             != QMessageBox::Yes) {
         event->ignore();
         return;
@@ -804,8 +806,8 @@ void MainWindow::joinCode(const QString &address) {
     };
     const QString code = Tunnel::code(address);
     auto trip = std::make_shared<Trip>();
-    QPointer<QProgressDialog> progress = new QProgressDialog("Looking for " + Tunnel::display(code) + "...", "Cancel", 0, 0, this);
-    progress->setWindowTitle("Join");
+    QPointer<QProgressDialog> progress = new QProgressDialog(tr("Looking for %1...").arg(Tunnel::display(code)), tr("Cancel"), 0, 0, this);
+    progress->setWindowTitle(tr("Join"));
     progress->setWindowModality(Qt::WindowModal);
     progress->setMinimumDuration(0);
     progress->setAttribute(Qt::WA_DeleteOnClose);
@@ -851,11 +853,11 @@ void MainWindow::joinCode(const QString &address) {
             trip->port = rest.section(' ', 0, 0).toInt();
             launch();
         } else if (word == "missing") {
-            trip->error = "Nobody is hosting with the code " + Tunnel::display(code) + " right now.";
+            trip->error = tr("Nobody is hosting with the code %1 right now.").arg(Tunnel::display(code));
         } else if (word == "error") {
-            trip->error = rest.startsWith("rendezvous") ? "Could not reach the OpenKogama P2P server. Check your internet connection."
-                : rest.startsWith("host") ? "Could not connect to the host. Try again in a moment."
-                : "Could not join: " + rest;
+            trip->error = rest.startsWith("rendezvous") ? tr("Could not reach the OpenKogama P2P server. Check your internet connection.")
+                : rest.startsWith("host") ? tr("Could not connect to the host. Try again in a moment.")
+                : tr("Could not join: %1").arg(rest);
         } else if (word == "found") {
             const QJsonObject info = QJsonDocument::fromJson(rest.toUtf8()).object();
             m_servers->showFound(address, info);
@@ -883,7 +885,7 @@ void MainWindow::joinCode(const QString &address) {
             trip->path = path;
             trip->exe = exe;
             trip->world = info.value("world").toInt();
-            if (progress) progress->setLabelText("Connecting to " + info.value("title").toString() + "...");
+            if (progress) progress->setLabelText(tr("Connecting to %1...").arg(info.value("title").toString()));
             launch();
         }
     });
@@ -893,6 +895,6 @@ void MainWindow::joinCode(const QString &address) {
         if (trip->missing)
             offerVersion(trip->needs, trip->title, [this, address]() { joinCode(address); });
         else if (!trip->launched && !trip->cancelled)
-            QMessageBox::information(this, "Join", trip->error.isEmpty() ? "Could not connect to the host." : trip->error);
+            QMessageBox::information(this, tr("Join"), trip->error.isEmpty() ? tr("Could not connect to the host.") : trip->error);
     });
 }

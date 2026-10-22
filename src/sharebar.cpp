@@ -31,7 +31,7 @@ constexpr int JpegLimit = 64 * 1024;
 
 ShareBar::ShareBar(QWidget *parent)
     : QFrame(parent), m_text(new QLabel(this)), m_code(new QLabel(this)), m_info(new QLabel(this)),
-      m_copy(new QPushButton("Copy code", this)), m_settings(new QPushButton("Server settings", this)),
+      m_copy(new QPushButton(tr("Copy code"), this)), m_settings(new QPushButton(tr("Server settings"), this)),
       m_stop(new QPushButton(this)), m_slow(new QTimer(this)), m_upload(new QTimer(this))
 {
     m_upload->setInterval(UploadMs);
@@ -67,8 +67,8 @@ ShareBar::ShareBar(QWidget *parent)
     });
     connect(m_copy, &QPushButton::clicked, this, [this]() {
         QGuiApplication::clipboard()->setText(Tunnel::display(m_codeText));
-        m_copy->setText("Copied");
-        QTimer::singleShot(CopiedMs, m_copy, [this]() { m_copy->setText("Copy code"); });
+        m_copy->setText(tr("Copied"));
+        QTimer::singleShot(CopiedMs, m_copy, [this]() { m_copy->setText(tr("Copy code")); });
     });
     connect(m_settings, &QPushButton::clicked, this, &ShareBar::settingsRequested);
     connect(m_stop, &QPushButton::clicked, this, &ShareBar::stop);
@@ -169,8 +169,8 @@ void ShareBar::heard(const QString &word, const QString &rest)
     } else if (word == "players") {
         m_players = rest.toInt();
     } else if (word == "error") {
-        m_error = rest.startsWith("no server") ? "your local server is not running, open the Worlds tab first"
-            : rest.startsWith("rendezvous") ? "the OpenKogama P2P servers can't be reached" : rest;
+        m_error = rest.startsWith("no server") ? tr("your local server is not running, open the Worlds tab first")
+            : rest.startsWith("rendezvous") ? tr("the OpenKogama P2P servers can't be reached") : rest;
     }
     refresh();
 }
@@ -223,7 +223,7 @@ void ShareBar::ended()
     m_slow->stop();
     m_codeText.clear();
     m_players = 0;
-    if (m_error.isEmpty()) m_error = "hosting stopped unexpectedly";
+    if (m_error.isEmpty()) m_error = tr("hosting stopped unexpectedly");
     refresh();
     emit hostedWorldChanged(0);
 }
@@ -232,14 +232,14 @@ void ShareBar::refresh()
 {
     const bool live = m_tunnel && !m_codeText.isEmpty();
     const bool failed = !m_tunnel && !m_error.isEmpty();
-    m_text->setText(failed ? "Could not host " + m_name + ": " + m_error : "Hosting " + m_name);
-    m_code->setText("Code " + Tunnel::display(m_codeText));
+    m_text->setText(failed ? tr("Could not host %1: %2").arg(m_name, m_error) : tr("Hosting %1").arg(m_name));
+    m_code->setText(tr("Code %1").arg(Tunnel::display(m_codeText)));
     m_code->setVisible(live);
-    if (live) m_info->setText(m_players == 0 ? "Nobody joined yet" : m_players == 1 ? "1 player joined" : QString::number(m_players) + " players joined");
-    else m_info->setText(m_waiting ? "Still reaching the P2P servers..." : "Getting a code...");
+    if (live) m_info->setText(m_players == 0 ? tr("Nobody joined yet") : tr("%n player(s) joined", nullptr, m_players));
+    else m_info->setText(m_waiting ? tr("Still reaching the P2P servers...") : tr("Getting a code..."));
     m_info->setVisible(!failed);
     m_copy->setVisible(live);
-    m_stop->setText(m_tunnel ? "Stop hosting" : "Close");
+    m_stop->setText(m_tunnel ? tr("Stop hosting") : tr("Close"));
     m_settings->setVisible(!failed);
-    setToolTip("Players type the code in Servers, Join with code");
+    setToolTip(tr("Players type the code in Servers, Join with code"));
 }

@@ -40,6 +40,7 @@ static const QString GameModelName("CubeModel");
 #include <QIcon>
 #include <QImage>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDialogButtonBox>
 #include <QFormLayout>
 #include <QVBoxLayout>
@@ -86,7 +87,7 @@ static std::optional<QString> askScale(QWidget *parent, const QString &title, co
     auto *layout = new QVBoxLayout(&dialog);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
-    auto *hint = new QLabel("Size of one cube in the game, like 0.5 or 1.", &dialog);
+    auto *hint = new QLabel(QCoreApplication::translate("WorldsDialog", "Size of one cube in the game, like 0.5 or 1."), &dialog);
     hint->setWordWrap(true);
     layout->addWidget(hint);
     auto *field = new QLineEdit(current, &dialog);
@@ -94,7 +95,7 @@ static std::optional<QString> askScale(QWidget *parent, const QString &title, co
     field->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,3}([.,]\\d{0,4})?"), field));
     auto *form = new QFormLayout;
     form->setSpacing(8);
-    form->addRow("Scale:", field);
+    form->addRow(QCoreApplication::translate("WorldsDialog", "Scale:"), field);
     layout->addLayout(form);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
@@ -149,10 +150,10 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->newButton, &QPushButton::clicked, this, &WorldsDialog::createWorld);
     connect(ui->importButton, &QPushButton::clicked, this, &WorldsDialog::importWorld);
     auto *worldMenu = new QMenu(this);
-    worldMenu->addAction("Export...", this, &WorldsDialog::exportWorld);
-    worldMenu->addAction("Rename", this, &WorldsDialog::renameWorld);
+    worldMenu->addAction(tr("Export..."), this, &WorldsDialog::exportWorld);
+    worldMenu->addAction(tr("Rename"), this, &WorldsDialog::renameWorld);
     worldMenu->addSeparator();
-    worldMenu->addAction("Delete...", this, &WorldsDialog::deleteWorld);
+    worldMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteWorld);
     ui->moreWorldButton->setMenu(worldMenu);
     auto *renameShortcut = new QShortcut(QKeySequence(Qt::Key_F2), ui->worldsList);
     renameShortcut->setContext(Qt::WidgetShortcut);
@@ -177,10 +178,10 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->useAvatarButton, &QPushButton::clicked, this, &WorldsDialog::useAvatar);
     connect(ui->importAvatarButton, &QPushButton::clicked, this, &WorldsDialog::importAvatar);
     auto *avatarMenu = new QMenu(this);
-    avatarMenu->addAction("Export...", this, &WorldsDialog::exportAvatar);
-    avatarMenu->addAction("Rename", this, &WorldsDialog::renameAvatar);
+    avatarMenu->addAction(tr("Export..."), this, &WorldsDialog::exportAvatar);
+    avatarMenu->addAction(tr("Rename"), this, &WorldsDialog::renameAvatar);
     avatarMenu->addSeparator();
-    avatarMenu->addAction("Delete...", this, &WorldsDialog::deleteAvatar);
+    avatarMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteAvatar);
     ui->moreAvatarButton->setMenu(avatarMenu);
     connect(ui->avatarsList, &QListWidget::itemChanged, this, &WorldsDialog::onAvatarRenamed);
     auto *renameAvatarShortcut = new QShortcut(QKeySequence(Qt::Key_F2), ui->avatarsList);
@@ -196,11 +197,11 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->inventorySearchLineEdit, &QLineEdit::textChanged, this, [this]() { filterInventory(); });
     connect(ui->inventoryList, &QListWidget::currentItemChanged, this, [this]() { updateInventoryActions(); });
     auto *itemMenu = new QMenu(this);
-    itemMenu->addAction("Export...", this, &WorldsDialog::exportItem);
-    itemMenu->addAction("Rename", this, &WorldsDialog::renameItem);
-    itemMenu->addAction("Scale...", this, &WorldsDialog::scaleItem);
+    itemMenu->addAction(tr("Export..."), this, &WorldsDialog::exportItem);
+    itemMenu->addAction(tr("Rename"), this, &WorldsDialog::renameItem);
+    itemMenu->addAction(tr("Scale..."), this, &WorldsDialog::scaleItem);
     itemMenu->addSeparator();
-    itemMenu->addAction("Delete...", this, &WorldsDialog::deleteItem);
+    itemMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteItem);
     ui->moreItemButton->setMenu(itemMenu);
     connect(ui->inventoryList, &QListWidget::itemChanged, this, &WorldsDialog::onItemRenamed);
     auto *renameItemShortcut = new QShortcut(QKeySequence(Qt::Key_F2), ui->inventoryList);
@@ -249,7 +250,7 @@ void WorldsDialog::setInstance(const QString &path, const QString &exe, QProcess
         info = QJsonDocument::fromJson(file.readAll()).object();
     m_hasAvatarEditor = !WebPlayerRuntime::isWebPlayerFile(exe)
         || !info.value("unityVersion").toString().startsWith("3.4");
-    ui->editAvatarButton->setToolTip(m_hasAvatarEditor ? QString() : "This game version has no avatar editor");
+    ui->editAvatarButton->setToolTip(m_hasAvatarEditor ? QString() : tr("This game version has no avatar editor"));
     updateAvatarActions();
 }
 
@@ -286,10 +287,10 @@ void WorldsDialog::updateWorldActions() {
     ui->playButton->setEnabled(selected && guests != "edit");
     ui->hostButton->setEnabled(selected);
     ui->buildButton->setEnabled(selected && guests != "play");
-    ui->playButton->setToolTip(guests == "edit" ? "Your guests join in build (Server settings)" : QString());
-    ui->buildButton->setToolTip(guests == "play" ? "Your guests join in play (Server settings)" : QString());
+    ui->playButton->setToolTip(guests == "edit" ? tr("Your guests join in build (Server settings)") : QString());
+    ui->buildButton->setToolTip(guests == "play" ? tr("Your guests join in play (Server settings)") : QString());
     ui->moreWorldButton->setEnabled(selected);
-    ui->selectedWorldLabel->setText(selected ? item->text() : "No world selected");
+    ui->selectedWorldLabel->setText(selected ? item->text() : tr("No world selected"));
 }
 
 void WorldsDialog::filterWorlds() {
@@ -309,10 +310,10 @@ void WorldsDialog::filterWorlds() {
     if (!current || current->isHidden())
         ui->worldsList->setCurrentItem(first);
     int total = ui->worldsList->count();
-    ui->worldSearchLineEdit->setPlaceholderText(total > 0 ? "Search " + QString::number(total) + (total == 1 ? " world..." : " worlds...") : "Search your worlds...");
+    ui->worldSearchLineEdit->setPlaceholderText(total > 0 ? tr("Search %n world(s)...", nullptr, total) : tr("Search your worlds..."));
     ui->worldStatusLabel->setText(total == 0
-        ? "No worlds yet. Click New world to create one, or Import to open a saved file."
-        : visible == 0 ? "No worlds match your search." : QString());
+        ? tr("No worlds yet. Click New world to create one, or Import to open a saved file.")
+        : visible == 0 ? tr("No worlds match your search.") : QString());
     ui->worldStatusLabel->setVisible(!ui->worldStatusLabel->text().isEmpty());
     updateWorldActions();
 }
@@ -334,10 +335,10 @@ void WorldsDialog::filterAvatars() {
     if (!current || current->isHidden())
         ui->avatarsList->setCurrentItem(first);
     int total = ui->avatarsList->count();
-    ui->avatarSearchLineEdit->setPlaceholderText(total > 0 ? "Search " + QString::number(total) + (total == 1 ? " avatar..." : " avatars...") : "Search your avatars...");
-    ui->avatarStatusLabel->setText(!m_hasAvatarEditor ? "This game version has no avatar editor. Choose another version to edit characters."
-        : total == 0 ? "No avatars yet. Open the avatar editor to create your character."
-        : visible == 0 ? "No avatars match your search." : QString());
+    ui->avatarSearchLineEdit->setPlaceholderText(total > 0 ? tr("Search %n avatar(s)...", nullptr, total) : tr("Search your avatars..."));
+    ui->avatarStatusLabel->setText(!m_hasAvatarEditor ? tr("This game version has no avatar editor. Choose another version to edit characters.")
+        : total == 0 ? tr("No avatars yet. Open the avatar editor to create your character.")
+        : visible == 0 ? tr("No avatars match your search.") : QString());
     ui->avatarStatusLabel->setVisible(!ui->avatarStatusLabel->text().isEmpty());
     updateAvatarActions();
 }
@@ -348,7 +349,7 @@ void WorldsDialog::updateAvatarActions() {
     ui->useAvatarButton->setEnabled(item && !active);
     ui->editAvatarButton->setEnabled(m_hasAvatarEditor);
     ui->moreAvatarButton->setEnabled(item != nullptr);
-    ui->selectedAvatarLabel->setText(item ? item->text() : "No avatar selected");
+    ui->selectedAvatarLabel->setText(item ? item->text() : tr("No avatar selected"));
 }
 
 void WorldsDialog::keyPressEvent(QKeyEvent *event) {
@@ -366,7 +367,7 @@ void WorldsDialog::reject() {
 
 void WorldsDialog::loadWorlds(int select) {
     if (ui->worldsList->count() == 0) {
-        ui->worldStatusLabel->setText("Loading your worlds...");
+        ui->worldStatusLabel->setText(tr("Loading your worlds..."));
         ui->worldStatusLabel->show();
     }
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/worlds")));
@@ -374,7 +375,7 @@ void WorldsDialog::loadWorlds(int select) {
         reply->deleteLater();
         if (url != LocalServerUrl) return;
         if (reply->error() != QNetworkReply::NoError) {
-            ui->worldStatusLabel->setText("Could not load your worlds. Press F5 to try again.");
+            ui->worldStatusLabel->setText(tr("Could not load your worlds. Press F5 to try again."));
             ui->worldStatusLabel->show();
             return;
         }
@@ -408,9 +409,9 @@ void WorldsDialog::loadWorlds(int select) {
                 item->setText(name);
                 item->setData(NameRole, name);
             }
-            QString tip = "Last played: " + (world["playedAt"].isString() ? date(world["playedAt"]) : QString("never")) + "\n"
-                + "Saved: " + date(world["savedAt"]) + "\n"
-                + (world["publishedAt"].isString() ? "Published: " + date(world["publishedAt"]) : QString("Not published"));
+            QString tip = tr("Last played: %1").arg(world["playedAt"].isString() ? date(world["playedAt"]) : tr("never")) + "\n"
+                + tr("Saved: %1").arg(date(world["savedAt"])) + "\n"
+                + (world["publishedAt"].isString() ? tr("Published: %1").arg(date(world["publishedAt"])) : tr("Not published"));
             if (item->toolTip() != tip)
                 item->setToolTip(tip);
             if (ids[i] == select)
@@ -478,11 +479,11 @@ void WorldsDialog::loadTemplates() {
 
 void WorldsDialog::createWorld() {
     QDialog dialog(this);
-    dialog.setWindowTitle("New world");
+    dialog.setWindowTitle(tr("New world"));
 
     dialog.setMinimumWidth(380);
 
-    auto *name = new QLineEdit("New world", &dialog);
+    auto *name = new QLineEdit(tr("New world"), &dialog);
     name->selectAll();
     auto *templates = new QComboBox(&dialog);
     for (const auto &[id, title] : std::as_const(m_templates))
@@ -490,7 +491,7 @@ void WorldsDialog::createWorld() {
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     auto *create = buttons->button(QDialogButtonBox::Ok);
-    create->setText("Create");
+    create->setText(tr("Create"));
     create->setProperty("primary", true);
     create->style()->polish(create);
     connect(name, &QLineEdit::textChanged, &dialog, [create](const QString &value) { create->setEnabled(!value.trimmed().isEmpty()); });
@@ -502,8 +503,8 @@ void WorldsDialog::createWorld() {
     layout->setSpacing(10);
     auto *form = new QFormLayout;
     form->setSpacing(8);
-    form->addRow("Name:", name);
-    form->addRow("Template:", templates);
+    form->addRow(tr("Name:"), name);
+    form->addRow(tr("Template:"), templates);
     layout->addLayout(form);
     layout->addWidget(buttons);
 
@@ -526,14 +527,14 @@ void WorldsDialog::createWorld() {
 }
 
 void WorldsDialog::importWorld() {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import worlds", QString(), "KoGaMa and ReGaMa maps (*.kgmap *.kgm *.json *.bin);;All files (*)");
+    const QStringList paths = QFileDialog::getOpenFileNames(this, tr("Import worlds"), QString(), tr("KoGaMa and ReGaMa maps (*.kgmap *.kgm *.json *.bin);;All files (*)"));
     if (!paths.isEmpty()) importWorlds(paths, {});
 }
 
 void WorldsDialog::importWorlds(QStringList paths, QStringList failed) {
     if (paths.isEmpty()) {
         if (!failed.isEmpty())
-            QMessageBox::warning(this, "Import", (failed.size() == 1 ? "This map could not be imported: " : "These maps could not be imported: ") + failed.join(", "));
+            QMessageBox::warning(this, tr("Import"), tr("These map(s) could not be imported: %1", nullptr, failed.size()).arg(failed.join(", ")));
         return;
     }
     const QString path = paths.takeFirst();
@@ -608,7 +609,7 @@ void WorldsDialog::exportWorld() {
 
     QString name = item->data(NameRole).toString();
     name.replace(QRegularExpression(R"([\\/:*?"<>|])"), "_");
-    QString path = QFileDialog::getSaveFileName(this, "Export world", name + ".kgmap", "KoGaMa maps (*.kgmap)");
+    QString path = QFileDialog::getSaveFileName(this, tr("Export world"), name + ".kgmap", tr("KoGaMa maps (*.kgmap)"));
     if (path.isEmpty()) return;
 
     QUrl url(LocalServerUrl + "/api/worlds/export");
@@ -621,7 +622,7 @@ void WorldsDialog::exportWorld() {
         reply->deleteLater();
         QFile file(path);
         if (reply->error() != QNetworkReply::NoError || !file.open(QIODevice::WriteOnly) || file.write(reply->readAll()) < 0)
-            QMessageBox::warning(this, "Export", "Could not export this world");
+            QMessageBox::warning(this, tr("Export"), tr("Could not export this world"));
     });
 }
 
@@ -655,7 +656,7 @@ void WorldsDialog::onWorldRenamed(QListWidgetItem *item) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, id]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
-            QMessageBox::warning(this, "Rename", "Could not rename this world");
+            QMessageBox::warning(this, tr("Rename"), tr("Could not rename this world"));
             loadWorlds(id);
         }
     });
@@ -665,8 +666,8 @@ void WorldsDialog::deleteWorld() {
     QListWidgetItem *item = ui->worldsList->currentItem();
     if (!item) return;
 
-    auto answer = QMessageBox::question(this, "Delete world",
-        "Delete \"" + item->text() + "\"? This can't be undone.",
+    auto answer = QMessageBox::question(this, tr("Delete world"),
+        tr("Delete \"%1\"? This can't be undone.").arg(item->text()),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
@@ -681,7 +682,7 @@ void WorldsDialog::deleteWorld() {
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, "Delete world", "This world is open in the game. Close it first.");
+            QMessageBox::warning(this, tr("Delete world"), tr("This world is open in the game. Close it first."));
         loadWorlds();
     });
 }
@@ -692,14 +693,14 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
     ui->worldsList->setCurrentItem(item);
 
     QMenu menu(this);
-    QAction *play = menu.addAction("Play");
-    QAction *build = menu.addAction("Build");
+    QAction *play = menu.addAction(tr("Play"));
+    QAction *build = menu.addAction(tr("Build"));
     play->setEnabled(ui->playButton->isEnabled());
     build->setEnabled(ui->buildButton->isEnabled());
     menu.addSeparator();
-    QAction *exported = menu.addAction("Export...");
-    QAction *rename = menu.addAction("Rename");
-    QAction *remove = menu.addAction("Delete");
+    QAction *exported = menu.addAction(tr("Export..."));
+    QAction *rename = menu.addAction(tr("Rename"));
+    QAction *remove = menu.addAction(tr("Delete"));
 
     QAction *chosen = menu.exec(ui->worldsList->viewport()->mapToGlobal(pos));
     if (chosen == play) launch("play", selectedWorld());
@@ -711,7 +712,7 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
 
 void WorldsDialog::loadAvatars(int select) {
     if (ui->avatarsList->count() == 0) {
-        ui->avatarStatusLabel->setText("Loading your avatars...");
+        ui->avatarStatusLabel->setText(tr("Loading your avatars..."));
         ui->avatarStatusLabel->show();
     }
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/avatars")));
@@ -719,7 +720,7 @@ void WorldsDialog::loadAvatars(int select) {
         reply->deleteLater();
         if (url != LocalServerUrl) return;
         if (reply->error() != QNetworkReply::NoError) {
-            ui->avatarStatusLabel->setText("Could not load your avatars. Press F5 to try again.");
+            ui->avatarStatusLabel->setText(tr("Could not load your avatars. Press F5 to try again."));
             ui->avatarStatusLabel->show();
             return;
         }
@@ -740,7 +741,7 @@ void WorldsDialog::loadAvatars(int select) {
                 auto *item = new QListWidgetItem(empty, QString(), ui->avatarsList);
                 item->setFlags(item->flags() | Qt::ItemIsEditable);
                 item->setData(Qt::UserRole, id);
-                item->setToolTip("No picture yet, take one with the camera in the avatar editor");
+                item->setToolTip(tr("No picture yet, take one with the camera in the avatar editor"));
             }
         }
 
@@ -749,7 +750,7 @@ void WorldsDialog::loadAvatars(int select) {
             QListWidgetItem *item = ui->avatarsList->item(i);
             item->setData(ActiveRole, active);
             QString name = avatars[i].toObject()["name"].toString();
-            QString text = name.isEmpty() ? "Avatar " + QString::number(ids[i]) : name;
+            QString text = name.isEmpty() ? tr("Avatar %1").arg(ids[i]) : name;
             if (item->text() != text) {
                 item->setText(text);
                 item->setData(NameRole, text);
@@ -813,7 +814,7 @@ void WorldsDialog::activateAvatar(int avatar, std::function<void()> done) {
         reply->deleteLater();
         bool ok = reply->error() == QNetworkReply::NoError;
         if (!ok)
-            QMessageBox::warning(this, "Avatars", "Could not switch to this avatar");
+            QMessageBox::warning(this, tr("Avatars"), tr("Could not switch to this avatar"));
         else
             PlayerProfile::refresh(this);
         loadAvatars(avatar);
@@ -822,14 +823,14 @@ void WorldsDialog::activateAvatar(int avatar, std::function<void()> done) {
 }
 
 void WorldsDialog::importAvatar() {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import avatars", QString(), "KoGaMa and ReGaMa avatars (*.kgavatar *.json *.bin);;All files (*)");
+    const QStringList paths = QFileDialog::getOpenFileNames(this, tr("Import avatars"), QString(), tr("KoGaMa and ReGaMa avatars (*.kgavatar *.json *.bin);;All files (*)"));
     if (!paths.isEmpty()) importAvatars(paths, {});
 }
 
 void WorldsDialog::importAvatars(QStringList paths, QStringList failed) {
     if (paths.isEmpty()) {
         if (!failed.isEmpty())
-            QMessageBox::warning(this, "Import", (failed.size() == 1 ? "This file is not an avatar: " : "These files are not avatars: ") + failed.join(", "));
+            QMessageBox::warning(this, tr("Import"), tr("These file(s) are not avatar(s): %1", nullptr, failed.size()).arg(failed.join(", ")));
         return;
     }
     const QString path = paths.takeFirst();
@@ -855,7 +856,7 @@ void WorldsDialog::exportAvatar() {
     int avatar = selectedAvatar();
     if (avatar == 0) return;
 
-    QString path = QFileDialog::getSaveFileName(this, "Export avatar", ui->avatarsList->currentItem()->text() + ".kgavatar", "KoGaMa avatars (*.kgavatar)");
+    QString path = QFileDialog::getSaveFileName(this, tr("Export avatar"), ui->avatarsList->currentItem()->text() + ".kgavatar", tr("KoGaMa avatars (*.kgavatar)"));
     if (path.isEmpty()) return;
 
     QUrl url(LocalServerUrl + "/api/avatars/export");
@@ -868,7 +869,7 @@ void WorldsDialog::exportAvatar() {
         reply->deleteLater();
         QFile file(path);
         if (reply->error() != QNetworkReply::NoError || !file.open(QIODevice::WriteOnly) || file.write(reply->readAll()) < 0)
-            QMessageBox::warning(this, "Export", "Could not export this avatar");
+            QMessageBox::warning(this, tr("Export"), tr("Could not export this avatar"));
     });
 }
 
@@ -902,7 +903,7 @@ void WorldsDialog::onAvatarRenamed(QListWidgetItem *item) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, id]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
-            QMessageBox::warning(this, "Rename", "Could not rename this avatar");
+            QMessageBox::warning(this, tr("Rename"), tr("Could not rename this avatar"));
             loadAvatars(id);
         }
     });
@@ -913,11 +914,11 @@ void WorldsDialog::deleteAvatar() {
     if (!item) return;
 
     if (item->data(ActiveRole).toBool()) {
-        QMessageBox::information(this, "Delete avatar", "You are using this avatar. Use another one first, then delete this one.");
+        QMessageBox::information(this, tr("Delete avatar"), tr("You are using this avatar. Use another one first, then delete this one."));
         return;
     }
-    auto answer = QMessageBox::question(this, "Delete avatar",
-        "Delete \"" + item->text() + "\"? This can't be undone.",
+    auto answer = QMessageBox::question(this, tr("Delete avatar"),
+        tr("Delete \"%1\"? This can't be undone.").arg(item->text()),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
@@ -932,7 +933,7 @@ void WorldsDialog::deleteAvatar() {
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, "Delete avatar", "Could not delete this avatar");
+            QMessageBox::warning(this, tr("Delete avatar"), tr("Could not delete this avatar"));
         loadAvatars();
     });
 }
@@ -943,12 +944,12 @@ void WorldsDialog::showAvatarMenu(const QPoint &pos) {
     ui->avatarsList->setCurrentItem(item);
 
     QMenu menu(this);
-    QAction *use = menu.addAction("Use");
+    QAction *use = menu.addAction(tr("Use"));
     use->setEnabled(ui->useAvatarButton->isEnabled());
     menu.addSeparator();
-    QAction *exported = menu.addAction("Export...");
-    QAction *rename = menu.addAction("Rename");
-    QAction *remove = menu.addAction("Delete");
+    QAction *exported = menu.addAction(tr("Export..."));
+    QAction *rename = menu.addAction(tr("Rename"));
+    QAction *remove = menu.addAction(tr("Delete"));
 
     QAction *chosen = menu.exec(ui->avatarsList->viewport()->mapToGlobal(pos));
     if (chosen == use) useAvatar();
@@ -964,7 +965,7 @@ int WorldsDialog::selectedAvatar() const {
 
 void WorldsDialog::loadInventory(int select) {
     if (ui->inventoryList->count() == 0) {
-        ui->inventoryStatusLabel->setText("Loading your inventory...");
+        ui->inventoryStatusLabel->setText(tr("Loading your inventory..."));
         ui->inventoryStatusLabel->show();
     }
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/inventory")));
@@ -972,7 +973,7 @@ void WorldsDialog::loadInventory(int select) {
         reply->deleteLater();
         if (url != LocalServerUrl) return;
         if (reply->error() != QNetworkReply::NoError) {
-            ui->inventoryStatusLabel->setText("Could not load your inventory. Press F5 to try again.");
+            ui->inventoryStatusLabel->setText(tr("Could not load your inventory. Press F5 to try again."));
             ui->inventoryStatusLabel->show();
             return;
         }
@@ -998,7 +999,7 @@ void WorldsDialog::loadInventory(int select) {
         for (int i = 0; i < items.size(); ++i) {
             QListWidgetItem *item = ui->inventoryList->item(i);
             const QString name = items[i].toObject()["name"].toString();
-            const QString text = name.isEmpty() || name == GameModelName ? "Model " + QString::number(ids[i]) : name;
+            const QString text = name.isEmpty() || name == GameModelName ? tr("Model %1").arg(ids[i]) : name;
             if (item->text() != text) {
                 item->setText(text);
                 item->setData(NameRole, text);
@@ -1064,10 +1065,10 @@ void WorldsDialog::filterInventory() {
     if (!current || current->isHidden())
         ui->inventoryList->setCurrentItem(first);
     int total = ui->inventoryList->count();
-    ui->inventorySearchLineEdit->setPlaceholderText(total > 0 ? "Search " + QString::number(total) + (total == 1 ? " item..." : " items...") : "Search your inventory...");
+    ui->inventorySearchLineEdit->setPlaceholderText(total > 0 ? tr("Search %n item(s)...", nullptr, total) : tr("Search your inventory..."));
     ui->inventoryStatusLabel->setText(total == 0
-        ? "No items yet. Import a model from openkogama.org/models, or add one to your inventory in build mode."
-        : visible == 0 ? "No items match your search." : QString());
+        ? tr("No items yet. Import a model from openkogama.org/models, or add one to your inventory in build mode.")
+        : visible == 0 ? tr("No items match your search.") : QString());
     ui->inventoryStatusLabel->setVisible(!ui->inventoryStatusLabel->text().isEmpty());
     updateInventoryActions();
 }
@@ -1077,14 +1078,14 @@ void WorldsDialog::updateInventoryActions() {
     const QByteArray model = item ? item->data(ImageRole).toByteArray() : QByteArray();
     const int cubes = ModelPreview::cubeCount(model);
     ui->moreItemButton->setEnabled(item != nullptr);
-    ui->selectedItemLabel->setText(item ? item->text() : "No item selected");
+    ui->selectedItemLabel->setText(item ? item->text() : tr("No item selected"));
     ui->selectedItemDetail->setText(cubes > 0
-        ? QLocale(QLocale::English).toString(cubes) + (cubes == 1 ? " cube, scale " : " cubes, scale ") + QString::number(ModelPreview::scale(model))
+        ? tr("%1 cube(s), scale %2", nullptr, cubes).arg(QLocale(QLocale::English).toString(cubes), QString::number(ModelPreview::scale(model)))
         : QString());
 }
 
 void WorldsDialog::importModel() {
-    const QStringList paths = QFileDialog::getOpenFileNames(this, "Import models", QString(), "Models (*.kgmodel *.kscubes *.json *.bin);;All files (*)");
+    const QStringList paths = QFileDialog::getOpenFileNames(this, tr("Import models"), QString(), tr("Models (*.kgmodel *.kscubes *.json *.bin);;All files (*)"));
     if (paths.isEmpty()) return;
 
     QList<std::optional<float>> scales;
@@ -1094,16 +1095,16 @@ void WorldsDialog::importModel() {
         scales.append(ModelPreview::hasScale(head) ? std::optional(ModelPreview::scale(head)) : std::nullopt);
     }
     const bool same = scales.first() && std::all_of(scales.cbegin(), scales.cend(), [&](const std::optional<float> &scale) { return scale == scales.first(); });
-    const QString title = paths.size() == 1 ? "Import " + QFileInfo(paths.first()).completeBaseName() : "Import " + QString::number(paths.size()) + " models";
-    const QString own = paths.size() == 1 ? "The file's own scale" : "Each file's own scale";
-    if (const auto scale = askScale(this, title, "Import", same ? QString::number(*scales.first()) : QString(), same ? QString() : own))
+    const QString title = paths.size() == 1 ? tr("Import %1").arg(QFileInfo(paths.first()).completeBaseName()) : tr("Import %n model(s)", nullptr, paths.size());
+    const QString own = paths.size() == 1 ? tr("The file's own scale") : tr("Each file's own scale");
+    if (const auto scale = askScale(this, title, tr("Import"), same ? QString::number(*scales.first()) : QString(), same ? QString() : own))
         importModels(paths, *scale, {});
 }
 
 void WorldsDialog::importModels(QStringList paths, const QString &scale, QStringList failed) {
     if (paths.isEmpty()) {
         if (!failed.isEmpty())
-            QMessageBox::warning(this, "Import", (failed.size() == 1 ? "This file is not a model: " : "These files are not models: ") + failed.join(", "));
+            QMessageBox::warning(this, tr("Import"), tr("These file(s) are not model(s): %1", nullptr, failed.size()).arg(failed.join(", ")));
         return;
     }
     const QString path = paths.takeFirst();
@@ -1135,10 +1136,10 @@ void WorldsDialog::scaleItem() {
     if (!item) return;
     const QByteArray model = item->data(ImageRole).toByteArray();
     if (model.isEmpty()) {
-        QMessageBox::information(this, "Scale", "Only models have a scale.");
+        QMessageBox::information(this, tr("Scale"), tr("Only models have a scale."));
         return;
     }
-    const auto scale = askScale(this, "Scale " + item->text(), "Save", QString::number(ModelPreview::scale(model)), QString());
+    const auto scale = askScale(this, tr("Scale %1").arg(item->text()), tr("Save"), QString::number(ModelPreview::scale(model)), QString());
     if (!scale) return;
 
     const int id = item->data(Qt::UserRole).toInt();
@@ -1154,7 +1155,7 @@ void WorldsDialog::scaleItem() {
     connect(reply, &QNetworkReply::finished, this, [this, reply, id]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, "Scale", "Could not change the scale of this model");
+            QMessageBox::warning(this, tr("Scale"), tr("Could not change the scale of this model"));
         loadInventory(id);
     });
 }
@@ -1163,7 +1164,7 @@ void WorldsDialog::exportItem() {
     int itemId = selectedItem();
     if (itemId == 0) return;
 
-    QString path = QFileDialog::getSaveFileName(this, "Export model", ui->inventoryList->currentItem()->text() + ".kgmodel", "KoGaMa models (*.kgmodel)");
+    QString path = QFileDialog::getSaveFileName(this, tr("Export model"), ui->inventoryList->currentItem()->text() + ".kgmodel", tr("KoGaMa models (*.kgmodel)"));
     if (path.isEmpty()) return;
 
     QUrl url(LocalServerUrl + "/api/inventory/model");
@@ -1176,7 +1177,7 @@ void WorldsDialog::exportItem() {
         reply->deleteLater();
         QFile file(path);
         if (reply->error() != QNetworkReply::NoError || !file.open(QIODevice::WriteOnly) || file.write(reply->readAll()) < 0)
-            QMessageBox::warning(this, "Export", "Could not export this item");
+            QMessageBox::warning(this, tr("Export"), tr("Could not export this item"));
     });
 }
 
@@ -1210,7 +1211,7 @@ void WorldsDialog::onItemRenamed(QListWidgetItem *item) {
     connect(reply, &QNetworkReply::finished, this, [this, reply, id]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
-            QMessageBox::warning(this, "Rename", "Could not rename this item");
+            QMessageBox::warning(this, tr("Rename"), tr("Could not rename this item"));
             loadInventory(id);
         }
     });
@@ -1220,8 +1221,8 @@ void WorldsDialog::deleteItem() {
     QListWidgetItem *item = ui->inventoryList->currentItem();
     if (!item) return;
 
-    auto answer = QMessageBox::question(this, "Delete item",
-        "Delete \"" + item->text() + "\" from your inventory? This can't be undone.",
+    auto answer = QMessageBox::question(this, tr("Delete item"),
+        tr("Delete \"%1\" from your inventory? This can't be undone.").arg(item->text()),
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
@@ -1236,7 +1237,7 @@ void WorldsDialog::deleteItem() {
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, "Delete item", "Could not delete this item");
+            QMessageBox::warning(this, tr("Delete item"), tr("Could not delete this item"));
         loadInventory();
     });
 }
@@ -1247,10 +1248,10 @@ void WorldsDialog::showItemMenu(const QPoint &pos) {
     ui->inventoryList->setCurrentItem(item);
 
     QMenu menu(this);
-    QAction *exported = menu.addAction("Export...");
-    QAction *rename = menu.addAction("Rename");
-    QAction *scale = menu.addAction("Scale...");
-    QAction *remove = menu.addAction("Delete");
+    QAction *exported = menu.addAction(tr("Export..."));
+    QAction *rename = menu.addAction(tr("Rename"));
+    QAction *scale = menu.addAction(tr("Scale..."));
+    QAction *remove = menu.addAction(tr("Delete"));
 
     QAction *chosen = menu.exec(ui->inventoryList->viewport()->mapToGlobal(pos));
     if (chosen == exported) exportItem();
@@ -1280,7 +1281,7 @@ void WorldsDialog::setHostedWorld(int world) {
 
 QProcess *WorldsDialog::launch(const QString &mode, int world) {
     if (mode != "avatar" && world == 0) {
-        QMessageBox::information(this, "Worlds", "Select a world first");
+        QMessageBox::information(this, tr("Worlds"), tr("Select a world first"));
         return nullptr;
     }
     QProcess *client = GameLauncher::start(m_path, m_exe, LocalServerUrl, mode, world, m_owner, this);

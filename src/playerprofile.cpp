@@ -1,6 +1,7 @@
 #include "playerprofile.h"
 #include "paths.h"
 #include "serverfeatures.h"
+#include <QCoreApplication>
 #include <QDir>
 #include <QEventLoop>
 #include <QCursor>
@@ -114,7 +115,7 @@ namespace PlayerProfile {
 QString send(const QString &url, const QString &key, bool everything, const std::optional<QStringList> &features)
 {
     if (!ServerFeatures::allows(features, "player"))
-        return everything ? "this server cannot take your avatar and models" : QString();
+        return everything ? QCoreApplication::translate("PlayerProfile", "this server cannot take your avatar and models") : QString();
     QJsonObject package{{"settings", read("settings")}};
     if (everything) {
         exportNow();
@@ -134,10 +135,10 @@ QString send(const QString &url, const QString &key, bool everything, const std:
 
     const qsizetype models = package.value("inventory").toObject().value("items").toArray().size();
     if (status == Accepted)
-        return QString("your avatar and %1 model%2 went to the server").arg(models).arg(models == 1 ? "" : "s");
-    if (status == Missing) return "this server is too old to take your avatar and models";
-    if (status == 0) return "your avatar and models did not reach the server in time";
-    return "the server did not take your avatar and models";
+        return QCoreApplication::translate("PlayerProfile", "your avatar and %n model(s) went to the server", nullptr, int(models));
+    if (status == Missing) return QCoreApplication::translate("PlayerProfile", "this server is too old to take your avatar and models");
+    if (status == 0) return QCoreApplication::translate("PlayerProfile", "your avatar and models did not reach the server in time");
+    return QCoreApplication::translate("PlayerProfile", "the server did not take your avatar and models");
 }
 
 void keep(const QString &url, const QString &key, bool local, QObject *owner)

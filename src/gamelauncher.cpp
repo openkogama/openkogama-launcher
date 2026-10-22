@@ -72,23 +72,25 @@ QPushButton *primary(QMessageBox &box, const QString &text)
 
 void askToSignIn(QWidget *parent, const std::function<void()> &retry)
 {
-    QMessageBox box(QMessageBox::Information, "Sign in to play",
-        "This server only lets in players with an OpenKogama account.\n\n"
-        "Sign in or create a free account in your browser. The game starts by itself after that.",
+    QMessageBox box(QMessageBox::Information, QCoreApplication::translate("GameLauncher", "Sign in to play"),
+        QCoreApplication::translate("GameLauncher",
+            "This server only lets in players with an OpenKogama account.\n\n"
+            "Sign in or create a free account in your browser. The game starts by itself after that."),
         QMessageBox::Cancel, parent);
-    QPushButton *signIn = primary(box, "Sign in");
+    QPushButton *signIn = primary(box, QCoreApplication::translate("GameLauncher", "Sign in"));
     box.exec();
     if (box.clickedButton() == signIn) signInThenJoin(retry);
 }
 
 void askAboutName(QWidget *parent, const QString &name, const std::function<void()> &retry)
 {
-    QMessageBox box(QMessageBox::Information, "Name taken",
-        "The name \"" + name + "\" belongs to an OpenKogama account on this server.\n\n"
-        "If it is yours, sign in. Otherwise pick another nickname.",
+    QMessageBox box(QMessageBox::Information, QCoreApplication::translate("GameLauncher", "Name taken"),
+        QCoreApplication::translate("GameLauncher",
+            "The name \"%1\" belongs to an OpenKogama account on this server.\n\n"
+            "If it is yours, sign in. Otherwise pick another nickname.").arg(name),
         QMessageBox::Cancel, parent);
-    QPushButton *signIn = primary(box, "Sign in");
-    QPushButton *rename = box.addButton("Change nickname", QMessageBox::ActionRole);
+    QPushButton *signIn = primary(box, QCoreApplication::translate("GameLauncher", "Sign in"));
+    QPushButton *rename = box.addButton(QCoreApplication::translate("GameLauncher", "Change nickname"), QMessageBox::ActionRole);
     box.exec();
     if (box.clickedButton() == signIn) {
         signInThenJoin(retry);
@@ -96,8 +98,8 @@ void askAboutName(QWidget *parent, const QString &name, const std::function<void
     }
     if (box.clickedButton() != rename) return;
     bool ok = false;
-    const QString picked = QInputDialog::getText(parent, "Change nickname", "Pick a nickname that other players will see:",
-        QLineEdit::Normal, name, &ok).trimmed();
+    const QString picked = QInputDialog::getText(parent, QCoreApplication::translate("GameLauncher", "Change nickname"),
+        QCoreApplication::translate("GameLauncher", "Pick a nickname that other players will see:"), QLineEdit::Normal, name, &ok).trimmed();
     if (!ok || picked.isEmpty()) return;
     Settings::setNickname(picked.left(MaxNickname));
     if (retry) QTimer::singleShot(0, parent, retry);
@@ -114,7 +116,7 @@ static QString instanceTitle(const QString &path)
     for (const char *key : {"name", "version"}) {
         QString value = info.value(key).toString().trimmed();
         if (!value.isEmpty())
-            return "KoGaMa " + value;
+            return QCoreApplication::translate("GameLauncher", "KoGaMa %1").arg(value);
     }
     return "KoGaMa";
 }
@@ -122,16 +124,16 @@ static QString instanceTitle(const QString &path)
 static QString presenceDetails(const QString &url, const QString &mode)
 {
     if (mode == "avatar")
-        return "Editing an avatar";
+        return QCoreApplication::translate("GameLauncher", "Editing an avatar");
     if (mode != "play")
-        return "Building a world";
+        return QCoreApplication::translate("GameLauncher", "Building a world");
     if (url == LocalServerUrl)
-        return "Playing a local world";
+        return QCoreApplication::translate("GameLauncher", "Playing a local world");
     const QList<GameServer> servers = Settings::servers();
     for (const GameServer &server : servers)
         if (server.address == url && !server.title.isEmpty())
-            return "Playing " + server.title;
-    return "Playing online";
+            return QCoreApplication::translate("GameLauncher", "Playing %1").arg(server.title);
+    return QCoreApplication::translate("GameLauncher", "Playing online");
 }
 
 bool GameLauncher::resumeJoin()
@@ -170,14 +172,15 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
             const Account::Reply ticket = Account::ticket(url);
             if (ticket.ok()) {
                 session += "&ticket=" + QString::fromLatin1(QUrl::toPercentEncoding(ticket.body.value("ticket").toString()));
-                notes << "signed in as " + ticket.body.value("name").toString();
+                notes << QCoreApplication::translate("GameLauncher", "signed in as %1").arg(ticket.body.value("name").toString());
                 signedIn = true;
             } else if (!Account::name().isEmpty()) {
                 if (required || nameClaimed(url, nickname)) {
-                    QMessageBox::warning(parent, "Sign in", "Could not sign in to this server. " + ticket.error());
+                    QMessageBox::warning(parent, QCoreApplication::translate("GameLauncher", "Sign in"),
+                        QCoreApplication::translate("GameLauncher", "Could not sign in to this server. %1").arg(ticket.error()));
                     return nullptr;
                 }
-                notes << "could not sign in here, playing as a guest: " + ticket.error();
+                notes << QCoreApplication::translate("GameLauncher", "could not sign in here, playing as a guest: %1").arg(ticket.error());
             }
         }
         if (!signedIn && Account::name().isEmpty()) {
@@ -207,7 +210,8 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         if (info.value("unityVersion").toString().startsWith("3.4")) {
             if (mode == "avatar") {
                 client->deleteLater();
-                QMessageBox::information(parent, "Worlds", "This version has no avatar editor");
+                QMessageBox::information(parent, QCoreApplication::translate("GameLauncher", "Worlds"),
+                    QCoreApplication::translate("GameLauncher", "This version has no avatar editor"));
                 return nullptr;
             }
             const QString username = viaCode && !nickname.isEmpty() ? QString::fromLatin1(QUrl::toPercentEncoding(nickname)) : "1";
@@ -235,16 +239,16 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     client->setWorkingDirectory(path);
     client->setProcessEnvironment(env);
 
-    auto *console = new ConsoleWindow("Console - " + title);
+    auto *console = new ConsoleWindow(QCoreApplication::translate("GameLauncher", "Console - %1").arg(title));
     console->setAttribute(Qt::WA_DeleteOnClose);
     console->setAttribute(Qt::WA_QuitOnClose, false);
-    console->follow("Game", log);
+    console->follow(QCoreApplication::translate("GameLauncher", "Game"), log);
     for (const QString &note : notes)
         console->note(note);
     if (WebPlayerRuntime::isWebPlayerFile(exe))
         console->followNewest("Unity", QDir::tempPath() + "/UnityWebPlayer/log");
     if (local)
-        console->followNewest("Server", Paths::serverData() + "/logs", true);
+        console->followNewest(QCoreApplication::translate("GameLauncher", "Server"), Paths::serverData() + "/logs", true);
     QObject::connect(console, &ConsoleWindow::crashed, console, [console]() {
         if (!Settings::consoleOnCrash())
             return;
@@ -265,7 +269,8 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     if (!client->waitForStarted()) {
         client->deleteLater();
         console->deleteLater();
-        QMessageBox::warning(parent, "Worlds", "Could not start " + exe);
+        QMessageBox::warning(parent, QCoreApplication::translate("GameLauncher", "Worlds"),
+            QCoreApplication::translate("GameLauncher", "Could not start %1").arg(exe));
         return nullptr;
     }
     DiscordPresence::show(client, presenceDetails(url, mode), title);

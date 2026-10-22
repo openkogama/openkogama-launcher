@@ -102,7 +102,7 @@ Tunnel::Tunnel(const QStringList &arguments, QObject *parent)
     connect(m_process, &QProcess::errorOccurred, this, [this](QProcess::ProcessError error) {
         if (error != QProcess::FailedToStart || m_ended) return;
         m_ended = true;
-        emit said("error", "Could not start " + m_process->program());
+        emit said("error", tr("Could not start %1").arg(m_process->program()));
         emit ended();
     });
     QMetaObject::invokeMethod(this, [this]() { m_process->start(); }, Qt::QueuedConnection);

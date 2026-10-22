@@ -221,6 +221,16 @@ void setClientPatch(const QString &id, bool enabled)
     store().setValue("clientPatches/" + id, enabled);
 }
 
+QString language()
+{
+    return store().value("general/language").toString();
+}
+
+void setLanguage(const QString &code)
+{
+    store().setValue("general/language", code);
+}
+
 }
 
 QString GameServer::addressOf(const QString &text)

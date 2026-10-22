@@ -29,11 +29,16 @@ const QString Starter = R"({
     "public": false,
     "playerSettings": true,
     "playerAvatars": true,
-    "playerInventory": true
+    "playerInventory": true,
+    "antiCheatCrash": true,
+    "antiCheatSpam": true,
+    "antiCheatSpoof": true,
+    "antiCheatBuild": true
 }
 )";
 const QList<QPair<QString, bool>> Defaults = {
-    {"public", false}, {"playerSettings", true}, {"playerAvatars", true}, {"playerInventory", true}};
+    {"public", false}, {"playerSettings", true}, {"playerAvatars", true}, {"playerInventory", true},
+    {"antiCheatCrash", true}, {"antiCheatSpam", true}, {"antiCheatSpoof", true}, {"antiCheatBuild", true}};
 
 QString configPath()
 {
@@ -106,12 +111,12 @@ QJsonObject ServerConfigDialog::current()
 ServerConfigDialog::ServerConfigDialog(QWidget *parent)
     : QDialog(parent), m_text(new QPlainTextEdit(this)), m_error(new QLabel(this))
 {
-    setWindowTitle("Server settings");
+    setWindowTitle(tr("Server settings"));
     resize(520, 420);
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
-    auto *hint = new QLabel(QString("The server.json of the server on this computer, which hosted worlds follow. "
+    auto *hint = new QLabel(tr("The server.json of the server on this computer, which hosted worlds follow. "
         "Saving restarts the server. <a href=\"%1\" style=\"color: #3a7a80; text-decoration: none;\">All settings</a>").arg(QLatin1String(Reference)), this);
     hint->setWordWrap(true);
     hint->setOpenExternalLinks(true);
@@ -129,7 +134,7 @@ ServerConfigDialog::ServerConfigDialog(QWidget *parent)
     m_error->hide();
     layout->addWidget(m_error);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Save | QDialogButtonBox::Cancel, this);
-    auto *folder = buttons->addButton("Open folder", QDialogButtonBox::ResetRole);
+    auto *folder = buttons->addButton(tr("Open folder"), QDialogButtonBox::ResetRole);
     auto *confirm = buttons->button(QDialogButtonBox::Save);
     confirm->setProperty("primary", true);
     confirm->style()->polish(confirm);
@@ -149,12 +154,12 @@ void ServerConfigDialog::save()
     const QJsonDocument document = QJsonDocument::fromJson(text, &error);
     QString problem;
     if (error.error != QJsonParseError::NoError)
-        problem = "Line " + QString::number(text.left(error.offset).count('\n') + 1) + ": " + error.errorString();
+        problem = tr("Line %1: %2").arg(QString::number(text.left(error.offset).count('\n') + 1), error.errorString());
     else if (!document.isObject())
-        problem = "The settings have to be one { } object.";
+        problem = tr("The settings have to be one { } object.");
     for (const QString &key : Fixed)
         if (problem.isEmpty() && document.object().contains(key))
-            problem = "Leave out " + key + ", the launcher picks the ports and address of this server itself.";
+            problem = tr("Leave out %1, the launcher picks the ports and address of this server itself.").arg(key);
     if (!problem.isEmpty()) {
         m_error->setText(problem);
         m_error->show();
@@ -164,7 +169,7 @@ void ServerConfigDialog::save()
     QDir().mkpath(Paths::serverData());
     QSaveFile file(configPath());
     if (!file.open(QIODevice::WriteOnly) || file.write(text) < 0 || !file.commit()) {
-        m_error->setText("Could not save " + QDir::toNativeSeparators(configPath()));
+        m_error->setText(tr("Could not save %1").arg(QDir::toNativeSeparators(configPath())));
         m_error->show();
         return;
     }

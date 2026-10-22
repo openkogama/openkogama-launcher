@@ -1,3 +1,4 @@
+#include "languages.h"
 #include "links.h"
 #include "mainwindow.h"
 #include "theme.h"
@@ -16,6 +17,7 @@ int main(int argc, char *argv[])
     Theme::apply(a);
     a.setOrganizationName("OpenKogama");
     a.setApplicationName("OpenKogama Launcher");
+    Languages::install(a);
     Links::registerScheme();
     MainWindow w;
     Links::listen(&w, [&w](const QString &opened) { w.openLink(opened); });

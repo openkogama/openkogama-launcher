@@ -2,6 +2,7 @@
 #include "paths.h"
 #include "serverconfigdialog.h"
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDateTime>
 #include <QDialogButtonBox>
 #include <QFormLayout>
@@ -29,8 +30,10 @@ constexpr int ForeverYears = 5;
 constexpr int PeerRole = Qt::UserRole;
 constexpr int AdminRole = Qt::UserRole + 1;
 constexpr int KeysRole = Qt::UserRole;
-const QList<QPair<QString, int>> Durations = {
-    {"1 hour", 1}, {"1 day", 24}, {"1 week", 24 * 7}, {"30 days", 24 * 30}, {"Forever", 24 * 365 * 10}};
+const QList<QPair<const char *, int>> Durations = {
+    {QT_TRANSLATE_NOOP("AdminDialog", "1 hour"), 1}, {QT_TRANSLATE_NOOP("AdminDialog", "1 day"), 24},
+    {QT_TRANSLATE_NOOP("AdminDialog", "1 week"), 24 * 7}, {QT_TRANSLATE_NOOP("AdminDialog", "30 days"), 24 * 30},
+    {QT_TRANSLATE_NOOP("AdminDialog", "Forever"), 24 * 365 * 10}};
 
 QTreeWidget *table(const QStringList &columns, QWidget *parent)
 {
@@ -49,15 +52,16 @@ QTreeWidget *table(const QStringList &columns, QWidget *parent)
 QString place(const QJsonObject &player)
 {
     const QString mode = player.value("mode").toString();
-    if (mode == "avatar") return "Avatar editor";
+    if (mode == "avatar") return QCoreApplication::translate("AdminDialog", "Avatar editor");
     const QString world = player.value("world").toString();
-    return (world.isEmpty() ? QString("World") : world) + (mode == "build" ? " (build)" : "");
+    const QString name = world.isEmpty() ? QCoreApplication::translate("AdminDialog", "World") : world;
+    return mode == "build" ? QCoreApplication::translate("AdminDialog", "%1 (build)").arg(name) : name;
 }
 
 QString joined(const QJsonObject &player)
 {
-    if (player.value("code").toBool()) return "With a code";
-    return player.value("admin").toBool() ? "Admin" : "Directly";
+    if (player.value("code").toBool()) return QCoreApplication::translate("AdminDialog", "With a code");
+    return player.value("admin").toBool() ? QCoreApplication::translate("AdminDialog", "Admin") : QCoreApplication::translate("AdminDialog", "Directly");
 }
 
 QString until(const QString &iso)
@@ -66,7 +70,7 @@ QString until(const QString &iso)
     if (!end.isValid()) end = QDateTime::fromString(iso, Qt::ISODate);
     end = end.toLocalTime();
     if (!end.isValid()) return iso;
-    if (end > QDateTime::currentDateTime().addYears(ForeverYears)) return "Forever";
+    if (end > QDateTime::currentDateTime().addYears(ForeverYears)) return QCoreApplication::translate("AdminDialog", "Forever");
     return end.toString("yyyy-MM-dd HH:mm");
 }
 }
@@ -74,15 +78,15 @@ QString until(const QString &iso)
 AdminDialog::AdminDialog(QWidget *parent)
     : QDialog(parent), m_net(new QNetworkAccessManager(this)), m_status(new QLabel(this))
 {
-    setWindowTitle("Admin");
+    setWindowTitle(tr("Admin"));
     resize(560, 380);
     auto *layout = new QVBoxLayout(this);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
     auto *tabs = new QTabWidget(this);
-    tabs->addTab(playersPage(), "Players");
-    tabs->addTab(bansPage(), "Bans");
-    tabs->addTab(adminsPage(), "Admins");
+    tabs->addTab(playersPage(), tr("Players"));
+    tabs->addTab(bansPage(), tr("Bans"));
+    tabs->addTab(adminsPage(), tr("Admins"));
     layout->addWidget(tabs, 1);
     m_status->setObjectName("adminStatus");
     m_status->setWordWrap(true);
@@ -108,11 +112,11 @@ QWidget *AdminDialog::playersPage()
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
     layout->setContentsMargins(0, 8, 0, 0);
-    m_players = table({"Player", "Version", "World", "Joined"}, page);
+    m_players = table({tr("Player"), tr("Version"), tr("World"), tr("Joined")}, page);
     layout->addWidget(m_players, 1);
     auto *row = new QHBoxLayout;
-    m_kick = new QPushButton("Kick", page);
-    m_ban = new QPushButton("Ban...", page);
+    m_kick = new QPushButton(tr("Kick"), page);
+    m_ban = new QPushButton(tr("Ban..."), page);
     row->addWidget(m_kick);
     row->addWidget(m_ban);
     row->addStretch();
@@ -128,10 +132,10 @@ QWidget *AdminDialog::bansPage()
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
     layout->setContentsMargins(0, 8, 0, 0);
-    m_bans = table({"Player", "Reason", "Until", "Ban on"}, page);
+    m_bans = table({tr("Player"), tr("Reason"), tr("Until"), tr("Ban on")}, page);
     layout->addWidget(m_bans, 1);
     auto *row = new QHBoxLayout;
-    m_unban = new QPushButton("Unban", page);
+    m_unban = new QPushButton(tr("Unban"), page);
     row->addWidget(m_unban);
     row->addStretch();
     layout->addLayout(row);
@@ -145,17 +149,17 @@ QWidget *AdminDialog::adminsPage()
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
     layout->setContentsMargins(0, 8, 0, 0);
-    auto *hint = new QLabel("Players from these IP addresses are admins. Players on this computer always are.", page);
+    auto *hint = new QLabel(tr("Players from these IP addresses are admins. Players on this computer always are."), page);
     hint->setWordWrap(true);
     layout->addWidget(hint);
-    m_admins = table({"IP address"}, page);
+    m_admins = table({tr("IP address")}, page);
     showAdmins(ServerConfigDialog::admins());
     layout->addWidget(m_admins, 1);
     auto *row = new QHBoxLayout;
     m_address = new QLineEdit(page);
-    m_address->setPlaceholderText("IP address");
-    m_add = new QPushButton("Add", page);
-    m_remove = new QPushButton("Remove", page);
+    m_address->setPlaceholderText(tr("IP address"));
+    m_add = new QPushButton(tr("Add"), page);
+    m_remove = new QPushButton(tr("Remove"), page);
     row->addWidget(m_address, 1);
     row->addWidget(m_add);
     row->addWidget(m_remove);
@@ -177,7 +181,7 @@ void AdminDialog::loadPlayers()
         reply->deleteLater();
         const QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
         if (reply->error() != QNetworkReply::NoError || !document.isArray()) {
-            showProblem("The server on this computer is not running.");
+            showProblem(tr("The server on this computer is not running."));
             m_players->clear();
             updateButtons();
             return;
@@ -209,7 +213,7 @@ void AdminDialog::loadBans()
         for (const QJsonValue &value : document.array()) {
             const QJsonObject entry = value.toObject();
             auto *item = new QTreeWidgetItem(m_bans, {entry.value("name").toString(), entry.value("reason").toString(),
-                until(entry.value("until").toString()), entry.value("code").toBool() ? "Nickname and IP" : "IP address"});
+                until(entry.value("until").toString()), entry.value("code").toBool() ? tr("Nickname and IP") : tr("IP address")});
             item->setData(0, KeysRole, entry.value("keys").toVariant());
         }
         updateButtons();
@@ -223,7 +227,7 @@ void AdminDialog::kick()
     QUrlQuery query;
     query.addQueryItem("peer", QString::number(item->data(0, PeerRole).toInt()));
     post("/api/admin/kick", query, [this](bool ok) {
-        if (!ok) showProblem("Could not kick this player.");
+        if (!ok) showProblem(tr("Could not kick this player."));
         loadPlayers();
     });
 }
@@ -235,11 +239,11 @@ void AdminDialog::ban()
     const int peer = item->data(0, PeerRole).toInt();
 
     QDialog dialog(this);
-    dialog.setWindowTitle("Ban " + item->text(0));
+    dialog.setWindowTitle(tr("Ban %1").arg(item->text(0)));
     dialog.setMinimumWidth(380);
     auto *duration = new QComboBox(&dialog);
     for (const auto &[label, hours] : Durations)
-        duration->addItem(label, hours);
+        duration->addItem(tr(label), hours);
     duration->setCurrentIndex(1);
     auto *reason = new QLineEdit(&dialog);
     reason->setMaxLength(200);
@@ -248,12 +252,12 @@ void AdminDialog::ban()
     layout->setSpacing(10);
     auto *form = new QFormLayout;
     form->setSpacing(8);
-    form->addRow("For:", duration);
-    form->addRow("Reason:", reason);
+    form->addRow(tr("For:"), duration);
+    form->addRow(tr("Reason:"), reason);
     layout->addLayout(form);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     auto *confirm = buttons->button(QDialogButtonBox::Ok);
-    confirm->setText("Ban");
+    confirm->setText(tr("Ban"));
     confirm->setProperty("primary", true);
     confirm->style()->polish(confirm);
     connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
@@ -267,7 +271,7 @@ void AdminDialog::ban()
     query.addQueryItem("hours", QString::number(duration->currentData().toInt()));
     query.addQueryItem("reason", reason->text().trimmed());
     post("/api/admin/ban", query, [this](bool ok) {
-        if (!ok) showProblem("Could not ban this player.");
+        if (!ok) showProblem(tr("Could not ban this player."));
         loadPlayers();
         loadBans();
     });
@@ -281,7 +285,7 @@ void AdminDialog::unban()
     for (const QVariant &key : item->data(0, KeysRole).toList())
         query.addQueryItem("key", key.toString());
     post("/api/admin/unban", query, [this](bool ok) {
-        if (!ok) showProblem("Could not lift this ban.");
+        if (!ok) showProblem(tr("Could not lift this ban."));
         loadBans();
     });
 }
@@ -318,7 +322,7 @@ void AdminDialog::showAdmins(const QStringList &admins)
 void AdminDialog::saveAdmins(const QStringList &admins)
 {
     if (!ServerConfigDialog::setAdmins(admins)) {
-        showProblem("Could not save the admins into server.json. Check it in File, Server settings.");
+        showProblem(tr("Could not save the admins into server.json. Check it in File, Server settings."));
         return;
     }
     showAdmins(admins);

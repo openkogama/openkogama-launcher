@@ -10,6 +10,7 @@
 #include <QMenu>
 #include <QGuiApplication>
 #include <QClipboard>
+#include <QCoreApplication>
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QEvent>
@@ -51,7 +52,7 @@ constexpr int RefreshMs = 10000;
 
 QString playersText(int count)
 {
-    return count == 1 ? "1 player" : QString::number(count) + " players";
+    return QCoreApplication::translate("ServersPage", "%n player(s)", nullptr, count);
 }
 
 QString titleText(const QString &text)
@@ -140,8 +141,8 @@ QByteArray normalizedThumbnail(QByteArray bytes)
 ServersPage::ServersPage(QWidget *parent)
     : QWidget(parent), m_net(new QNetworkAccessManager(this)), m_view(new QTabBar(this)), m_list(new QListWidget(this)),
       m_search(new QLineEdit(this)), m_empty(new QLabel(this)), m_selected(new QLabel(this)),
-      m_address(new QLabel(this)), m_more(new QToolButton(this)), m_join(new QPushButton("&Join", this)),
-      m_joinCode(new QPushButton("Join with code", this))
+      m_address(new QLabel(this)), m_more(new QToolButton(this)), m_join(new QPushButton(tr("&Join"), this)),
+      m_joinCode(new QPushButton(tr("Join with code"), this))
 {
     setObjectName("serversPage");
     auto *layout = new QVBoxLayout(this);
@@ -152,19 +153,19 @@ ServersPage::ServersPage(QWidget *parent)
     m_view->setObjectName("serversViewTabs");
     m_view->setDrawBase(false);
     m_view->setExpanding(false);
-    m_view->addTab("Public");
-    m_view->addTab("Saved");
-    m_view->setTabToolTip(0, "Servers that anyone can join");
-    m_view->setTabToolTip(1, "Servers you added or joined with a code");
+    m_view->addTab(tr("Public"));
+    m_view->addTab(tr("Saved"));
+    m_view->setTabToolTip(0, tr("Servers that anyone can join"));
+    m_view->setTabToolTip(1, tr("Servers you added or joined with a code"));
     m_showPublic = Settings::publicView();
     m_view->setCurrentIndex(m_showPublic ? 0 : 1);
-    m_search->setPlaceholderText("Search servers...");
-    m_search->setAccessibleName("Search servers");
+    m_search->setPlaceholderText(tr("Search servers..."));
+    m_search->setAccessibleName(tr("Search servers"));
     m_search->setClearButtonEnabled(true);
-    auto *add = new QPushButton("Add server...", this);
+    auto *add = new QPushButton(tr("Add server..."), this);
     add->setObjectName("addServerButton");
     m_joinCode->setObjectName("joinCodeButton");
-    m_joinCode->setToolTip("Join a hosted world with its code");
+    m_joinCode->setToolTip(tr("Join a hosted world with its code"));
     toolbar->addWidget(m_search, 1);
     toolbar->addWidget(m_joinCode);
     toolbar->addWidget(add);
@@ -176,7 +177,7 @@ ServersPage::ServersPage(QWidget *parent)
     layout->addWidget(m_empty);
 
     m_list->setObjectName("serversList");
-    m_list->setAccessibleName("Your servers");
+    m_list->setAccessibleName(tr("Your servers"));
     TileGrid::setup(m_list, this);
     layout->addWidget(m_list, 1);
 
@@ -194,14 +195,14 @@ ServersPage::ServersPage(QWidget *parent)
     m_address->setTextInteractionFlags(Qt::TextSelectableByMouse);
     m_more->setObjectName("moreServerButton");
     m_more->setText(QString::fromUtf8("\u2022\u2022\u2022"));
-    m_more->setToolTip("More");
+    m_more->setToolTip(tr("More"));
     m_more->setAutoRaise(true);
     m_more->setPopupMode(QToolButton::InstantPopup);
     auto *menu = new QMenu(this);
-    menu->addAction("Copy address", this, &ServersPage::copyAddress);
-    m_save = menu->addAction("Save to my servers", this, &ServersPage::saveServer);
+    menu->addAction(tr("Copy address"), this, &ServersPage::copyAddress);
+    m_save = menu->addAction(tr("Save to my servers"), this, &ServersPage::saveServer);
     menu->addSeparator();
-    m_remove = menu->addAction("Remove...", this, &ServersPage::removeServer);
+    m_remove = menu->addAction(tr("Remove..."), this, &ServersPage::removeServer);
     m_more->setMenu(menu);
     m_join->setObjectName("joinServerButton");
     m_join->setProperty("primary", true);
@@ -299,7 +300,7 @@ void ServersPage::load(const QString &select)
         item->setData(Qt::UserRole, server.address);
         item->setData(TitleRole, title);
         item->setData(ClientsRole, server.clients);
-        setStatus(server.address, "Checking...");
+        setStatus(server.address, tr("Checking..."));
         if (server.address == select) m_list->setCurrentItem(item);
     }
     if (!m_list->currentItem() && m_list->count()) m_list->setCurrentRow(0);
@@ -318,13 +319,13 @@ void ServersPage::filter()
         if (visible && !first) first = item;
     }
     if (!m_list->currentItem() || m_list->currentItem()->isHidden()) m_list->setCurrentItem(first);
-    QString empty = "No servers match your search.";
+    QString empty = tr("No servers match your search.");
     if (m_list->count() == 0 && m_showPublic)
-        empty = !m_publicLoaded ? "Looking for public servers..."
-            : m_publicFailed ? "Could not load the public servers. Check your internet connection."
-            : "No public servers right now.";
+        empty = !m_publicLoaded ? tr("Looking for public servers...")
+            : m_publicFailed ? tr("Could not load the public servers. Check your internet connection.")
+            : tr("No public servers right now.");
     else if (m_list->count() == 0)
-        empty = "Add a server by its address, or join a hosted world with its code.";
+        empty = tr("Add a server by its address, or join a hosted world with its code.");
     m_empty->setText(empty);
     m_empty->setVisible(!first);
     updateActions();
@@ -334,14 +335,14 @@ void ServersPage::updateActions()
 {
     const QString address = selectedAddress();
     const auto *item = find(address);
-    m_selected->setText(item ? item->data(TitleRole).toString() : "No server selected");
+    m_selected->setText(item ? item->data(TitleRole).toString() : tr("No server selected"));
     m_address->setText(shortAddress(address));
     m_more->setEnabled(!address.isEmpty());
     m_save->setVisible(m_showPublic);
     m_save->setEnabled(!address.isEmpty() && !isSaved(address));
     m_remove->setVisible(!m_showPublic);
     m_join->setEnabled(m_canJoin && !address.isEmpty());
-    m_join->setToolTip(m_canJoin ? QString() : "Add a game version first");
+    m_join->setToolTip(m_canJoin ? QString() : tr("Add a game version first"));
     m_joinCode->setEnabled(m_canJoin);
 }
 
@@ -351,7 +352,7 @@ void ServersPage::setStatus(const QString &address, const QString &status)
         const QString versions = item->data(ClientsRole).toStringList().join(", ");
         item->setData(StatusRole, status);
         item->setData(CenteredDelegate::SubtitleRole, versions.isEmpty() ? status : status + QStringLiteral(" · ") + versions);
-        item->setToolTip(shortAddress(address) + "\n" + status + (versions.isEmpty() ? QString() : "\nVersions: " + versions));
+        item->setToolTip(shortAddress(address) + "\n" + status + (versions.isEmpty() ? QString() : "\n" + tr("Versions: %1").arg(versions)));
     }
 }
 
@@ -502,14 +503,14 @@ void ServersPage::probe(const QString &address)
         if (status == 404) {
             get(address + "/ping", 4096, [this, address](int code, const QByteArray &) {
                 m_pending.remove(address);
-                setStatus(address, code == 200 ? "Online" : "Offline");
+                setStatus(address, code == 200 ? tr("Online") : tr("Offline"));
             });
             return;
         }
         m_pending.remove(address);
         const QJsonDocument document = QJsonDocument::fromJson(data);
         if (status != 200 || !document.isObject()) {
-            setStatus(address, "Offline");
+            setStatus(address, tr("Offline"));
             return;
         }
         auto servers = Settings::servers();
@@ -533,7 +534,7 @@ void ServersPage::probe(const QString &address)
                 item->setText(title);
             }
         }
-        setStatus(address, "Online");
+        setStatus(address, tr("Online"));
         filter();
         if (document.object().value("thumbnail").toString() == "/api/server/thumbnail") fetchThumbnail(address, address + "/api/server/thumbnail");
     });
@@ -552,7 +553,7 @@ void ServersPage::probeCode(const QString &address)
     });
     connect(tunnel, &Tunnel::ended, this, [this, tunnel, address, found]() {
         m_pending.remove(address);
-        if (!*found) setStatus(address, "Offline");
+        if (!*found) setStatus(address, tr("Offline"));
         tunnel->deleteLater();
     });
 }
@@ -575,7 +576,7 @@ void ServersPage::showFound(const QString &address, const QJsonObject &info)
             item->setText(title);
         }
     }
-    setStatus(address, "Online");
+    setStatus(address, tr("Online"));
     filter();
 }
 
@@ -608,24 +609,24 @@ void ServersPage::fetchThumbnail(const QString &address, const QString &url)
 void ServersPage::addServer()
 {
     QDialog dialog(this);
-    dialog.setWindowTitle("Add server");
+    dialog.setWindowTitle(tr("Add server"));
     dialog.setMinimumWidth(380);
     auto *name = new QLineEdit(&dialog);
     name->setMaxLength(40);
-    name->setPlaceholderText("Optional name");
+    name->setPlaceholderText(tr("Optional name"));
     auto *address = new QLineEdit(&dialog);
-    address->setPlaceholderText("192.168.1.20 or example.com");
+    address->setPlaceholderText(tr("192.168.1.20 or example.com"));
     auto *layout = new QVBoxLayout(&dialog);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
     auto *form = new QFormLayout;
     form->setSpacing(8);
-    form->addRow("Name:", name);
-    form->addRow("Address:", address);
+    form->addRow(tr("Name:"), name);
+    form->addRow(tr("Address:"), address);
     layout->addLayout(form);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     auto *confirm = buttons->button(QDialogButtonBox::Ok);
-    confirm->setText("Add");
+    confirm->setText(tr("Add"));
     confirm->setProperty("primary", true);
     confirm->style()->polish(confirm);
     confirm->setEnabled(false);
@@ -645,7 +646,7 @@ void ServersPage::addServer()
         if (!url.isValid() || url.host().isEmpty() || (url.scheme() != "http" && url.scheme() != "https")
             || !url.userInfo().isEmpty() || url.hasQuery() || url.hasFragment()
             || (!url.path().isEmpty() && url.path() != "/") || url.port() == 0) {
-            QMessageBox::warning(&dialog, "Add server", "Enter a server host with an optional port, or an HTTP/HTTPS address.");
+            QMessageBox::warning(&dialog, tr("Add server"), tr("Enter a server host with an optional port, or an HTTP/HTTPS address."));
             return;
         }
         if (url.path() == "/") url.setPath(QString());
@@ -659,7 +660,7 @@ void ServersPage::addServer()
         name->setEnabled(false);
         address->setEnabled(false);
         confirm->setEnabled(false);
-        confirm->setText("Checking...");
+        confirm->setText(tr("Checking..."));
         QPointer<QDialog> open(&dialog);
         resolve(candidates, [this, open, candidates, chosenName](const QString &found) {
             if (!open || !open->isVisible()) return;
@@ -676,12 +677,12 @@ void ServersPage::addServer()
 void ServersPage::joinWithCode()
 {
     QDialog dialog(this);
-    dialog.setWindowTitle("Join with code");
+    dialog.setWindowTitle(tr("Join with code"));
     dialog.setMinimumWidth(380);
     auto *layout = new QVBoxLayout(&dialog);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
-    auto *hint = new QLabel("Type the code shown in the host's launcher after they click Host.", &dialog);
+    auto *hint = new QLabel(tr("Type the code shown in the host's launcher after they click Host."), &dialog);
     hint->setWordWrap(true);
     layout->addWidget(hint);
     auto *code = new QLineEdit(&dialog);
@@ -692,7 +693,7 @@ void ServersPage::joinWithCode()
     layout->addWidget(code);
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     auto *confirm = buttons->button(QDialogButtonBox::Ok);
-    confirm->setText("Join");
+    confirm->setText(tr("Join"));
     confirm->setProperty("primary", true);
     confirm->style()->polish(confirm);
     confirm->setEnabled(false);
@@ -749,7 +750,7 @@ void ServersPage::removeServer()
     const QString address = selectedAddress();
     if (address.isEmpty() || m_showPublic) return;
     const QString title = find(address)->data(TitleRole).toString();
-    if (QMessageBox::question(this, "Remove server", "Remove \"" + title + "\" from your servers?") != QMessageBox::Yes) return;
+    if (QMessageBox::question(this, tr("Remove server"), tr("Remove \"%1\" from your servers?").arg(title)) != QMessageBox::Yes) return;
     auto servers = Settings::servers();
     servers.removeIf([&](const GameServer &server) { return server.address == address; });
     Settings::setServers(servers);
@@ -770,14 +771,14 @@ void ServersPage::showMenu(const QPoint &pos)
     if (!item) return;
     m_list->setCurrentItem(item);
     QMenu menu(this);
-    QAction *joinAction = menu.addAction("Join", this, &ServersPage::join);
+    QAction *joinAction = menu.addAction(tr("Join"), this, &ServersPage::join);
     joinAction->setEnabled(m_canJoin);
-    menu.addAction("Copy address", this, &ServersPage::copyAddress);
+    menu.addAction(tr("Copy address"), this, &ServersPage::copyAddress);
     if (m_showPublic) {
-        menu.addAction("Save to my servers", this, &ServersPage::saveServer)->setEnabled(!isSaved(selectedAddress()));
+        menu.addAction(tr("Save to my servers"), this, &ServersPage::saveServer)->setEnabled(!isSaved(selectedAddress()));
     } else {
         menu.addSeparator();
-        menu.addAction("Remove...", this, &ServersPage::removeServer);
+        menu.addAction(tr("Remove..."), this, &ServersPage::removeServer);
     }
     menu.exec(m_list->viewport()->mapToGlobal(pos));
 }

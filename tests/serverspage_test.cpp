@@ -35,6 +35,7 @@
 #include <QTemporaryDir>
 #include <QTextStream>
 #include <QThread>
+#include <QTranslator>
 #include <QUrl>
 #include <QUrlQuery>
 
@@ -357,6 +358,8 @@ int main(int argc, char **argv)
             {"cwd", QDir::currentPath()}}).toJson());
         return 0;
     }
+    QTranslator english;
+    if (english.load("launcher_en", LAUNCHER_TRANSLATIONS)) app.installTranslator(&english);
     ServersPageTest test;
     return QTest::qExec(&test, argc, argv);
 }

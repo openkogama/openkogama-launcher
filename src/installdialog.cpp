@@ -82,10 +82,10 @@ void InstallDialog::showSelection() {
         if (!backend.contains(version.backend)) backend.append(version.backend);
     }
     const auto shortList = [](const QStringList &items) {
-        return items.size() <= MaxListed ? items.join(", ") : items.mid(0, MaxListed).join(", ") + " and " + QString::number(items.size() - MaxListed) + " more";
+        return items.size() <= MaxListed ? items.join(", ") : tr("%1 and %n more", nullptr, int(items.size() - MaxListed)).arg(items.mid(0, MaxListed).join(", "));
     };
-    ui->versionValue->setText(QString::number(chosen.size()) + " versions");
-    ui->releasedValue->setText(chosen.last().date == chosen.first().date ? chosen.first().date : chosen.last().date + " to " + chosen.first().date);
+    ui->versionValue->setText(tr("%n version(s)", nullptr, int(chosen.size())));
+    ui->releasedValue->setText(chosen.last().date == chosen.first().date ? chosen.first().date : tr("%1 to %2").arg(chosen.last().date, chosen.first().date));
     ui->unityValue->setText(shortList(unity));
     ui->backendValue->setText(backend.join(", "));
     ui->downloadValue->setText(QLocale().formattedDataSize(download));
@@ -136,7 +136,7 @@ void InstallDialog::populate(const QByteArray &data) {
 
 void InstallDialog::loadVersions() {
     model = new QStandardItemModel(this);
-    model->setHorizontalHeaderLabels({"Version", "Released"});
+    model->setHorizontalHeaderLabels({tr("Version"), tr("Released")});
 
     proxy = new QSortFilterProxyModel(this);
     proxy->setSourceModel(model);

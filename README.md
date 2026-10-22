@@ -17,6 +17,10 @@ To publish a release, run the release workflow with a tag such as `v1.0.0`. A ta
 
 Build with `-DBUILD_TESTING=ON` and run `ctest --output-on-failure` to check server metadata, direct join requests, size limits and offline caching.
 
+## Translations
+
+The launcher follows the system language, or the one picked under Settings, General, and falls back to English. Translations are made on Weblate and live in `i18n`: `launcher.ts` lists every text, `launcher_en.ts` holds the English plural forms, and each `launcher_<language>.ts` is one language, picked up by the build without further changes. After changing texts in the code, run `cmake --build <build folder> --target update_translations` and commit the updated files, so Weblate offers the new texts.
+
 ## Credits
 
 Made by nightus.

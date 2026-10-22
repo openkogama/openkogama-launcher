@@ -15,13 +15,13 @@ struct Credit {
 };
 
 const Credit Thanks[] = {
-    {"Becko", "Huge thanks. The main inspiration for this project, and the packet captures that made it possible."},
-    {"LazyLemon", "Info on how things looked in old versions, and help with the launcher."},
-    {"bustersky", "Archiving the standalone builds."},
-    {"kamilslimak", "Finding the 2012 build."},
-    {"Dylinn", "Announcing OpenKogama on Regama."},
-    {"Zpayer", "Announcing OpenKogama, and pointing kogama.cloud here."},
-    {"loafio", "Sharing OpenKogama on his server."},
+    {"Becko", QT_TRANSLATE_NOOP("CreditsDialog", "Huge thanks. The main inspiration for this project, and the packet captures that made it possible.")},
+    {"LazyLemon", QT_TRANSLATE_NOOP("CreditsDialog", "Info on how things looked in old versions, and help with the launcher.")},
+    {"bustersky", QT_TRANSLATE_NOOP("CreditsDialog", "Archiving the standalone builds.")},
+    {"kamilslimak", QT_TRANSLATE_NOOP("CreditsDialog", "Finding the 2012 build.")},
+    {"Dylinn", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama on Regama.")},
+    {"Zpayer", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama, and pointing kogama.cloud here.")},
+    {"loafio", QT_TRANSLATE_NOOP("CreditsDialog", "Sharing OpenKogama on his server.")},
 };
 
 QFont brandFont(int pointSize)
@@ -49,7 +49,7 @@ QLabel *secondary(const QString &text, QWidget *parent)
 CreditsDialog::CreditsDialog(QWidget *parent)
     : QDialog(parent)
 {
-    setWindowTitle("Credits");
+    setWindowTitle(tr("Credits"));
     setWindowIcon(QIcon(":/logo.png"));
     setFixedWidth(380);
 
@@ -67,7 +67,7 @@ CreditsDialog::CreditsDialog(QWidget *parent)
     title->setAlignment(Qt::AlignCenter);
     layout->addWidget(title);
 
-    auto *author = secondary("Made by nightus", this);
+    auto *author = secondary(tr("Made by %1").arg("nightus"), this);
     author->setAlignment(Qt::AlignCenter);
     layout->addWidget(author);
 
@@ -78,7 +78,7 @@ CreditsDialog::CreditsDialog(QWidget *parent)
     layout->addWidget(line);
     layout->addSpacing(8);
 
-    auto *heading = new QLabel("Thanks to", this);
+    auto *heading = new QLabel(tr("Thanks to"), this);
     QFont headingFont = heading->font();
     headingFont.setBold(true);
     headingFont.setPointSize(headingFont.pointSize() + 1);
@@ -92,7 +92,7 @@ CreditsDialog::CreditsDialog(QWidget *parent)
         nameFont.setBold(true);
         name->setFont(nameFont);
         layout->addWidget(name);
-        layout->addWidget(secondary(credit.reason, this));
+        layout->addWidget(secondary(tr(credit.reason), this));
     }
 
     layout->addSpacing(16);

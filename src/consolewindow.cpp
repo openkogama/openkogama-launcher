@@ -52,8 +52,8 @@ ConsoleWindow::ConsoleWindow(const QString &title, QWidget *parent)
     setWindowTitle(title);
     resize(560, 760);
 
-    auto *copy = new QPushButton("Copy", this);
-    auto *close = new QPushButton("Close", this);
+    auto *copy = new QPushButton(tr("Copy"), this);
+    auto *close = new QPushButton(tr("Close"), this);
     connect(copy, &QPushButton::clicked, this, [this]() {
         if (auto *view = qobject_cast<QPlainTextEdit *>(m_tabs->currentWidget()))
             QApplication::clipboard()->setText(view->toPlainText());
@@ -103,7 +103,7 @@ void ConsoleWindow::gameFinished(int exitCode, QProcess::ExitStatus status)
     m_timer.stop();
     if (m_sources.isEmpty())
         return;
-    append(0, QString("[launcher] game exited with code %1").arg(exitCode));
+    append(0, "[launcher] " + tr("game exited with code %1").arg(exitCode));
     if (status == QProcess::CrashExit || exitCode != 0)
         reportCrash(0);
 }

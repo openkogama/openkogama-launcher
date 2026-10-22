@@ -41,8 +41,8 @@ InstallProgressDialog::InstallProgressDialog(const Version &version, const QStri
 {
     ui->setupUi(this);
     setWindowIcon(QIcon(":/install.png"));
-    setWindowTitle("Installing " + version.version);
-    ui->nameLabel->setText("Installing KoGaMa " + version.version);
+    setWindowTitle(tr("Installing %1").arg(version.version));
+    ui->nameLabel->setText(tr("Installing KoGaMa %1").arg(version.version));
     ui->progressBar->setRange(0, 100);
     ui->progressBar->setValue(0);
 
@@ -58,21 +58,21 @@ InstallProgressDialog::~InstallProgressDialog()
 
 void InstallProgressDialog::startDownload() {
     if (m_urlIndex >= m_version.urls.size()) {
-        ui->statusLabel->setText("Could not download this version, all sources failed");
+        ui->statusLabel->setText(tr("Could not download this version, all sources failed"));
         return;
     }
 
     QString temp = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
     m_file.setFileName(QDir(temp).filePath("openkogama-" + m_version.sha256 + ".zip"));
     if (!m_file.open(QIODevice::WriteOnly)) {
-        ui->statusLabel->setText("Cannot open temp file");
+        ui->statusLabel->setText(tr("Cannot open temp file"));
         return;
     }
 
     m_hash.reset();
 
     QUrl url(m_version.urls[m_urlIndex]);
-    ui->statusLabel->setText("Downloading from " + url.host());
+    ui->statusLabel->setText(tr("Downloading from %1").arg(url.host()));
 
     m_reply = m_net->get(QNetworkRequest(url));
     connect(m_reply, &QNetworkReply::downloadProgress, this, &InstallProgressDialog::onProgress);
@@ -125,7 +125,7 @@ void InstallProgressDialog::extract() {
     m_dest = uniqueDir(base, folder.isEmpty() ? "KoGaMa" : folder);
     QDir().mkpath(m_dest);
 
-    ui->statusLabel->setText("Extracting...");
+    ui->statusLabel->setText(tr("Extracting..."));
     setProgress(DownloadEnd + 2);
     ui->buttonBox->setEnabled(false);
 
@@ -141,7 +141,7 @@ void InstallProgressDialog::extract() {
 
 void InstallProgressDialog::onExtracted() {
     if (!m_watcher->result()) {
-        ui->statusLabel->setText("Extraction failed");
+        ui->statusLabel->setText(tr("Extraction failed"));
         ui->buttonBox->setEnabled(true);
         return;
     }
@@ -164,7 +164,7 @@ void InstallProgressDialog::onExtracted() {
 }
 
 void InstallProgressDialog::installAssets() {
-    ui->statusLabel->setText("Downloading game assets...");
+    ui->statusLabel->setText(tr("Downloading game assets..."));
     setProgress(ExtractEnd);
     ui->buttonBox->setEnabled(true);
 
@@ -173,7 +173,7 @@ void InstallProgressDialog::installAssets() {
     });
     connect(m_assets, &AssetInstaller::finished, this, [this](bool ok) {
         setProgress(100);
-        ui->statusLabel->setText(ok ? "Installed to " + m_dest : "Installed, some game assets will download on launch");
+        ui->statusLabel->setText(ok ? tr("Installed to %1").arg(m_dest) : tr("Installed, some game assets will download on launch"));
         QTimer::singleShot(ok ? 800 : 2500, this, &QDialog::accept);
     });
     m_assets->start(m_version.version + "@" + m_version.unity);

@@ -1,0 +1,28 @@
+name: translations
+
+on:
+  push:
+    branches: [main]
+    paths: [src/**]
+
+permissions:
+  contents: write
+
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y qt6-l10n-tools
+      - name: lupdate
+        run: |
+          lupdate=/usr/lib/qt6/bin/lupdate
+          $lupdate -no-obsolete -locations none src -ts i18n/launcher.ts $(ls i18n/launcher_*.ts | grep -v '/launcher_en.ts$')
+          $lupdate -no-obsolete -locations none -pluralonly src -ts i18n/launcher_en.ts
+      - name: commit
+        run: |
+          git diff --quiet -- i18n && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "translation sources follow the code"
+          git push

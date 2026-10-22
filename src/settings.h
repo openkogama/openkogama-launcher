@@ -58,4 +58,7 @@ void setDiscordPresence(bool enabled);
 bool clientPatch(const QString &id);
 void setClientPatch(const QString &id, bool enabled);
 
+QString language();
+void setLanguage(const QString &code);
+
 }

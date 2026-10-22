@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(openkogama-launcher LANGUAGES CXX)
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core CorePrivate Widgets Network Concurrent)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core CorePrivate Widgets Network Concurrent LinguistTools)
 
 qt_standard_project_setup()
 
@@ -36,6 +36,7 @@ qt_add_executable(openkogama-launcher
     src/updater.h src/updater.cpp
     src/theme.h src/theme.cpp
     src/settings.h src/settings.cpp
+    src/languages.h src/languages.cpp
     src/settingsdialog.h src/settingsdialog.cpp src/settingsdialog.ui
     src/account.h src/account.cpp
     src/consolewindow.h src/consolewindow.cpp
@@ -94,6 +95,15 @@ add_custom_command(TARGET openkogama-launcher POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:velopack> $<TARGET_FILE_DIR:openkogama-launcher>
 )
 
+file(GLOB LAUNCHER_TRANSLATIONS CONFIGURE_DEPENDS i18n/launcher_*.ts)
+list(REMOVE_ITEM LAUNCHER_TRANSLATIONS ${CMAKE_CURRENT_SOURCE_DIR}/i18n/launcher_en.ts)
+qt_add_translations(openkogama-launcher
+    TS_FILES i18n/launcher.ts ${LAUNCHER_TRANSLATIONS}
+    PLURALS_TS_FILE i18n/launcher_en.ts
+    RESOURCE_PREFIX /i18n
+    LUPDATE_OPTIONS -no-obsolete -locations none
+)
+
 install(TARGETS openkogama-launcher
     BUNDLE  DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -116,6 +126,8 @@ if(BUILD_TESTING)
         src/gamelauncher.cpp src/gamelauncher.h src/singleinstance.cpp src/singleinstance.h src/clientpatches.cpp src/clientpatches.h src/serverfeatures.cpp src/serverfeatures.h src/account.cpp src/account.h src/playerprofile.cpp src/playerprofile.h src/discordpresence.cpp src/discordpresence.h src/consolewindow.cpp src/consolewindow.h src/webplayerruntime.cpp src/webplayerruntime.h src/paths.cpp src/paths.h src/theme.cpp src/theme.h
         src/launchdialog.cpp src/launchdialog.h src/launchdialog.ui src/assetinstaller.cpp src/assetinstaller.h)
     target_include_directories(launcher-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_compile_definitions(launcher-tests PRIVATE LAUNCHER_TRANSLATIONS="${CMAKE_CURRENT_BINARY_DIR}")
+    add_dependencies(launcher-tests openkogama-launcher_lrelease)
     target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate crypt32)
     qt_add_resources(launcher-tests "test_resources" PREFIX "/" BASE resources FILES resources/logo.png)
     add_test(NAME launcher-servers COMMAND launcher-tests -o ${CMAKE_CURRENT_BINARY_DIR}/launcher-tests.txt,txt)

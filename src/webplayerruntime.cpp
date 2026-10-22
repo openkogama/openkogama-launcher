@@ -1,5 +1,6 @@
 #include "webplayerruntime.h"
 #include <QBuffer>
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QEventLoop>
@@ -48,7 +49,7 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
         return true;
     }
 
-    QProgressDialog progress("Downloading Unity Web Player...", "Cancel", 0, 100, parent);
+    QProgressDialog progress(QCoreApplication::translate("WebPlayerRuntime", "Downloading Unity Web Player..."), QCoreApplication::translate("WebPlayerRuntime", "Cancel"), 0, 100, parent);
     progress.setWindowTitle("Unity Web Player");
     progress.setWindowModality(Qt::WindowModal);
     progress.setMinimumDuration(0);
@@ -69,17 +70,17 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
 
     if (reply->error() != QNetworkReply::NoError) {
         if (reply->error() != QNetworkReply::OperationCanceledError)
-            QMessageBox::warning(parent, "Unity Web Player", "Download failed: " + reply->errorString());
+            QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Download failed: %1").arg(reply->errorString()));
         return false;
     }
 
     QByteArray data = reply->readAll();
     if (QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex() != RuntimeSha256) {
-        QMessageBox::warning(parent, "Unity Web Player", "The downloaded file is damaged, try again.");
+        QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "The downloaded file is damaged, try again."));
         return false;
     }
 
-    progress.setLabelText("Installing Unity Web Player...");
+    progress.setLabelText(QCoreApplication::translate("WebPlayerRuntime", "Installing Unity Web Player..."));
     progress.setCancelButton(nullptr);
 
     QBuffer archive(&data);
@@ -98,23 +99,23 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
         bool isDir = entry.isDir || folders.contains(entry.filePath);
         QString folder = isDir ? path : QFileInfo(path).absolutePath();
         if (!QDir().mkpath(folder)) {
-            failed = "Could not create the folder " + folder + ", check the folder permissions or run the launcher as administrator.";
+            failed = QCoreApplication::translate("WebPlayerRuntime", "Could not create the folder %1, check the folder permissions or run the launcher as administrator.").arg(folder);
         } else if (!isDir && entry.isFile) {
             QByteArray content = zip.fileData(entry.filePath);
             if (content.size() != entry.size)
                 content = zip.fileData(QString(entry.filePath).replace(u'/', u'\\'));
             QFile file(path);
             if (content.size() != entry.size)
-                failed = "Could not unpack " + entry.filePath + " from the download.";
+                failed = QCoreApplication::translate("WebPlayerRuntime", "Could not unpack %1 from the download.").arg(entry.filePath);
             else if (!file.open(QIODevice::WriteOnly) || file.write(content) != content.size())
-                failed = "Could not write " + path + " (" + file.errorString() + "), check your antivirus.";
+                failed = QCoreApplication::translate("WebPlayerRuntime", "Could not write %1 (%2), check your antivirus.").arg(path, file.errorString());
         }
         if (!failed.isEmpty()) break;
     }
     zip.close();
 
     if (!failed.isEmpty() || !installed()) {
-        QMessageBox::warning(parent, "Unity Web Player", "Could not install to " + runtimeRoot() + "\n" + (failed.isEmpty() ? "Files were removed after installing, check your antivirus." : failed));
+        QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Could not install to %1\n%2").arg(runtimeRoot(), failed.isEmpty() ? QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing, check your antivirus.") : failed));
         return false;
     }
     registerRuntime();

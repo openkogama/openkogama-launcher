@@ -90,14 +90,14 @@ void Updater::check(QWidget *window) {
         if (!update.info)
             return;
         QString version = QString::fromStdString(update.info->TargetFullRelease.Version);
-        if (QMessageBox::question(window, "Update", "OpenKogama Launcher " + version + " is ready. Restart now to update?") != QMessageBox::Yes)
+        if (QMessageBox::question(window, QCoreApplication::translate("Updater", "Update"), QCoreApplication::translate("Updater", "OpenKogama Launcher %1 is ready. Restart now to update?").arg(version)) != QMessageBox::Yes)
             return;
         try {
             stopChildren(window);
             update.manager->WaitExitThenApplyUpdates(*update.info);
             QApplication::quit();
         } catch (const std::exception &error) {
-            QMessageBox::warning(window, "Update", QString::fromUtf8(error.what()));
+            QMessageBox::warning(window, QCoreApplication::translate("Updater", "Update"), QString::fromUtf8(error.what()));
         }
     });
     watcher->setFuture(QtConcurrent::run(download));

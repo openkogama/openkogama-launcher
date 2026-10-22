@@ -94,25 +94,25 @@ LaunchDialog::LaunchDialog(const QString &version, QWidget *parent)
 {
     ui->setupUi(this);
     setWindowIcon(QIcon(":/launch.png"));
-    setWindowTitle("Starting server");
-    ui->nameLabel->setText("Starting OpenKogama server");
+    setWindowTitle(tr("Starting server"));
+    ui->nameLabel->setText(tr("Starting OpenKogama server"));
     ui->progressBar->setRange(0, 100);
     ui->statusLabel->setWordWrap(true);
 
     connect(m_assets, &AssetInstaller::progress, this, [this](qint64 done, qint64 total) {
-        if (total > 0) setStep("Checking game assets...", int(done * AssetsEnd / total));
+        if (total > 0) setStep(tr("Checking game assets..."), int(done * AssetsEnd / total));
     });
     connect(m_assets, &AssetInstaller::finished, this, [this](bool ok) {
         if (m_cancelled) return;
         m_offline = ok;
         checkServer();
     });
-    setStep("Checking game assets...", 0);
+    setStep(tr("Checking game assets..."), 0);
     m_assets->start(version);
 }
 
 void LaunchDialog::checkServer() {
-    setStep("Checking server...", AssetsEnd);
+    setStep(tr("Checking server..."), AssetsEnd);
     QNetworkReply *reply = m_net->get(pingRequest("/api/server"));
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
@@ -143,11 +143,11 @@ void LaunchDialog::reject() {
 void LaunchDialog::startServer() {
     QDir dir(Paths::server());
     if (!dir.exists("openkogama-server.exe")) {
-        fail("Server not found in " + dir.path());
+        fail(tr("Server not found in %1").arg(dir.path()));
         return;
     }
 
-    setStep("Starting server...", AssetsEnd + 5);
+    setStep(tr("Starting server..."), AssetsEnd + 5);
     QDir().mkpath(Paths::serverData());
     choosePorts(m_retried, m_retried ? busyPort() : 0);
     QStringList arguments{"--http", QString::number(LocalHttpPort), "--photon", QString::number(LocalPhotonPort)};
@@ -174,7 +174,7 @@ void LaunchDialog::waitForServer(int attempts) {
         return;
     }
 
-    setStep("Waiting for server...", AssetsEnd + 10 + (90 - AssetsEnd) * (PingAttempts - attempts) / PingAttempts);
+    setStep(tr("Waiting for server..."), AssetsEnd + 10 + (90 - AssetsEnd) * (PingAttempts - attempts) / PingAttempts);
     QNetworkReply *reply = m_net->get(pingRequest());
     connect(reply, &QNetworkReply::finished, this, [this, reply, attempts]() {
         reply->deleteLater();
@@ -196,7 +196,7 @@ void LaunchDialog::failed() {
         return;
     }
     const QString reason = lastServerError();
-    fail(reason.isEmpty() ? QString("Server did not start") : "Server did not start: " + reason);
+    fail(reason.isEmpty() ? tr("Server did not start") : tr("Server did not start: %1").arg(reason));
 }
 
 void LaunchDialog::fail(const QString &message) {

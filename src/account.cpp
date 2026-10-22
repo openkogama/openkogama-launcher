@@ -1,5 +1,6 @@
 #include "account.h"
 #include "settings.h"
+#include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QCursor>
 #include <QEventLoop>
@@ -74,9 +75,9 @@ namespace Account {
 
 QString Reply::error() const
 {
-    if (status == 0) return "Could not reach OpenKogama accounts, check your connection.";
+    if (status == 0) return QCoreApplication::translate("Account", "Could not reach OpenKogama accounts, check your connection.");
     QString message = body.value("error").toString();
-    if (message.isEmpty()) return QString("OpenKogama accounts answered with error %1, try again later.").arg(status);
+    if (message.isEmpty()) return QCoreApplication::translate("Account", "OpenKogama accounts answered with error %1, try again later.").arg(status);
     message[0] = message[0].toUpper();
     return message + ".";
 }
@@ -106,7 +107,7 @@ QUrl signInPage()
 Reply finishSignIn(const QString &code)
 {
     const QString verifier = Settings::accountVerifier();
-    if (verifier.isEmpty()) return {Unauthorized, {{"error", "start signing in from the launcher"}}};
+    if (verifier.isEmpty()) return {Unauthorized, {{"error", QCoreApplication::translate("Account", "start signing in from the launcher")}}};
     const Reply reply = post("/launcher/token", {{"code", code}, {"verifier", verifier}});
     const QString session = reply.body.value("token").toString();
     if (!reply.ok() || session.isEmpty()) return reply;
