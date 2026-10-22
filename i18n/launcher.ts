@@ -254,6 +254,10 @@
         <source>game exited with code %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>the game closed right after it started, an antivirus may have removed or blocked some of its files, deleting and installing this version again usually helps</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CreditsDialog</name>
