@@ -306,7 +306,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Translating the website into Spanish.</source>
+        <source>Translating the website and the launcher into Spanish.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -23,7 +23,7 @@ const Credit Thanks[] = {
     {"Zpayer", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama.")},
     {"loafio", QT_TRANSLATE_NOOP("CreditsDialog", "Sharing OpenKogama on his server.")},
     {"Limeen", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website into French.")},
-    {"lordscorpioni", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website into Spanish.")},
+    {"lordscorpioni", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website and the launcher into Spanish.")},
 };
 
 QFont brandFont(int pointSize)

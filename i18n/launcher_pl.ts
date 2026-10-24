@@ -312,8 +312,8 @@
         <translation>Przetłumaczenie strony na francuski.</translation>
     </message>
     <message>
-        <source>Translating the website into Spanish.</source>
-        <translation>Przetłumaczenie strony na hiszpański.</translation>
+        <source>Translating the website and the launcher into Spanish.</source>
+        <translation>Przetłumaczenie strony i launchera na hiszpański.</translation>
     </message>
     <message>
         <source>Credits</source>

@@ -33,4 +33,4 @@ Made by nightus.
 - **Zpayer**: announcing OpenKogama
 - **loafio**: sharing OpenKogama on his server
 - **Limeen**: translating the website into French
-- **lordscorpioni**: translating the website into Spanish
+- **lordscorpioni**: translating the website and the launcher into Spanish
