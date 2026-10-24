@@ -1,144 +1,205 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.1" language="en" sourcelanguage="en">
-<context>
-    <name>ClientPatches</name>
-    <message numerus="yes">
-        <source>added %n server sound(s) to the Sound Emitter list in data.unity3d</source>
-        <translation>
-            <numerusform>added %n server sound to the Sound Emitter list in data.unity3d</numerusform>
-            <numerusform>added %n server sounds to the Sound Emitter list in data.unity3d</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>closed the one window lock in %n running game(s)</source>
-        <translation>
-            <numerusform>closed the one window lock in %n running game</numerusform>
-            <numerusform>closed the one window lock in %n running games</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>removed %n cached bundle(s) the server replaces</source>
-        <translation>
-            <numerusform>removed %n cached bundle the server replaces</numerusform>
-            <numerusform>removed %n cached bundles the server replaces</numerusform>
-        </translation>
-    </message>
-</context>
-<context>
-    <name>InstallDialog</name>
-    <message numerus="yes">
-        <source>%1 and %n more</source>
-        <translation>
-            <numerusform>%1 and %n more</numerusform>
-            <numerusform>%1 and %n more</numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>%n version(s)</source>
-        <translation>
-            <numerusform>%n version</numerusform>
-            <numerusform>%n versions</numerusform>
-        </translation>
-    </message>
-</context>
+<TS version="2.1" language="fr" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
-    <message numerus="yes">
-        <source>Search %n version(s)...</source>
-        <translation>
-            <numerusform>Search %n version...</numerusform>
-            <numerusform>Search %n versions...</numerusform>
-        </translation>
+    <message>
+        <source>File</source>
+        <translation>Fichier</translation>
+    </message>
+    <message>
+        <source>Help</source>
+        <translation>Aide</translation>
+    </message>
+
+    <message>
+        <source>Worlds</source>
+        <translation>Mondes</translation>
+    </message>
+    <message>
+        <source>Servers</source>
+        <translation>Serveurs</translation>
+    </message>
+    <message>
+        <source>Avatars</source>
+        <translation>Avatars</translation>
+    </message>
+    <message>
+        <source>Inventory</source>
+        <translation>Inventaire</translation>
+    </message>
+    <message>
+        <source>Versions</source>
+        <translation>Versions</translation>
+    </message>
+
+    <message>
+        <source>Public</source>
+        <translation>Publics</translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation>Enregistrés</translation>
+    </message>
+    <message>
+        <source>Search %1 worlds...</source>
+        <translation>Rechercher parmi %1 mondes...</translation>
+    </message>
+    <message>
+        <source>Search %1 avatars...</source>
+        <translation>Rechercher parmi %1 avatars...</translation>
+    </message>
+    <message>
+        <source>Search %1 items...</source>
+        <translation>Rechercher parmi %1 objets...</translation>
+    </message>
+    <message>
+        <source>Search servers...</source>
+        <translation>Rechercher des serveurs...</translation>
+    </message>
+
+    <message>
+        <source>New world...</source>
+        <translation>Nouveau monde...</translation>
+    </message>
+    <message>
+        <source>Import...</source>
+        <translation>Importer...</translation>
+    </message>
+    <message>
+        <source>Join with code</source>
+        <translation>Rejoindre avec un code</translation>
+    </message>
+    <message>
+        <source>Add server...</source>
+        <translation>Ajouter un serveur...</translation>
+    </message>
+
+    <message>
+        <source>Host</source>
+        <translation>Héberger</translation>
+    </message>
+    <message>
+        <source>Build</source>
+        <translation>Construire</translation>
+    </message>
+    <message>
+        <source>Play</source>
+        <translation>Jouer</translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation>Rejoindre</translation>
+    </message>
+    <message>
+        <source>Edit</source>
+        <translation>Éditer</translation>
+    </message>
+    <message>
+        <source>Use</source>
+        <translation>Utiliser</translation>
+    </message>
+
+    <message>
+        <source>%1 player</source>
+        <translation>%1 joueur</translation>
+    </message>
+    <message>
+        <source>%1 players</source>
+        <translation>%1 joueurs</translation>
+    </message>
+    <message>
+        <source>%1 cubes, scale %2</source>
+        <translation>%1 cubes, échelle %2</translation>
     </message>
 </context>
+
 <context>
-    <name>PlayerProfile</name>
-    <message numerus="yes">
-        <source>your avatar and %n model(s) went to the server</source>
-        <translation>
-            <numerusform>your avatar and %n model went to the server</numerusform>
-            <numerusform>your avatar and %n models went to the server</numerusform>
-        </translation>
+    <name>SettingsDialog</name>
+    <message>
+        <source>Settings</source>
+        <translation>Paramètres</translation>
     </message>
-</context>
-<context>
-    <name>ServersPage</name>
-    <message numerus="yes">
-        <source>%n player(s)</source>
-        <translation>
-            <numerusform>%n player</numerusform>
-            <numerusform>%n players</numerusform>
-        </translation>
+    
+    <message>
+        <source>General</source>
+        <translation>Général</translation>
     </message>
-</context>
-<context>
-    <name>ShareBar</name>
-    <message numerus="yes">
-        <source>%n player(s) joined</source>
-        <translation>
-            <numerusform>%n player joined</numerusform>
-            <numerusform>%n players joined</numerusform>
-        </translation>
+    <message>
+        <source>Console</source>
+        <translation>Console</translation>
     </message>
-</context>
-<context>
-    <name>WorldsDialog</name>
-    <message numerus="yes">
-        <source>Search %n world(s)...</source>
-        <translation>
-            <numerusform>Search %n world...</numerusform>
-            <numerusform>Search %n worlds...</numerusform>
-        </translation>
+    <message>
+        <source>Client patches</source>
+        <translation>Correctifs du client</translation>
     </message>
-    <message numerus="yes">
-        <source>Search %n avatar(s)...</source>
-        <translation>
-            <numerusform>Search %n avatar...</numerusform>
-            <numerusform>Search %n avatars...</numerusform>
-        </translation>
+
+    <message>
+        <source>Account:</source>
+        <translation>Compte :</translation>
     </message>
-    <message numerus="yes">
-        <source>These map(s) could not be imported: %1</source>
-        <translation>
-            <numerusform>This map could not be imported: %1</numerusform>
-            <numerusform>These maps could not be imported: %1</numerusform>
-        </translation>
+    <message>
+        <source>Sign out</source>
+        <translation>Se déconnecter</translation>
     </message>
-    <message numerus="yes">
-        <source>These file(s) are not avatar(s): %1</source>
-        <translation>
-            <numerusform>This file is not an avatar: %1</numerusform>
-            <numerusform>These files are not avatars: %1</numerusform>
-        </translation>
+    <message>
+        <source>Nickname:</source>
+        <translation>Pseudo :</translation>
     </message>
-    <message numerus="yes">
-        <source>Search %n item(s)...</source>
-        <translation>
-            <numerusform>Search %n item...</numerusform>
-            <numerusform>Search %n items...</numerusform>
-        </translation>
+    <message>
+        <source>Discord:</source>
+        <translation>Discord :</translation>
     </message>
-    <message numerus="yes">
-        <source>%1 cube(s), scale %2</source>
-        <translation>
-            <numerusform>%1 cube, scale %2</numerusform>
-            <numerusform>%1 cubes, scale %2</numerusform>
-        </translation>
+    <message>
+        <source>Show what I'm playing</source>
+        <translation>Afficher ce à quoi je joue</translation>
     </message>
-    <message numerus="yes">
-        <source>Import %n model(s)</source>
-        <translation>
-            <numerusform>Import %n model</numerusform>
-            <numerusform>Import %n models</numerusform>
-        </translation>
+    <message>
+        <source>Language:</source>
+        <translation>Langue :</translation>
     </message>
-    <message numerus="yes">
-        <source>These file(s) are not model(s): %1</source>
-        <translation>
-            <numerusform>This file is not a model: %1</numerusform>
-            <numerusform>These files are not models: %1</numerusform>
-        </translation>
+    <message>
+        <source>System</source>
+        <translation>Système (par défaut)</translation>
+    </message>
+
+    <message>
+        <source>Show the console:</source>
+        <translation>Afficher la console :</translation>
+    </message>
+    <message>
+        <source>When a game starts</source>
+        <translation>Lorsqu'un jeu démarre</translation>
+    </message>
+    <message>
+        <source>When a game crashes</source>
+        <translation>Lorsqu'un jeu plante</translation>
+    </message>
+
+    <message>
+        <source>Several game windows</source>
+        <translation>Autoriser plusieurs fenêtres de jeu</translation>
+    </message>
+    <message>
+        <source>Server sounds in the Sound Emitter list</source>
+        <translation>Sons du serveur dans la liste des émetteurs de son</translation>
+    </message>
+    <message>
+        <source>Fresh copies of replaced bundles</source>
+        <translation>Copies propres des bundles remplacés</translation>
+    </message>
+    <message>
+        <source>Colossus laser fix</source>
+        <translation>Correction du laser Colossus</translation>
+    </message>
+
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>Annuler</translation>
     </message>
 </context>
 </TS>
