@@ -1,11 +1,17 @@
 #include "theme.h"
+#include "settings.h"
 #include <QApplication>
 #include <QFile>
 #include <QHash>
+#include <QIcon>
+#include <QPainter>
+#include <QPixmap>
 #include <QProxyStyle>
 #include <QStyleHints>
 
 namespace {
+
+QString chosenTheme;
 
 class PlainStyle : public QProxyStyle
 {
@@ -74,16 +80,35 @@ QString styleSheet() {
 }
 
 void Theme::apply(QApplication &app) {
-    app.setStyleSheet(styleSheet());
     QObject::connect(app.styleHints(), &QStyleHints::colorSchemeChanged, &app, [&app]() {
         app.setStyleSheet(styleSheet());
     });
+    use(Settings::theme());
+}
+
+void Theme::use(const QString &theme) {
+    chosenTheme = theme;
+    QGuiApplication::styleHints()->setColorScheme(theme == "dark" ? Qt::ColorScheme::Dark
+        : theme == "light" ? Qt::ColorScheme::Light : Qt::ColorScheme::Unknown);
+    qApp->setStyleSheet(styleSheet());
 }
 
 QStyle *Theme::style() {
     return new PlainStyle;
 }
 
+QIcon Theme::icon(const QString &path) {
+    QPixmap pixmap(path);
+    if (!dark()) {
+        QPainter painter(&pixmap);
+        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        painter.fillRect(pixmap.rect(), QColor(0x3c, 0x3c, 0x3c));
+    }
+    return QIcon(pixmap);
+}
+
 bool Theme::dark() {
+    if (chosenTheme == "dark") return true;
+    if (chosenTheme == "light") return false;
     return QGuiApplication::styleHints()->colorScheme() == Qt::ColorScheme::Dark;
 }

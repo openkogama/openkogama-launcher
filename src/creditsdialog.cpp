@@ -16,12 +16,14 @@ struct Credit {
 
 const Credit Thanks[] = {
     {"Becko", QT_TRANSLATE_NOOP("CreditsDialog", "Huge thanks. The main inspiration for this project, and the packet captures that made it possible.")},
-    {"LazyLemon", QT_TRANSLATE_NOOP("CreditsDialog", "Info on how things looked in old versions, and help with the launcher.")},
+    {"LazyLemon", QT_TRANSLATE_NOOP("CreditsDialog", "Info on how things looked in old versions, help with the launcher, founding the r/OpenKogama subreddit, and translating the website into Russian.")},
     {"bustersky", QT_TRANSLATE_NOOP("CreditsDialog", "Archiving the standalone builds.")},
     {"kamilslimak", QT_TRANSLATE_NOOP("CreditsDialog", "Finding the 2012 build.")},
     {"Dylinn", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama on Regama.")},
-    {"Zpayer", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama, and pointing kogama.cloud here.")},
+    {"Zpayer", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama.")},
     {"loafio", QT_TRANSLATE_NOOP("CreditsDialog", "Sharing OpenKogama on his server.")},
+    {"Limeen", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website into French.")},
+    {"lordscorpioni", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website into Spanish.")},
 };
 
 QFont brandFont(int pointSize)

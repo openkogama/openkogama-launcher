@@ -5,6 +5,7 @@
 #include "clientpatches.h"
 #include "account.h"
 #include "languages.h"
+#include "theme.h"
 #include <QCheckBox>
 #include <QComboBox>
 #include <QDesktopServices>
@@ -35,6 +36,12 @@ SettingsDialog::SettingsDialog(QWidget *parent)
         m_language->addItem(Languages::nameOf(code), code);
     m_language->setCurrentIndex(qMax(0, m_language->findData(Settings::language())));
     ui->generalLayout->addRow(tr("Language:"), m_language);
+    m_theme = new QComboBox(ui->generalPage);
+    m_theme->addItem(tr("System"), QString());
+    m_theme->addItem(tr("Light"), "light");
+    m_theme->addItem(tr("Dark"), "dark");
+    m_theme->setCurrentIndex(qMax(0, m_theme->findData(Settings::theme())));
+    ui->generalLayout->addRow(tr("Theme:"), m_theme);
     ui->nicknameEdit->setText(Settings::nickname());
     ui->consoleOnLaunchCheck->setChecked(Settings::consoleOnLaunch());
     ui->consoleOnCrashCheck->setChecked(Settings::consoleOnCrash());
@@ -84,6 +91,11 @@ void SettingsDialog::accept()
     if (language != Settings::language()) {
         Settings::setLanguage(language);
         QMessageBox::information(this, tr("Language"), tr("The new language shows after the launcher restarts."));
+    }
+    const QString theme = m_theme->currentData().toString();
+    if (theme != Settings::theme()) {
+        Settings::setTheme(theme);
+        Theme::use(theme);
     }
     DiscordPresence::refresh();
     QDialog::accept();

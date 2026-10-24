@@ -10,6 +10,7 @@
 #include "modelpreview.h"
 #include "serverconfigdialog.h"
 #include "settings.h"
+#include "theme.h"
 #include <QEvent>
 #include <QFutureWatcher>
 #include <QLocale>
@@ -20,6 +21,8 @@
 #include <QPixmap>
 #include <QPainter>
 #include <QTimer>
+#include <QGuiApplication>
+#include <QStyleHints>
 #include <algorithm>
 
 static constexpr int NameRole = Qt::UserRole + 1;
@@ -135,7 +138,7 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     ui->setupUi(this);
     m_net->setTransferTimeout(8000);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
-    setWindowIcon(QIcon(":/launch.png"));
+    setWindowIcon(Theme::icon(":/launch.png"));
     setWindowTitle(m_title);
 
     connect(ui->playButton, &QPushButton::clicked, this, [this]() { launch("play", selectedWorld()); });
@@ -228,6 +231,19 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     loadTemplates();
     loadAvatars();
     loadInventory();
+    connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this, [this]() {
+        QTimer::singleShot(0, this, [this]() {
+            const int world = selectedWorld();
+            const int avatar = selectedAvatar();
+            const int item = selectedItem();
+            ui->worldsList->clear();
+            ui->avatarsList->clear();
+            ui->inventoryList->clear();
+            loadWorlds(world);
+            loadAvatars(avatar);
+            loadInventory(item);
+        });
+    });
 
     auto *poll = new QTimer(this);
     connect(poll, &QTimer::timeout, this, &WorldsDialog::checkRevision);

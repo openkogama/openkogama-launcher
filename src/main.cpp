@@ -14,9 +14,9 @@ int main(int argc, char *argv[])
     const QString link = Links::find(a.arguments());
     if (!link.isEmpty() && Links::forward(link)) return 0;
     a.setStyle(Theme::style());
-    Theme::apply(a);
     a.setOrganizationName("OpenKogama");
     a.setApplicationName("OpenKogama Launcher");
+    Theme::apply(a);
     Languages::install(a);
     Links::registerScheme();
     MainWindow w;

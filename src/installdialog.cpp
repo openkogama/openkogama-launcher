@@ -1,4 +1,5 @@
 #include "installdialog.h"
+#include "theme.h"
 #include "ui_installdialog.h"
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -18,7 +19,7 @@ InstallDialog::InstallDialog(const QByteArray &versionsJson, QWidget *parent)
     , ui(new Ui::InstallDialog)
 {
     ui->setupUi(this);
-    setWindowIcon(QIcon(":/install.png"));
+    setWindowIcon(Theme::icon(":/install.png"));
     loadVersions();
     populate(versionsJson);
 }

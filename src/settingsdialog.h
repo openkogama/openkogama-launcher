@@ -33,6 +33,7 @@ private:
     QLabel *m_account = nullptr;
     QPushButton *m_accountButton = nullptr;
     QComboBox *m_language = nullptr;
+    QComboBox *m_theme = nullptr;
 };
 
 #endif

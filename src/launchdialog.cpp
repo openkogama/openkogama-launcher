@@ -1,6 +1,7 @@
 #include "launchdialog.h"
 #include "assetinstaller.h"
 #include "paths.h"
+#include "theme.h"
 #include "ui_launchdialog.h"
 #include <QDialogButtonBox>
 #include <QDir>
@@ -93,7 +94,7 @@ LaunchDialog::LaunchDialog(const QString &version, QWidget *parent)
     , m_assets(new AssetInstaller(this))
 {
     ui->setupUi(this);
-    setWindowIcon(QIcon(":/launch.png"));
+    setWindowIcon(Theme::icon(":/launch.png"));
     setWindowTitle(tr("Starting server"));
     ui->nameLabel->setText(tr("Starting OpenKogama server"));
     ui->progressBar->setRange(0, 100);

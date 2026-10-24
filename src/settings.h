@@ -43,7 +43,8 @@ void setAccount(const QString &name, const QByteArray &token);
 void forgetAccount();
 
 QString rendezvous();
-QString hostSecret();
+QString publicSecret();
+QString newPublicSecret();
 int hostWorld();
 void setHostWorld(int world);
 
@@ -60,5 +61,8 @@ void setClientPatch(const QString &id, bool enabled);
 
 QString language();
 void setLanguage(const QString &code);
+
+QString theme();
+void setTheme(const QString &theme);
 
 }

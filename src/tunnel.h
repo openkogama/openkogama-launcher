@@ -11,6 +11,9 @@ class Tunnel : public QObject
     Q_OBJECT
 
 public:
+    static constexpr int SecretLength = 32;
+
+    static QString newSecret();
     static QString normalize(const QString &text);
     static bool isAddress(const QString &address);
     static QString address(const QString &code);

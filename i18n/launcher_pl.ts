@@ -186,16 +186,20 @@
         <translation>nie udało się dodać dźwięków serwera do listy Sound Emitter, gra zostaje przy swoich</translation>
     </message>
     <message>
-        <source>put the original Assembly-CSharp.dll back</source>
-        <translation>przywrócono oryginalny Assembly-CSharp.dll</translation>
-    </message>
-    <message>
         <source>wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block</source>
         <translation>opakowano GodzillaLaser.OnUnequip w Assembly-CSharp.dll w blok try</translation>
     </message>
     <message>
-        <source>could not fix the Colossus laser, the game keeps its own Assembly-CSharp.dll</source>
-        <translation>nie udało się naprawić lasera Kolosa, gra zostaje przy swoim Assembly-CSharp.dll</translation>
+        <source>put the original %1 back</source>
+        <translation>przywrócono oryginalny %1</translation>
+    </message>
+    <message>
+        <source>could not patch %1, the game keeps its own</source>
+        <translation>nie udało się załatać %1, gra zostaje przy swoim pliku</translation>
+    </message>
+    <message>
+        <source>the game can switch worlds without restarting</source>
+        <translation>gra może zmieniać świat bez restartu</translation>
     </message>
     <message>
         <source>Several game windows</source>
@@ -215,19 +219,27 @@
     </message>
     <message>
         <source>Fresh copies of replaced bundles</source>
-        <translation>Świeże kopie podmienionych paczek</translation>
+        <translation>Odświeżanie paczek podmienionych przez serwer</translation>
     </message>
     <message>
         <source>Removes the game&apos;s cached copies of bundles the server replaces, so the game downloads the server&apos;s version.</source>
-        <translation>Usuwa zapisane przez grę kopie paczek, które podmienia serwer, żeby gra pobrała wersję serwera.</translation>
+        <translation>Usuwa stare kopie paczek, które gra trzyma u siebie, a serwer podmienia na swoje, żeby gra pobrała je od serwera na nowo.</translation>
     </message>
     <message>
         <source>Colossus laser fix</source>
-        <translation>Poprawka lasera Kolosa</translation>
+        <translation>Poprawka lasera Colossusa</translation>
     </message>
     <message>
         <source>Wraps GodzillaLaser.OnUnequip in kogama_Data/Managed/Assembly-CSharp.dll in a try block, so 1.47 to 1.92 stop breaking when someone leaves the Colossus. The original stays as Assembly-CSharp.dll.original and comes back when this is off.</source>
-        <translation>Opakowuje GodzillaLaser.OnUnequip w kogama_Data/Managed/Assembly-CSharp.dll w blok try, żeby wersje od 1.47 do 1.92 przestały się psuć, gdy ktoś wychodzi z Kolosa. Oryginał zostaje jako Assembly-CSharp.dll.original i wraca, gdy ta opcja jest wyłączona.</translation>
+        <translation>Opakowuje GodzillaLaser.OnUnequip w kogama_Data/Managed/Assembly-CSharp.dll w blok try, żeby wersje od 1.47 do 1.92 przestały się psuć, gdy ktoś wychodzi z Colossusa. Oryginał zostaje jako Assembly-CSharp.dll.original i wraca, gdy ta opcja jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>World switching</source>
+        <translation>Zmiana świata bez restartu gry</translation>
+    </message>
+    <message>
+        <source>Lets a server send you to another world without closing the game: when the server asks the game to sign in again, it cleans up and loads itself into the new world. Rewrites MVGameControllerBase.TryReauth and turns off HackingToolDetector in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back when this is off.</source>
+        <translation>Pozwala serwerowi przenieść cię do innego świata bez zamykania gry: gdy serwer każe grze zalogować się ponownie, gra sprząta po sobie i wczytuje się od nowa w nowym świecie. Zmienia MVGameControllerBase.TryReauth i wyłącza HackingToolDetector w kogama_Data/Managed/Assembly-CSharp.dll, a w wersjach IL2CPP w GameAssembly.dll. Oryginał zostaje obok jako .original i wraca, gdy ta opcja jest wyłączona.</translation>
     </message>
     <message numerus="yes">
         <source>closed the one window lock in %n running game(s)</source>
@@ -272,8 +284,8 @@
         <translation>Ogromne podziękowania. Główna inspiracja tego projektu i zrzuty pakietów, dzięki którym w ogóle powstał.</translation>
     </message>
     <message>
-        <source>Info on how things looked in old versions, and help with the launcher.</source>
-        <translation>Informacje o tym, jak wyglądały stare wersje, i pomoc przy launcherze.</translation>
+        <source>Info on how things looked in old versions, help with the launcher, founding the r/OpenKogama subreddit, and translating the website into Russian.</source>
+        <translation>Informacje o tym, jak wyglądały stare wersje, pomoc przy launcherze, założenie subreddita r/OpenKogama i przetłumaczenie strony na rosyjski.</translation>
     </message>
     <message>
         <source>Archiving the standalone builds.</source>
@@ -288,12 +300,20 @@
         <translation>Ogłoszenie OpenKogama na Regamie.</translation>
     </message>
     <message>
-        <source>Announcing OpenKogama, and pointing kogama.cloud here.</source>
-        <translation>Ogłoszenie OpenKogama i przekierowanie kogama.cloud tutaj.</translation>
+        <source>Announcing OpenKogama.</source>
+        <translation>Ogłoszenie OpenKogama.</translation>
     </message>
     <message>
         <source>Sharing OpenKogama on his server.</source>
         <translation>Udostępnienie OpenKogama na swoim serwerze.</translation>
+    </message>
+    <message>
+        <source>Translating the website into French.</source>
+        <translation>Przetłumaczenie strony na francuski.</translation>
+    </message>
+    <message>
+        <source>Translating the website into Spanish.</source>
+        <translation>Przetłumaczenie strony na hiszpański.</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -1208,6 +1228,18 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Język:</translation>
     </message>
     <message>
+        <source>Light</source>
+        <translation>Jasny</translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation>Ciemny</translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation>Motyw:</translation>
+    </message>
+    <message>
         <source>Not signed in</source>
         <translation>Nie zalogowano</translation>
     </message>
@@ -1239,8 +1271,16 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Kopiuj kod</translation>
     </message>
     <message>
+        <source>New code</source>
+        <translation>Nowy kod</translation>
+    </message>
+    <message>
         <source>Server settings</source>
         <translation>Ustawienia serwera</translation>
+    </message>
+    <message>
+        <source>Players with the old code can no longer join</source>
+        <translation>Gracze ze starym kodem nie mogą już dołączyć</translation>
     </message>
     <message>
         <source>Copied</source>
@@ -1269,6 +1309,14 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     <message>
         <source>Code %1</source>
         <translation>Kod %1</translation>
+    </message>
+    <message>
+        <source>A public server keeps its code</source>
+        <translation>Serwer publiczny zachowuje swój kod</translation>
+    </message>
+    <message>
+        <source>Every time you host, the code is new</source>
+        <translation>Przy każdym hostowaniu kod jest nowy</translation>
     </message>
     <message>
         <source>Nobody joined yet</source>

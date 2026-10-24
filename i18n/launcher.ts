@@ -184,15 +184,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>put the original Assembly-CSharp.dll back</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>could not fix the Colossus laser, the game keeps its own Assembly-CSharp.dll</source>
+        <source>put the original %1 back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>could not patch %1, the game keeps its own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the game can switch worlds without restarting</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -225,6 +229,14 @@
     </message>
     <message>
         <source>Wraps GodzillaLaser.OnUnequip in kogama_Data/Managed/Assembly-CSharp.dll in a try block, so 1.47 to 1.92 stop breaking when someone leaves the Colossus. The original stays as Assembly-CSharp.dll.original and comes back when this is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>World switching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lets a server send you to another world without closing the game: when the server asks the game to sign in again, it cleans up and loads itself into the new world. Rewrites MVGameControllerBase.TryReauth and turns off HackingToolDetector in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back when this is off.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -266,7 +278,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Info on how things looked in old versions, and help with the launcher.</source>
+        <source>Info on how things looked in old versions, help with the launcher, founding the r/OpenKogama subreddit, and translating the website into Russian.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -282,11 +294,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Announcing OpenKogama, and pointing kogama.cloud here.</source>
+        <source>Announcing OpenKogama.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sharing OpenKogama on his server.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translating the website into French.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translating the website into Spanish.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1187,6 +1207,18 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Light</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Theme:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Not signed in</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1218,7 +1250,15 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>New code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Server settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Players with the old code can no longer join</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1247,6 +1287,14 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Code %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A public server keeps its code</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every time you host, the code is new</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

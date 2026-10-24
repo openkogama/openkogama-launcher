@@ -3,6 +3,7 @@
 #include "clientpatches.h"
 #include "serverfeatures.h"
 #include "launchdialog.h"
+#include "languages.h"
 #include "paths.h"
 #include "playerprofile.h"
 #include "webplayerruntime.h"
@@ -162,6 +163,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         session += "&local=" + QString::number(LocalHttpPort);
     const QString settingsKey = QUuid::createUuid().toString(QUuid::Id128);
     session += "&key=" + settingsKey;
+    session += "&language=" + QString::fromLatin1(QUrl::toPercentEncoding(Languages::current()));
 
     const std::optional<QStringList> features = ServerFeatures::fetch(url);
     QStringList notes;
@@ -233,8 +235,11 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         QString unity = info.value("unityVersion").toString();
         if (!unity.isEmpty())
             session += "&unity=" + unity;
+        QStringList active;
+        notes += ClientPatches::apply(path, url, version, features, &active);
+        if (!active.isEmpty())
+            session += "&patches=" + active.join(',');
         client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
-        notes += ClientPatches::apply(path, url, version, features);
     }
     client->setWorkingDirectory(path);
     client->setProcessEnvironment(env);

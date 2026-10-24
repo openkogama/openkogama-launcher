@@ -6,11 +6,21 @@
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QProcess>
+#include <QRandomGenerator>
 
 namespace {
 constexpr unsigned long CreateNoWindow = 0x08000000;
 constexpr int CodeLength = 6;
 const QString Letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+}
+
+QString Tunnel::newSecret()
+{
+    const QString letters = "abcdefghijklmnopqrstuvwxyz0123456789";
+    QString secret;
+    for (int i = 0; i < SecretLength; ++i)
+        secret += letters[QRandomGenerator::system()->bounded(int(letters.size()))];
+    return secret;
 }
 
 QString Tunnel::normalize(const QString &text)

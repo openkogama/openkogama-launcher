@@ -1,5 +1,7 @@
 #include "tilegrid.h"
 #include "centereddelegate.h"
+#include <QCoreApplication>
+#include <QHoverEvent>
 #include <QListWidget>
 #include <QScrollBar>
 #include <QPainter>
@@ -29,6 +31,10 @@ void setup(QListWidget *list, QObject *resizeFilter)
     list->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
     list->setTextElideMode(Qt::ElideRight);
     list->installEventFilter(resizeFilter);
+    QObject::connect(list->verticalScrollBar(), &QScrollBar::valueChanged, list, [list]() {
+        QHoverEvent leave(QEvent::HoverLeave, QPointF(-1, -1), QPointF(-1, -1), QPointF(-1, -1));
+        QCoreApplication::sendEvent(list->viewport(), &leave);
+    });
 }
 
 void fit(QListWidget *list, const QSize &tile)

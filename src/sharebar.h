@@ -29,6 +29,8 @@ signals:
 
 private:
     void start();
+    void newCode();
+    void leaveList();
     void heard(const QString &word, const QString &rest);
     void ended();
     void refresh();
@@ -39,6 +41,7 @@ private:
     QLabel *m_code;
     QLabel *m_info;
     QPushButton *m_copy;
+    QPushButton *m_newCode;
     QPushButton *m_settings;
     QPushButton *m_stop;
     QTimer *m_slow;
@@ -49,6 +52,7 @@ private:
     QString m_title;
     QString m_version;
     QString m_codeText;
+    QString m_privateSecret;
     QString m_error;
     int m_world = 0;
     int m_players = 0;

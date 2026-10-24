@@ -30,7 +30,6 @@
 #include <QFileIconProvider>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QPainter>
 #include <QPixmap>
 #include <QStyleHints>
 #include <QIcon>
@@ -78,11 +77,7 @@ static QString versionTitle(const QString &name, const QString &version) {
 }
 
 static QIcon unknownIcon() {
-    QPixmap pixmap(":/unknown.png");
-    QPainter painter(&pixmap);
-    painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    painter.fillRect(pixmap.rect(), Theme::dark() ? QColor(Qt::white) : QColor(0x3c, 0x3c, 0x3c));
-    return QIcon(pixmap);
+    return Theme::icon(":/unknown.png");
 }
 
 static QIcon instanceIcon(const QDir &dir, const QFileIconProvider &provider) {

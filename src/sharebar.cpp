@@ -31,8 +31,9 @@ constexpr int JpegLimit = 64 * 1024;
 
 ShareBar::ShareBar(QWidget *parent)
     : QFrame(parent), m_text(new QLabel(this)), m_code(new QLabel(this)), m_info(new QLabel(this)),
-      m_copy(new QPushButton(tr("Copy code"), this)), m_settings(new QPushButton(tr("Server settings"), this)),
-      m_stop(new QPushButton(this)), m_slow(new QTimer(this)), m_upload(new QTimer(this))
+      m_copy(new QPushButton(tr("Copy code"), this)), m_newCode(new QPushButton(tr("New code"), this)),
+      m_settings(new QPushButton(tr("Server settings"), this)), m_stop(new QPushButton(this)), m_slow(new QTimer(this)),
+      m_upload(new QTimer(this))
 {
     m_upload->setInterval(UploadMs);
     connect(m_upload, &QTimer::timeout, this, [this]() { sendThumbnail(1); });
@@ -50,6 +51,8 @@ ShareBar::ShareBar(QWidget *parent)
     m_code->setContentsMargins(Gap, 0, 0, 0);
     m_info->setContentsMargins(Gap, 0, 0, 0);
     m_copy->setObjectName("shareCopyButton");
+    m_newCode->setObjectName("shareNewCodeButton");
+    m_newCode->setToolTip(tr("Players with the old code can no longer join"));
     m_settings->setObjectName("shareSettingsButton");
     m_stop->setObjectName("shareStopButton");
     layout->addWidget(m_text);
@@ -57,6 +60,7 @@ ShareBar::ShareBar(QWidget *parent)
     layout->addWidget(m_info);
     layout->addStretch(1);
     layout->addWidget(m_copy);
+    layout->addWidget(m_newCode);
     layout->addWidget(m_settings);
     layout->addWidget(m_stop);
     m_slow->setSingleShot(true);
@@ -70,6 +74,7 @@ ShareBar::ShareBar(QWidget *parent)
         m_copy->setText(tr("Copied"));
         QTimer::singleShot(CopiedMs, m_copy, [this]() { m_copy->setText(tr("Copy code")); });
     });
+    connect(m_newCode, &QPushButton::clicked, this, &ShareBar::newCode);
     connect(m_settings, &QPushButton::clicked, this, &ShareBar::settingsRequested);
     connect(m_stop, &QPushButton::clicked, this, &ShareBar::stop);
     hide();
@@ -77,6 +82,7 @@ ShareBar::ShareBar(QWidget *parent)
 
 void ShareBar::share(int world, const QString &name, const QString &version)
 {
+    if (!m_tunnel || m_privateSecret.isEmpty()) m_privateSecret = Tunnel::newSecret();
     if (m_tunnel) {
         Tunnel *old = m_tunnel;
         m_tunnel = nullptr;
@@ -105,17 +111,33 @@ void ShareBar::restart()
     if (m_tunnel) share(m_world, m_name, m_version);
 }
 
+void ShareBar::newCode()
+{
+    if (!m_tunnel) return;
+    if (m_listed) {
+        leaveList();
+        Settings::newPublicSecret();
+    } else {
+        m_privateSecret = Tunnel::newSecret();
+    }
+    share(m_world, m_name, m_version);
+}
+
+void ShareBar::leaveList()
+{
+    if (!m_tunnel || !m_listed) return;
+    if (!m_net) m_net = new QNetworkAccessManager(this);
+    QNetworkRequest request{QUrl(Settings::publicList() + "/announce")};
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+    request.setTransferTimeout(8000);
+    const QJsonObject goodbye{{"secret", Settings::publicSecret()}, {"left", true}};
+    QNetworkReply *reply = m_net->post(request, QJsonDocument(goodbye).toJson(QJsonDocument::Compact));
+    connect(reply, &QNetworkReply::finished, reply, &QObject::deleteLater);
+}
+
 void ShareBar::stop()
 {
-    if (m_tunnel && m_listed) {
-        if (!m_net) m_net = new QNetworkAccessManager(this);
-        QNetworkRequest request{QUrl(Settings::publicList() + "/announce")};
-        request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-        request.setTransferTimeout(8000);
-        const QJsonObject goodbye{{"secret", Settings::hostSecret()}, {"left", true}};
-        QNetworkReply *reply = m_net->post(request, QJsonDocument(goodbye).toJson(QJsonDocument::Compact));
-        connect(reply, &QNetworkReply::finished, reply, &QObject::deleteLater);
-    }
+    leaveList();
     m_listed = false;
     m_upload->stop();
     if (m_tunnel) {
@@ -143,8 +165,8 @@ void ShareBar::start()
     if (clients.isEmpty() && !config.value("mixedClients").toBool()) clients.append(m_version);
     const QJsonObject info{{"title", title}, {"version", clients.size() == 1 ? clients.first().toString() : QString()},
         {"clients", clients}, {"world", m_world}};
-    Tunnel *tunnel = Tunnel::host(Settings::hostSecret(), QString::fromUtf8(QJsonDocument(info).toJson(QJsonDocument::Compact)),
-        m_listed, this);
+    Tunnel *tunnel = Tunnel::host(m_listed ? Settings::publicSecret() : m_privateSecret,
+        QString::fromUtf8(QJsonDocument(info).toJson(QJsonDocument::Compact)), m_listed, this);
     m_tunnel = tunnel;
     connect(tunnel, &Tunnel::said, this, [this, tunnel](const QString &word, const QString &rest) {
         if (tunnel == m_tunnel) heard(word, rest);
@@ -188,7 +210,7 @@ void ShareBar::sendThumbnail(int tries)
         QNetworkRequest request{QUrl(Settings::publicList() + "/thumbnail")};
         request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
         request.setTransferTimeout(8000);
-        const QJsonObject body{{"secret", Settings::hostSecret()}, {"image", QString::fromLatin1(jpeg.toBase64())}};
+        const QJsonObject body{{"secret", Settings::publicSecret()}, {"image", QString::fromLatin1(jpeg.toBase64())}};
         QNetworkReply *reply = m_net->post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
         connect(reply, &QNetworkReply::finished, this, [this, reply, tries]() {
             reply->deleteLater();
@@ -235,10 +257,12 @@ void ShareBar::refresh()
     m_text->setText(failed ? tr("Could not host %1: %2").arg(m_name, m_error) : tr("Hosting %1").arg(m_name));
     m_code->setText(tr("Code %1").arg(Tunnel::display(m_codeText)));
     m_code->setVisible(live);
+    m_code->setToolTip(m_listed ? tr("A public server keeps its code") : tr("Every time you host, the code is new"));
     if (live) m_info->setText(m_players == 0 ? tr("Nobody joined yet") : tr("%n player(s) joined", nullptr, m_players));
     else m_info->setText(m_waiting ? tr("Still reaching the P2P servers...") : tr("Getting a code..."));
     m_info->setVisible(!failed);
     m_copy->setVisible(live);
+    m_newCode->setVisible(live);
     m_stop->setText(m_tunnel ? tr("Stop hosting") : tr("Close"));
     m_settings->setVisible(!failed);
     setToolTip(tr("Players type the code in Servers, Join with code"));

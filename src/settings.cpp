@@ -2,7 +2,6 @@
 #include "paths.h"
 #include "tunnel.h"
 
-#include <QRandomGenerator>
 #include <QSettings>
 #include <QUrl>
 #include <QVersionNumber>
@@ -158,16 +157,16 @@ QString rendezvous()
     return store().value("p2p/rendezvous").toString();
 }
 
-QString hostSecret()
+QString publicSecret()
 {
-    QSettings settings = store();
-    QString secret = settings.value("p2p/secret").toString();
-    if (secret.size() >= 32) return secret;
-    const QString letters = "abcdefghijklmnopqrstuvwxyz0123456789";
-    secret.clear();
-    for (int i = 0; i < 32; ++i)
-        secret += letters[QRandomGenerator::system()->bounded(int(letters.size()))];
-    settings.setValue("p2p/secret", secret);
+    const QString secret = store().value("p2p/secret").toString();
+    return secret.size() >= Tunnel::SecretLength ? secret : newPublicSecret();
+}
+
+QString newPublicSecret()
+{
+    const QString secret = Tunnel::newSecret();
+    store().setValue("p2p/secret", secret);
     return secret;
 }
 
@@ -229,6 +228,16 @@ QString language()
 void setLanguage(const QString &code)
 {
     store().setValue("general/language", code);
+}
+
+QString theme()
+{
+    return store().value("general/theme").toString();
+}
+
+void setTheme(const QString &theme)
+{
+    store().setValue("general/theme", theme);
 }
 
 }

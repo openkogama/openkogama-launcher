@@ -33,6 +33,8 @@ const QString SeveralWindows = "several-windows";
 const QString SoundEmitterList = "sound-emitter-list";
 const QString FreshBundles = "fresh-bundles";
 const QString ColossusLaser = "colossus-laser";
+const QString WorldSwitch = "world-switch";
+const QByteArray Applied = "client fix: applied ";
 
 QString unityCache(const QString &instancePath) {
     const QDir instance(instancePath);
@@ -130,7 +132,7 @@ QJsonObject content(const QString &serverUrl, const QString &version) {
     return QJsonDocument::fromJson(reply->readAll()).object();
 }
 
-int serverTool(const QStringList &arguments, const QByteArray &input = {}) {
+int serverTool(const QStringList &arguments, const QByteArray &input = {}, QByteArray *output = nullptr) {
     QProcess process;
     process.setProgram(QDir(Paths::server()).filePath("openkogama-server.exe"));
     process.setArguments(arguments);
@@ -143,7 +145,9 @@ int serverTool(const QStringList &arguments, const QByteArray &input = {}) {
     process.write(input);
     process.closeWriteChannel();
     const int code = process.waitForFinished(PatchTimeout) && process.exitStatus() == QProcess::NormalExit ? process.exitCode() : -1;
-    if (code != 0 && code != NothingToChange) qWarning("Client %s failed: %s", qPrintable(arguments.value(1)), process.readAll().constData());
+    const QByteArray printed = process.readAll();
+    if (output) *output = printed;
+    if (code != 0 && code != NothingToChange) qWarning("Client %s failed: %s", qPrintable(arguments.value(1)), printed.constData());
     return code;
 }
 
@@ -185,26 +189,40 @@ QString managedAssembly(const QString &instancePath) {
     return {};
 }
 
-QString colossusLaser(const QString &instancePath, bool on) {
-    const QString assembly = managedAssembly(instancePath);
-    if (assembly.isEmpty()) return {};
-    const QString original = assembly + ".original";
+QString gameAssembly(const QString &instancePath) {
+    const QString file = QDir(instancePath).filePath("GameAssembly.dll");
+    return QFile::exists(file) ? file : QString();
+}
 
-    if (!on) {
-        if (!QFile::exists(original) || !replace(original, assembly)) return {};
+QString fixCode(const QString &file, const QStringList &fixes, QStringList &applied) {
+    const QString name = QFileInfo(file).fileName();
+    const QString original = file + ".original";
+    if (fixes.isEmpty()) {
+        if (!QFile::exists(original) || !replace(original, file)) return {};
         QFile::remove(original);
-        return QCoreApplication::translate("ClientPatches", "put the original Assembly-CSharp.dll back");
+        return QCoreApplication::translate("ClientPatches", "put the original %1 back").arg(name);
     }
 
     const bool fresh = !QFile::exists(original);
-    if (fresh && !QFile::copy(assembly, original)) return {};
-    const int result = serverTool({"client", "fix", original, assembly});
-    if (result == 0) return QCoreApplication::translate("ClientPatches", "wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block");
-    if (result == NothingToChange) {
-        if (fresh) QFile::remove(original);
+    if (fresh && !QFile::copy(file, original)) return {};
+    QByteArray output;
+    const int result = serverTool(QStringList{"client", "fix", original, file} + fixes, {}, &output);
+    if (result == 0) {
+        for (const QByteArray &line : output.split('\n'))
+            if (line.trimmed().startsWith(Applied)) applied << QString::fromUtf8(line.trimmed().mid(Applied.size()));
         return {};
     }
-    return QCoreApplication::translate("ClientPatches", "could not fix the Colossus laser, the game keeps its own Assembly-CSharp.dll");
+    if (result == NothingToChange) {
+        if (fresh || replace(original, file)) QFile::remove(original);
+        return {};
+    }
+    return QCoreApplication::translate("ClientPatches", "could not patch %1, the game keeps its own").arg(name);
+}
+
+QString describe(const QString &fix) {
+    if (fix == ColossusLaser) return QCoreApplication::translate("ClientPatches", "wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block");
+    if (fix == WorldSwitch) return QCoreApplication::translate("ClientPatches", "the game can switch worlds without restarting");
+    return fix;
 }
 
 }
@@ -223,11 +241,18 @@ const QList<ClientPatch> &ClientPatches::all() {
          QCoreApplication::translate("ClientPatches",
              "Wraps GodzillaLaser.OnUnequip in kogama_Data/Managed/Assembly-CSharp.dll in a try block, so 1.47 to 1.92 stop breaking "
              "when someone leaves the Colossus. The original stays as Assembly-CSharp.dll.original and comes back when this is off.")},
+        {WorldSwitch, QCoreApplication::translate("ClientPatches", "World switching"),
+         QCoreApplication::translate("ClientPatches",
+             "Lets a server send you to another world without closing the game: when the server asks the game to sign in again, it cleans up "
+             "and loads itself into the new world. Rewrites MVGameControllerBase.TryReauth and turns off HackingToolDetector in "
+             "kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. "
+             "The original stays as .original next to it and comes back when this is off.")},
     };
     return patches;
 }
 
-QStringList ClientPatches::apply(const QString &instancePath, const QString &serverUrl, const QString &version, const std::optional<QStringList> &features) {
+QStringList ClientPatches::apply(const QString &instancePath, const QString &serverUrl, const QString &version, const std::optional<QStringList> &features,
+    QStringList *active) {
     QStringList notes;
     if (Settings::clientPatch(SeveralWindows))
         if (const int released = SingleInstance::release(Paths::instances()); released > 0)
@@ -241,7 +266,16 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
             notes << QCoreApplication::translate("ClientPatches", "removed %n cached bundle(s) the server replaces", nullptr, removed);
     if (const QString note = soundEmitterList(instancePath, sounds ? served.value("sounds").toArray() : QJsonArray()); !note.isEmpty())
         notes << note;
-    if (const QString note = colossusLaser(instancePath, Settings::clientPatch(ColossusLaser)); !note.isEmpty())
-        notes << note;
+    QStringList fixes;
+    if (Settings::clientPatch(ColossusLaser)) fixes << ColossusLaser;
+    if (Settings::clientPatch(WorldSwitch)) fixes << WorldSwitch;
+    QStringList applied;
+    if (const QString assembly = managedAssembly(instancePath); !assembly.isEmpty())
+        if (const QString note = fixCode(assembly, fixes, applied); !note.isEmpty()) notes << note;
+    if (const QString native = gameAssembly(instancePath); !native.isEmpty())
+        if (const QString note = fixCode(native, fixes.contains(WorldSwitch) ? QStringList{WorldSwitch} : QStringList(), applied); !note.isEmpty())
+            notes << note;
+    for (const QString &fix : applied) notes << describe(fix);
+    if (active) *active = applied;
     return notes;
 }

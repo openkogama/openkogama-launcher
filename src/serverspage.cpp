@@ -9,6 +9,7 @@
 #include <QStyle>
 #include <QMenu>
 #include <QGuiApplication>
+#include <QStyleHints>
 #include <QClipboard>
 #include <QCoreApplication>
 #include <QDialog>
@@ -236,6 +237,9 @@ ServersPage::ServersPage(QWidget *parent)
     timer->start(RefreshMs);
     load(Settings::currentServer());
     refresh();
+    connect(QGuiApplication::styleHints(), &QStyleHints::colorSchemeChanged, this, [this]() {
+        QTimer::singleShot(0, this, [this]() { load(selectedAddress()); });
+    });
 }
 
 void ServersPage::showEvent(QShowEvent *event)

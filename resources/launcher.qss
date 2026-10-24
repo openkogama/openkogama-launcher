@@ -13,6 +13,7 @@ QPushButton:flat { background: transparent; border: none; }
 QPushButton:flat:hover { background: @button@; }
 
 QPushButton[primary="true"] { background: #3a7a80; color: #ffffff; border: 1px solid #3a7a80; font-weight: bold; padding-left: 14px; padding-right: 14px; }
+QPushButton[primary="true"]:default { border-color: #3a7a80; }
 QPushButton[primary="true"]:hover { background: #438a90; border-color: #438a90; }
 QPushButton[primary="true"]:pressed { background: #2c5e63; border-color: #2c5e63; }
 QPushButton[primary="true"]:disabled { background: @disabled@; color: @disabled-text@; border-color: @disabled-border@; }
@@ -45,6 +46,8 @@ QComboBox {
     border-radius: 4px;
     padding: 0 8px;
     min-height: 26px;
+    selection-background-color: #3a7a80;
+    selection-color: #ffffff;
 }
 QComboBox:hover { background: @hover@; border-color: @hover-border@; }
 QComboBox:disabled { background: @disabled@; color: @disabled-text@; border-color: @disabled-border@; }
@@ -94,7 +97,7 @@ QToolButton#moreWorldButton, QToolButton#moreAvatarButton,
 QToolButton#moreVersionButton, QToolButton#moreServerButton, QToolButton#moreItemButton { padding: 0; min-width: 26px; max-width: 26px; min-height: 26px; max-height: 26px; }
 
 QMenuBar { background: transparent; }
-QMenuBar::item { padding: 4px 8px; background: transparent; border-radius: 4px; }
+QMenuBar::item { padding: 4px 8px; background: transparent; border-radius: 4px; color: @text@; }
 QMenuBar::item:selected, QMenuBar::item:pressed { background: @button@; }
 QMenu { background: @field@; border: 1px solid @border@; padding: 4px; }
 QMenu::item { padding: 5px 20px 5px 10px; border-radius: 4px; }

@@ -2,6 +2,7 @@
 #include "ui_installprogressdialog.h"
 #include "assetinstaller.h"
 #include "paths.h"
+#include "theme.h"
 #include <QIcon>
 #include <QDir>
 #include <QStandardPaths>
@@ -40,7 +41,7 @@ InstallProgressDialog::InstallProgressDialog(const Version &version, const QStri
     , m_assets(new AssetInstaller(this))
 {
     ui->setupUi(this);
-    setWindowIcon(QIcon(":/install.png"));
+    setWindowIcon(Theme::icon(":/install.png"));
     setWindowTitle(tr("Installing %1").arg(version.version));
     ui->nameLabel->setText(tr("Installing KoGaMa %1").arg(version.version));
     ui->progressBar->setRange(0, 100);
