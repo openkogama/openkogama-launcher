@@ -39,7 +39,7 @@
     </message>
     <message>
         <source>Saved</source>
-        <translation>Enregistrés</translation>
+        <translation>Enregistrï¿½s</translation>
     </message>
     <message>
         <source>Search %1 worlds...</source>
@@ -77,7 +77,7 @@
 
     <message>
         <source>Host</source>
-        <translation>Héberger</translation>
+        <translation>Hï¿½berger</translation>
     </message>
     <message>
         <source>Build</source>
@@ -93,7 +93,7 @@
     </message>
     <message>
         <source>Edit</source>
-        <translation>Éditer</translation>
+        <translation>ï¿½diter</translation>
     </message>
     <message>
         <source>Use</source>
@@ -110,7 +110,7 @@
     </message>
     <message>
         <source>%1 cubes, scale %2</source>
-        <translation>%1 cubes, échelle %2</translation>
+        <translation>%1 cubes, ï¿½chelle %2</translation>
     </message>
 </context>
 
@@ -118,12 +118,12 @@
     <name>SettingsDialog</name>
     <message>
         <source>Settings</source>
-        <translation>Paramètres</translation>
+        <translation>Paramï¿½tres</translation>
     </message>
     
     <message>
         <source>General</source>
-        <translation>Général</translation>
+        <translation>Gï¿½nï¿½ral</translation>
     </message>
     <message>
         <source>Console</source>
@@ -140,7 +140,7 @@
     </message>
     <message>
         <source>Sign out</source>
-        <translation>Se déconnecter</translation>
+        <translation>Se dï¿½connecter</translation>
     </message>
     <message>
         <source>Nickname:</source>
@@ -152,7 +152,7 @@
     </message>
     <message>
         <source>Show what I'm playing</source>
-        <translation>Afficher ce à quoi je joue</translation>
+        <translation>Afficher ce ï¿½ quoi je joue</translation>
     </message>
     <message>
         <source>Language:</source>
@@ -160,7 +160,7 @@
     </message>
     <message>
         <source>System</source>
-        <translation>Système (par défaut)</translation>
+        <translation>Systï¿½me (par dï¿½faut)</translation>
     </message>
 
     <message>
@@ -169,7 +169,7 @@
     </message>
     <message>
         <source>When a game starts</source>
-        <translation>Lorsqu'un jeu démarre</translation>
+        <translation>Lorsqu'un jeu dï¿½marre</translation>
     </message>
     <message>
         <source>When a game crashes</source>
@@ -178,15 +178,15 @@
 
     <message>
         <source>Several game windows</source>
-        <translation>Autoriser plusieurs fenêtres de jeu</translation>
+        <translation>Autoriser plusieurs fenï¿½tres de jeu</translation>
     </message>
     <message>
         <source>Server sounds in the Sound Emitter list</source>
-        <translation>Sons du serveur dans la liste des émetteurs de son</translation>
+        <translation>Sons du serveur dans la liste des ï¿½metteurs de son</translation>
     </message>
     <message>
         <source>Fresh copies of replaced bundles</source>
-        <translation>Copies propres des bundles remplacés</translation>
+        <translation>Copies propres des bundles remplacï¿½s</translation>
     </message>
     <message>
         <source>Colossus laser fix</source>
