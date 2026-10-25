@@ -202,6 +202,10 @@
         <translation>gra może zmieniać świat bez restartu</translation>
     </message>
     <message>
+        <source>the game connects over TCP, because its UDP traffic does not reach this server</source>
+        <translation>gra łączy się przez TCP, bo jej ruch UDP nie dociera do tego serwera</translation>
+    </message>
+    <message>
         <source>Several game windows</source>
         <translation>Kilka okien gry</translation>
     </message>
@@ -240,6 +244,14 @@
     <message>
         <source>Lets a server send you to another world without closing the game: when the server asks the game to sign in again, it cleans up and loads itself into the new world. Rewrites MVGameControllerBase.TryReauth and turns off HackingToolDetector in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back when this is off.</source>
         <translation>Pozwala serwerowi przenieść cię do innego świata bez zamykania gry: gdy serwer każe grze zalogować się ponownie, gra sprząta po sobie i wczytuje się od nowa w nowym świecie. Zmienia MVGameControllerBase.TryReauth i wyłącza HackingToolDetector w kogama_Data/Managed/Assembly-CSharp.dll, a w wersjach IL2CPP w GameAssembly.dll. Oryginał zostaje obok jako .original i wraca, gdy ta opcja jest wyłączona.</translation>
+    </message>
+    <message>
+        <source>TCP when UDP is blocked</source>
+        <translation>TCP, gdy UDP jest zablokowane</translation>
+    </message>
+    <message>
+        <source>Before joining a server that offers it, the launcher checks whether the game&apos;s UDP traffic gets through. When your network or VPN blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back on the next launch over UDP.</source>
+        <translation>Przed wejściem na serwer, który to oferuje, launcher sprawdza, czy ruch UDP gry przechodzi. Gdy Twoja sieć albo VPN go blokuje, gra łączy się przy tym wejściu przez TCP, tak jak strona internetowa. Zmienia sposób, w jaki MVNetworkGame otwiera połączenie w kogama_Data/Managed/Assembly-CSharp.dll albo w GameAssembly.dll w wersjach IL2CPP. Oryginał zostaje obok jako .original i wraca przy następnym wejściu przez UDP.</translation>
     </message>
     <message numerus="yes">
         <source>closed the one window lock in %n running game(s)</source>
@@ -329,21 +341,6 @@
     </message>
 </context>
 <context>
-    <name>DiscordPresence</name>
-    <message>
-        <source>Play OpenKogama</source>
-        <translation>Graj w OpenKogama</translation>
-    </message>
-    <message>
-        <source>Join this server</source>
-        <translation>Dołącz do tego serwera</translation>
-    </message>
-    <message>
-        <source>Playing %1</source>
-        <translation>Gra na %1</translation>
-    </message>
-</context>
-<context>
     <name>GameLauncher</name>
     <message>
         <source>Sign in to play</source>
@@ -384,26 +381,6 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     <message>
         <source>KoGaMa %1</source>
         <translation>KoGaMa %1</translation>
-    </message>
-    <message>
-        <source>Editing an avatar</source>
-        <translation>Edytuje awatara</translation>
-    </message>
-    <message>
-        <source>Building a world</source>
-        <translation>Buduje świat</translation>
-    </message>
-    <message>
-        <source>Playing a local world</source>
-        <translation>Gra w lokalnym świecie</translation>
-    </message>
-    <message>
-        <source>Playing %1</source>
-        <translation>Gra na %1</translation>
-    </message>
-    <message>
-        <source>Playing online</source>
-        <translation>Gra online</translation>
     </message>
     <message>
         <source>signed in as %1</source>
@@ -1517,8 +1494,28 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Nie wybrano przedmiotu</translation>
     </message>
     <message>
-        <source>Size of one cube in the game, like 0.5 or 1.</source>
-        <translation>Rozmiar jednej kostki w grze, na przykład 0.5 albo 1.</translation>
+        <source>Small (0.125)</source>
+        <translation>Mały (0.125)</translation>
+    </message>
+    <message>
+        <source>Medium (0.25)</source>
+        <translation>Średni (0.25)</translation>
+    </message>
+    <message>
+        <source>Large (0.5)</source>
+        <translation>Duży (0.5)</translation>
+    </message>
+    <message>
+        <source>Size of one cube in the game.</source>
+        <translation>Rozmiar jednej kostki w grze.</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation>Własny</translation>
+    </message>
+    <message>
+        <source>Size:</source>
+        <translation>Rozmiar:</translation>
     </message>
     <message>
         <source>Scale:</source>
@@ -1811,14 +1808,6 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
             <numerusform>Importuj %n modele</numerusform>
             <numerusform>Importuj %n modeli</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>The file&apos;s own scale</source>
-        <translation>Skala zapisana w pliku</translation>
-    </message>
-    <message>
-        <source>Each file&apos;s own scale</source>
-        <translation>Skala zapisana w każdym pliku</translation>
     </message>
     <message numerus="yes">
         <source>These file(s) are not model(s): %1</source>

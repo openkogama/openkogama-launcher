@@ -80,9 +80,14 @@ static QString guestMode()
     return ServerConfigDialog::current().value("joinMode").toString().compare("build", Qt::CaseInsensitive) == 0 ? "edit" : "play";
 }
 
-static std::optional<QString> askScale(QWidget *parent, const QString &title, const QString &confirm, const QString &current, const QString &placeholder)
+static std::optional<QString> askScale(QWidget *parent, const QString &title, const QString &confirm, const QString &current)
 {
     constexpr double MaxScale = 100;
+    const QList<std::pair<QString, QString>> presets{
+        {QCoreApplication::translate("WorldsDialog", "Small (0.125)"), "0.125"},
+        {QCoreApplication::translate("WorldsDialog", "Medium (0.25)"), "0.25"},
+        {QCoreApplication::translate("WorldsDialog", "Large (0.5)"), "0.5"},
+    };
 
     QDialog dialog(parent);
     dialog.setWindowTitle(title);
@@ -90,38 +95,51 @@ static std::optional<QString> askScale(QWidget *parent, const QString &title, co
     auto *layout = new QVBoxLayout(&dialog);
     layout->setContentsMargins(12, 12, 12, 12);
     layout->setSpacing(10);
-    auto *hint = new QLabel(QCoreApplication::translate("WorldsDialog", "Size of one cube in the game, like 0.5 or 1."), &dialog);
+    auto *hint = new QLabel(QCoreApplication::translate("WorldsDialog", "Size of one cube in the game."), &dialog);
     hint->setWordWrap(true);
     layout->addWidget(hint);
-    auto *field = new QLineEdit(current, &dialog);
-    field->setPlaceholderText(placeholder);
+    auto *size = new QComboBox(&dialog);
+    for (const auto &[label, value] : presets) size->addItem(label, value);
+    size->addItem(QCoreApplication::translate("WorldsDialog", "Custom"));
+    const int custom = size->count() - 1;
+    auto *field = new QLineEdit(&dialog);
     field->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{0,3}([.,]\\d{0,4})?"), field));
     auto *form = new QFormLayout;
     form->setSpacing(8);
+    form->addRow(QCoreApplication::translate("WorldsDialog", "Size:"), size);
     form->addRow(QCoreApplication::translate("WorldsDialog", "Scale:"), field);
     layout->addLayout(form);
+    const int preset = size->findData(current);
+    size->setCurrentIndex(preset >= 0 ? preset : custom);
+    if (preset < 0) field->setText(current);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     auto *ok = buttons->button(QDialogButtonBox::Ok);
     ok->setText(confirm);
     ok->setProperty("primary", true);
     ok->style()->polish(ok);
-    const auto check = [field, ok, placeholder]() {
+    const auto check = [size, field, form, ok, custom]() {
+        const bool own = size->currentIndex() == custom;
+        form->setRowVisible(field, own);
         const QString text = field->text().trimmed();
         bool number = false;
         const double value = QString(text).replace(',', '.').toDouble(&number);
-        ok->setEnabled(text.isEmpty() ? !placeholder.isEmpty() : number && value > 0 && value <= MaxScale);
+        ok->setEnabled(!own || (number && value > 0 && value <= MaxScale));
     };
+    QObject::connect(size, &QComboBox::currentIndexChanged, &dialog, [check, size, field, custom]() {
+        check();
+        if (size->currentIndex() == custom) field->setFocus();
+    });
     QObject::connect(field, &QLineEdit::textChanged, &dialog, check);
     check();
     QObject::connect(buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
     QObject::connect(buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
     layout->addStretch();
     layout->addWidget(buttons);
-    field->selectAll();
-    field->setFocus();
+    size->setFocus();
 
     if (dialog.exec() != QDialog::Accepted) return std::nullopt;
+    if (size->currentIndex() != custom) return size->currentData().toString();
     return field->text().trimmed().replace(',', '.');
 }
 
@@ -1102,23 +1120,18 @@ void WorldsDialog::updateInventoryActions() {
 
 void WorldsDialog::importModel() {
     const QStringList paths = QFileDialog::getOpenFileNames(this, tr("Import models"), QString(), tr("Models (*.kgmodel *.kscubes *.json *.bin);;All files (*)"));
-    if (paths.isEmpty()) return;
-
-    QList<std::optional<float>> scales;
-    for (const QString &path : paths) {
-        QFile file(path);
-        const QByteArray head = file.open(QIODevice::ReadOnly) ? file.read(8) : QByteArray();
-        scales.append(ModelPreview::hasScale(head) ? std::optional(ModelPreview::scale(head)) : std::nullopt);
-    }
-    const bool same = scales.first() && std::all_of(scales.cbegin(), scales.cend(), [&](const std::optional<float> &scale) { return scale == scales.first(); });
-    const QString title = paths.size() == 1 ? tr("Import %1").arg(QFileInfo(paths.first()).completeBaseName()) : tr("Import %n model(s)", nullptr, paths.size());
-    const QString own = paths.size() == 1 ? tr("The file's own scale") : tr("Each file's own scale");
-    if (const auto scale = askScale(this, title, tr("Import"), same ? QString::number(*scales.first()) : QString(), same ? QString() : own))
-        importModels(paths, *scale, {});
+    if (!paths.isEmpty()) importModels(paths, QString(), {}, {});
 }
 
-void WorldsDialog::importModels(QStringList paths, const QString &scale, QStringList failed) {
+void WorldsDialog::importModels(QStringList paths, const QString &scale, QStringList failed, QStringList unscaled) {
     if (paths.isEmpty()) {
+        if (!unscaled.isEmpty()) {
+            const QString title = unscaled.size() == 1 ? tr("Import %1").arg(QFileInfo(unscaled.first()).completeBaseName()) : tr("Import %n model(s)", nullptr, unscaled.size());
+            if (const auto chosen = askScale(this, title, tr("Import"), "0.25")) {
+                importModels(unscaled, *chosen, failed, {});
+                return;
+            }
+        }
         if (!failed.isEmpty())
             QMessageBox::warning(this, tr("Import"), tr("These file(s) are not model(s): %1", nullptr, failed.size()).arg(failed.join(", ")));
         return;
@@ -1126,7 +1139,7 @@ void WorldsDialog::importModels(QStringList paths, const QString &scale, QString
     const QString path = paths.takeFirst();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        importModels(paths, scale, failed << QFileInfo(path).fileName());
+        importModels(paths, scale, failed << QFileInfo(path).fileName(), unscaled);
         return;
     }
 
@@ -1138,12 +1151,14 @@ void WorldsDialog::importModels(QStringList paths, const QString &scale, QString
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
     QNetworkReply *reply = m_net->post(request, file.readAll());
-    connect(reply, &QNetworkReply::finished, this, [this, reply, path, paths, scale, failed]() mutable {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, path, paths, scale, failed, unscaled]() mutable {
         reply->deleteLater();
-        int id = QJsonDocument::fromJson(reply->readAll()).object()["id"].toInt();
-        if (id == 0) failed << QFileInfo(path).fileName();
+        const QJsonObject result = QJsonDocument::fromJson(reply->readAll()).object();
+        const int id = result["id"].toInt();
+        if (result["needsScale"].toBool()) unscaled << path;
+        else if (id == 0) failed << QFileInfo(path).fileName();
         loadInventory(id);
-        importModels(paths, scale, failed);
+        importModels(paths, scale, failed, unscaled);
     });
 }
 
@@ -1155,7 +1170,7 @@ void WorldsDialog::scaleItem() {
         QMessageBox::information(this, tr("Scale"), tr("Only models have a scale."));
         return;
     }
-    const auto scale = askScale(this, tr("Scale %1").arg(item->text()), tr("Save"), QString::number(ModelPreview::scale(model)), QString());
+    const auto scale = askScale(this, tr("Scale %1").arg(item->text()), tr("Save"), QString::number(ModelPreview::scale(model)));
     if (!scale) return;
 
     const int id = item->data(Qt::UserRole).toInt();

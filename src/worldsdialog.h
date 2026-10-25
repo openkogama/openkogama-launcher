@@ -77,7 +77,7 @@ private:
     void filterInventory();
     void updateInventoryActions();
     void importModel();
-    void importModels(QStringList paths, const QString &scale, QStringList failed);
+    void importModels(QStringList paths, const QString &scale, QStringList failed, QStringList unscaled);
     void exportItem();
     void renameItem();
     void scaleItem();

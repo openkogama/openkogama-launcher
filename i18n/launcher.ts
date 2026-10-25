@@ -200,6 +200,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>the game connects over TCP, because its UDP traffic does not reach this server</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Several game windows</source>
         <translation type="unfinished"></translation>
     </message>
@@ -237,6 +241,14 @@
     </message>
     <message>
         <source>Lets a server send you to another world without closing the game: when the server asks the game to sign in again, it cleans up and loads itself into the new world. Rewrites MVGameControllerBase.TryReauth and turns off HackingToolDetector in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back when this is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>TCP when UDP is blocked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before joining a server that offers it, the launcher checks whether the game&apos;s UDP traffic gets through. When your network or VPN blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back on the next launch over UDP.</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
@@ -323,21 +335,6 @@
     </message>
 </context>
 <context>
-    <name>DiscordPresence</name>
-    <message>
-        <source>Play OpenKogama</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Join this server</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playing %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
     <name>GameLauncher</name>
     <message>
         <source>Sign in to play</source>
@@ -373,26 +370,6 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>KoGaMa %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Editing an avatar</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Building a world</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playing a local world</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playing %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Playing online</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1493,7 +1470,27 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Size of one cube in the game, like 0.5 or 1.</source>
+        <source>Small (0.125)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Medium (0.25)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Large (0.5)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size of one cube in the game.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Size:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1773,14 +1770,6 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>The file&apos;s own scale</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each file&apos;s own scale</source>
-        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>These file(s) are not model(s): %1</source>

@@ -6,5 +6,6 @@
 
 namespace ServerFeatures {
 std::optional<QStringList> fetch(const QString &serverUrl);
+int udpPort(const QString &serverUrl);
 bool allows(const std::optional<QStringList> &features, const QString &feature);
 }

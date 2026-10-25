@@ -51,8 +51,8 @@ void sendActivity()
     if (!socket || !ready || games.isEmpty()) return;
     const Game &game = games.last();
     const QJsonObject button = game.join.isEmpty()
-        ? QJsonObject{{"label", QCoreApplication::translate("DiscordPresence", "Play OpenKogama").left(ButtonLimit)}, {"url", WebsiteUrl}}
-        : QJsonObject{{"label", QCoreApplication::translate("DiscordPresence", "Join this server").left(ButtonLimit)},
+        ? QJsonObject{{"label", QStringLiteral("Play OpenKogama").left(ButtonLimit)}, {"url", WebsiteUrl}}
+        : QJsonObject{{"label", QStringLiteral("Join this server").left(ButtonLimit)},
             {"url", WebsiteUrl + "/join/?server=" + QString::fromLatin1(QUrl::toPercentEncoding(game.join))}};
     const QJsonObject activity{
         {"details", game.details.left(TextLimit)},
@@ -132,7 +132,7 @@ void DiscordPresence::join(QProcess *client, const QString &address, const QStri
     for (Game &game : games) {
         if (game.client != client) continue;
         game.join = address;
-        if (!title.isEmpty()) game.details = QCoreApplication::translate("DiscordPresence", "Playing %1").arg(title);
+        if (!title.isEmpty()) game.details = QStringLiteral("Playing %1").arg(title);
     }
     refresh();
 }

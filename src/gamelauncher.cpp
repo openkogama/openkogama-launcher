@@ -125,16 +125,16 @@ static QString instanceTitle(const QString &path)
 static QString presenceDetails(const QString &url, const QString &mode)
 {
     if (mode == "avatar")
-        return QCoreApplication::translate("GameLauncher", "Editing an avatar");
+        return QStringLiteral("Editing an avatar");
     if (mode != "play")
-        return QCoreApplication::translate("GameLauncher", "Building a world");
+        return QStringLiteral("Building a world");
     if (url == LocalServerUrl)
-        return QCoreApplication::translate("GameLauncher", "Playing a local world");
+        return QStringLiteral("Playing a local world");
     const QList<GameServer> servers = Settings::servers();
     for (const GameServer &server : servers)
         if (server.address == url && !server.title.isEmpty())
-            return QCoreApplication::translate("GameLauncher", "Playing %1").arg(server.title);
-    return QCoreApplication::translate("GameLauncher", "Playing online");
+            return QStringLiteral("Playing %1").arg(server.title);
+    return QStringLiteral("Playing online");
 }
 
 bool GameLauncher::resumeJoin()

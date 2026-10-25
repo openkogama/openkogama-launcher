@@ -10,6 +10,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QHostInfo>
+#include <QUdpSocket>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -26,6 +28,8 @@ static constexpr int PatchTimeout = 60000;
 static constexpr int NothingToChange = 3;
 static constexpr quint32 CompressionMask = 0x3F;
 static constexpr int MaxCacheName = 100;
+static constexpr int ProbeAttempts = 3;
+static constexpr int ProbeWaitMs = 700;
 
 namespace {
 
@@ -34,6 +38,8 @@ const QString SoundEmitterList = "sound-emitter-list";
 const QString FreshBundles = "fresh-bundles";
 const QString ColossusLaser = "colossus-laser";
 const QString WorldSwitch = "world-switch";
+const QString Tcp = "tcp";
+const QByteArray UdpProbe = "OKUDP?";
 const QByteArray Applied = "client fix: applied ";
 
 QString unityCache(const QString &instancePath) {
@@ -219,9 +225,26 @@ QString fixCode(const QString &file, const QStringList &fixes, QStringList &appl
     return QCoreApplication::translate("ClientPatches", "could not patch %1, the game keeps its own").arg(name);
 }
 
+bool udpReaches(const QString &serverUrl, int port) {
+    const QHostInfo host = QHostInfo::fromName(QUrl(serverUrl).host());
+    if (port <= 0 || host.addresses().isEmpty()) return true;
+    QUdpSocket socket;
+    for (int attempt = 0; attempt < ProbeAttempts; ++attempt) {
+        socket.writeDatagram(UdpProbe, host.addresses().first(), quint16(port));
+        if (!socket.waitForReadyRead(ProbeWaitMs)) continue;
+        while (socket.hasPendingDatagrams()) {
+            QByteArray reply(int(socket.pendingDatagramSize()), Qt::Uninitialized);
+            socket.readDatagram(reply.data(), reply.size());
+            if (reply == UdpProbe) return true;
+        }
+    }
+    return false;
+}
+
 QString describe(const QString &fix) {
     if (fix == ColossusLaser) return QCoreApplication::translate("ClientPatches", "wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block");
     if (fix == WorldSwitch) return QCoreApplication::translate("ClientPatches", "the game can switch worlds without restarting");
+    if (fix == Tcp) return QCoreApplication::translate("ClientPatches", "the game connects over TCP, because its UDP traffic does not reach this server");
     return fix;
 }
 
@@ -247,6 +270,12 @@ const QList<ClientPatch> &ClientPatches::all() {
              "and loads itself into the new world. Rewrites MVGameControllerBase.TryReauth and turns off HackingToolDetector in "
              "kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. "
              "The original stays as .original next to it and comes back when this is off.")},
+        {Tcp, QCoreApplication::translate("ClientPatches", "TCP when UDP is blocked"),
+         QCoreApplication::translate("ClientPatches",
+             "Before joining a server that offers it, the launcher checks whether the game's UDP traffic gets through. When your network or VPN "
+             "blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection "
+             "in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. "
+             "The original stays as .original next to it and comes back on the next launch over UDP.")},
     };
     return patches;
 }
@@ -269,12 +298,17 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
     QStringList fixes;
     if (Settings::clientPatch(ColossusLaser)) fixes << ColossusLaser;
     if (Settings::clientPatch(WorldSwitch)) fixes << WorldSwitch;
+    if (Settings::clientPatch(Tcp) && features && features->contains(Tcp) && !udpReaches(serverUrl, ServerFeatures::udpPort(serverUrl)))
+        fixes << Tcp;
     QStringList applied;
     if (const QString assembly = managedAssembly(instancePath); !assembly.isEmpty())
         if (const QString note = fixCode(assembly, fixes, applied); !note.isEmpty()) notes << note;
-    if (const QString native = gameAssembly(instancePath); !native.isEmpty())
-        if (const QString note = fixCode(native, fixes.contains(WorldSwitch) ? QStringList{WorldSwitch} : QStringList(), applied); !note.isEmpty())
-            notes << note;
+    if (const QString native = gameAssembly(instancePath); !native.isEmpty()) {
+        QStringList nativeFixes;
+        for (const QString &fix : {WorldSwitch, Tcp})
+            if (fixes.contains(fix)) nativeFixes << fix;
+        if (const QString note = fixCode(native, nativeFixes, applied); !note.isEmpty()) notes << note;
+    }
     for (const QString &fix : applied) notes << describe(fix);
     if (active) *active = applied;
     return notes;
