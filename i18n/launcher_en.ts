@@ -24,6 +24,13 @@
             <numerusform>removed %n cached bundles the server replaces</numerusform>
         </translation>
     </message>
+    <message numerus="yes">
+        <source>the game loads okmod.dll with %n mod(s) from the launcher&apos;s mods folder</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>

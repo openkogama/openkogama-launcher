@@ -177,10 +177,6 @@
 </context>
 <context>
     <name>ClientPatches</name>
-    <message>
-        <source>put the original data.unity3d back</source>
-        <translation>вернуть исходные данные.unity3d</translation>
-    </message>
     <message numerus="yes">
         <source>added %n server sound(s) to the Sound Emitter list in data.unity3d</source>
         <translation>
@@ -188,10 +184,6 @@
             <numerusform>добавлено %n серверных звука в список источников звука (Sound Emitter) в файле data.unity3d</numerusform>
             <numerusform>добавлено %n серверных звуков в список источников звука (Sound Emitter) в файле data.unity3d</numerusform>
         </translation>
-    </message>
-    <message>
-        <source>could not add the server sounds to the Sound Emitter list, the game keeps its own</source>
-        <translation>Не удалось добавить звуки сервера в список звуков, игра остаётся без изменений</translation>
     </message>
     <message>
         <source>wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block</source>
@@ -276,6 +268,54 @@
             <numerusform>удалено %n кэшированных пакета, которые сервер заменяет</numerusform>
             <numerusform>удалено %n кэшированных пакетов, которые сервер заменяет</numerusform>
         </translation>
+    </message>
+    <message>
+        <source>could not add the server&apos;s sounds and themes to %1, the game keeps its own</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>added the server&apos;s themes to the theme list in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>took okmod.dll and the mods out of the game</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>the game loads okmod.dll with %n mod(s) from the launcher&apos;s mods folder</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>the server can move your avatar at once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server themes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adds the server&apos;s own sky themes to the theme menu and gives the game&apos;s themes the pictures the server replaced, by rewriting the theme list in kogama_Data/sharedassets0.assets, or in kogama_Data/data.unity3d on 3.5. The original stays as .original next to it and comes back when the server has none or this is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Server teleport</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lets the server move your avatar at once, without the hidden vehicles and teleporters it uses otherwise: when the server sends your own avatar a teleport, the game puts it there. Adds a check after MVNetworkGame.OnUpdateWorldObjectEvent reads a transform in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions, where the check goes in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mods</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into 3.5. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, and puts okmod.dll and the mods next to the game. While the folder has no mods, the game stays as it is. The original stays as GameAssembly.dll.original and comes back when this is off or the folder is empty.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
