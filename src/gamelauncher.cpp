@@ -236,9 +236,12 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         if (!unity.isEmpty())
             session += "&unity=" + unity;
         QStringList active;
-        notes += ClientPatches::apply(path, url, version, features, &active);
+        QString themes;
+        notes += ClientPatches::apply(path, url, version, features, &active, &themes);
         if (!active.isEmpty())
             session += "&patches=" + active.join(',');
+        if (!themes.isEmpty())
+            session += "&themes=" + themes;
         client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
     }
     client->setWorkingDirectory(path);

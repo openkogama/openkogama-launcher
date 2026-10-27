@@ -111,16 +111,24 @@
         <translation>Odbanuj</translation>
     </message>
     <message>
-        <source>Players from these IP addresses are admins. Players on this computer always are.</source>
-        <translation>Gracze z tych adresów IP są adminami. Gracze z tego komputera są nimi zawsze.</translation>
-    </message>
-    <message>
         <source>IP address</source>
         <translation>Adres IP</translation>
     </message>
     <message>
         <source>Add</source>
         <translation>Dodaj</translation>
+    </message>
+    <message>
+        <source>Players with these OpenKogama account names or IP addresses are admins. A name only counts for a player signed in with that account. Players on this computer always are.</source>
+        <translation>Gracze z tymi nazwami kont OpenKogama albo adresami IP są adminami. Nazwa liczy się tylko u gracza zalogowanego na to konto. Gracze na tym komputerze są nimi zawsze.</translation>
+    </message>
+    <message>
+        <source>Name or IP address</source>
+        <translation>Nazwa albo adres IP</translation>
+    </message>
+    <message>
+        <source>Account name or IP address</source>
+        <translation>Nazwa konta albo adres IP</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -326,6 +334,10 @@
     <message>
         <source>Translating the website and the launcher into Spanish.</source>
         <translation>Przetłumaczenie strony i launchera na hiszpański.</translation>
+    </message>
+    <message>
+        <source>Translating the launcher into Russian.</source>
+        <translation>Przetłumaczenie launchera na rosyjski.</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -1494,6 +1506,10 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Nie wybrano przedmiotu</translation>
     </message>
     <message>
+        <source>Side view on game versions 1.25 to 2.5. Newer versions play the world in 3D.</source>
+        <translation>Widok z boku w wersjach gry od 1.25 do 2.5. Nowsze wersje grają w ten świat w 3D.</translation>
+    </message>
+    <message>
         <source>Small (0.125)</source>
         <translation>Mały (0.125)</translation>
     </message>
@@ -1530,8 +1546,20 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Zmień nazwę</translation>
     </message>
     <message>
+        <source>Platformer 2D</source>
+        <translation>Platformówka 2D</translation>
+    </message>
+    <message>
         <source>Delete...</source>
         <translation>Usuń...</translation>
+    </message>
+    <message>
+        <source>Switch to Platformer 2D</source>
+        <translation>Zmień na platformówkę 2D</translation>
+    </message>
+    <message>
+        <source>Switch to Classic</source>
+        <translation>Zmień na klasyczny</translation>
     </message>
     <message>
         <source>Scale...</source>
@@ -1614,6 +1642,10 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Nowy świat</translation>
     </message>
     <message>
+        <source>Classic</source>
+        <translation>Klasyczny</translation>
+    </message>
+    <message>
         <source>Create</source>
         <translation>Utwórz</translation>
     </message>
@@ -1624,6 +1656,10 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     <message>
         <source>Template:</source>
         <translation>Szablon:</translation>
+    </message>
+    <message>
+        <source>Type:</source>
+        <translation>Typ:</translation>
     </message>
     <message>
         <source>Import worlds</source>

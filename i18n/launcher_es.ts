@@ -111,16 +111,24 @@
         <translation>Desbanear</translation>
     </message>
     <message>
-        <source>Players from these IP addresses are admins. Players on this computer always are.</source>
-        <translation>Los jugadores que se conecten desde estas direcciones IP serán administradores. Los jugadores de este ordenador siempre lo serán.</translation>
-    </message>
-    <message>
         <source>IP address</source>
         <translation>Dirección IP</translation>
     </message>
     <message>
         <source>Add</source>
         <translation>Añadir</translation>
+    </message>
+    <message>
+        <source>Players with these OpenKogama account names or IP addresses are admins. A name only counts for a player signed in with that account. Players on this computer always are.</source>
+        <translation>Los jugadores con estos nombres de cuenta de OpenKogama o direcciones IP son administradores. Un nombre solo cuenta para un jugador que haya iniciado sesión con esa cuenta. Los jugadores de este ordenador siempre lo son.</translation>
+    </message>
+    <message>
+        <source>Name or IP address</source>
+        <translation>Nombre o dirección IP</translation>
+    </message>
+    <message>
+        <source>Account name or IP address</source>
+        <translation>Nombre de cuenta o dirección IP</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -323,6 +331,10 @@
     <message>
         <source>Translating the website and the launcher into Spanish.</source>
         <translation>Por traducir la web y el lanzador al español.</translation>
+    </message>
+    <message>
+        <source>Translating the launcher into Russian.</source>
+        <translation>Por traducir el lanzador al ruso.</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -1485,6 +1497,10 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>No hay ningún objeto seleccionado</translation>
     </message>
     <message>
+        <source>Side view on game versions 1.25 to 2.5. Newer versions play the world in 3D.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Small (0.125)</source>
         <translation>Pequeño (0.125)</translation>
     </message>
@@ -1521,8 +1537,20 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Cambiar nombre</translation>
     </message>
     <message>
+        <source>Platformer 2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete...</source>
         <translation>Eliminar...</translation>
+    </message>
+    <message>
+        <source>Switch to Platformer 2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to Classic</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Scale...</source>
@@ -1603,6 +1631,10 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Nuevo mundo</translation>
     </message>
     <message>
+        <source>Classic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Create</source>
         <translation>Crear</translation>
     </message>
@@ -1613,6 +1645,10 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
     <message>
         <source>Template:</source>
         <translation>Plantilla:</translation>
+    </message>
+    <message>
+        <source>Type:</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import worlds</source>

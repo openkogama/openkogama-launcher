@@ -49,7 +49,7 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     for (const ClientPatch &patch : ClientPatches::all()) {
         auto *check = new QCheckBox(patch.name, ui->clientPatchesPage);
         check->setToolTip(patch.description);
-        check->setChecked(Settings::clientPatch(patch.id));
+        check->setChecked(Settings::clientPatch(patch.id, patch.byDefault));
         ui->clientPatchesLayout->addWidget(check);
         m_patches.append({patch.id, check});
     }

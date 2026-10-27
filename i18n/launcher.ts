@@ -111,15 +111,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Players from these IP addresses are admins. Players on this computer always are.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>IP address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Players with these OpenKogama account names or IP addresses are admins. A name only counts for a player signed in with that account. Players on this computer always are.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name or IP address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Account name or IP address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -319,6 +327,10 @@
     </message>
     <message>
         <source>Translating the website and the launcher into Spanish.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translating the launcher into Russian.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1470,6 +1482,10 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Side view on game versions 1.25 to 2.5. Newer versions play the world in 3D.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Small (0.125)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1506,7 +1522,19 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Platformer 2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Delete...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to Platformer 2D</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch to Classic</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1586,6 +1614,10 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Classic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1595,6 +1627,10 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Template:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

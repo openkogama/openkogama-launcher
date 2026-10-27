@@ -30,17 +30,23 @@ static constexpr quint32 CompressionMask = 0x3F;
 static constexpr int MaxCacheName = 100;
 static constexpr int ProbeAttempts = 3;
 static constexpr int ProbeWaitMs = 700;
+static constexpr quint16 PeMachine64 = 0x8664;
 
 namespace {
 
 const QString SeveralWindows = "several-windows";
 const QString SoundEmitterList = "sound-emitter-list";
+const QString ServerThemes = "server-themes";
 const QString FreshBundles = "fresh-bundles";
 const QString ColossusLaser = "colossus-laser";
 const QString WorldSwitch = "world-switch";
 const QString Tcp = "tcp";
+const QString ServerTeleport = "teleport";
+const QString Mods = "mods";
+const QString ModLoader = "okmod.dll";
 const QByteArray UdpProbe = "OKUDP?";
 const QByteArray Applied = "client fix: applied ";
+const QByteArray ThemesUnchanged = "themes unchanged";
 
 QString unityCache(const QString &instancePath) {
     const QDir instance(instancePath);
@@ -157,33 +163,55 @@ int serverTool(const QStringList &arguments, const QByteArray &input = {}, QByte
     return code;
 }
 
-bool patch(const QString &original, const QJsonArray &list, const QString &data) {
-    return serverTool({"client", "patch", original, "-", data}, QJsonDocument(QJsonObject{{"sounds", list}}).toJson(QJsonDocument::Compact)) == 0;
+QString sharedAssets(const QString &instancePath) {
+    const QDir instance(instancePath);
+    for (const QString &folder : instance.entryList({"*_Data"}, QDir::Dirs)) {
+        const QString file = instance.filePath(folder + "/sharedassets0.assets");
+        if (QFile::exists(file)) return file;
+    }
+    return {};
 }
 
-QString soundEmitterList(const QString &instancePath, const QJsonArray &list) {
+bool differs(const QString &file, const QString &original) {
+    return QFile::exists(original) && QFileInfo(original).size() != QFileInfo(file).size();
+}
+
+QStringList gameData(const QString &instancePath, const QJsonArray &sounds, const QJsonArray &themes, bool *themed) {
+    *themed = false;
     const QString data = dataFile(instancePath);
-    if (data.isEmpty()) return {};
-    const QString original = data + ".original";
+    const QString file = data.isEmpty() ? sharedAssets(instancePath) : data;
+    if (file.isEmpty()) return {};
+    const QString name = QFileInfo(file).fileName();
+    const QString original = file + ".original";
+    const QJsonArray soundList = data.isEmpty() ? QJsonArray() : sounds;
 
-    if (list.isEmpty()) {
-        if (patched(data) && QFile::exists(original) && replace(original, data))
-            return QCoreApplication::translate("ClientPatches", "put the original data.unity3d back");
+    auto restore = [&]() -> QStringList {
+        if (differs(file, original) && replace(original, file))
+            return {QCoreApplication::translate("ClientPatches", "put the original %1 back").arg(name)};
         return {};
-    }
+    };
+    if (soundList.isEmpty() && themes.isEmpty()) return restore();
 
-    if (!patched(data) && QFileInfo(original).size() != QFileInfo(data).size()) {
-        QFile::remove(original);
-        if (!QFile::copy(data, original)) return {};
-    }
-    if (!QFile::exists(original)) return {};
+    if (!data.isEmpty() && !patched(data) && differs(data, original)) QFile::remove(original);
+    if (!QFile::exists(original) && !QFile::copy(file, original)) return {};
 
     QGuiApplication::setOverrideCursor(Qt::WaitCursor);
-    const bool done = patch(original, list, data);
-    if (!done && patched(data)) replace(original, data);
+    QByteArray output;
+    const QJsonObject content{{"sounds", soundList}, {"themes", themes}};
+    const int result = serverTool({"client", "patch", original, "-", file}, QJsonDocument(content).toJson(QJsonDocument::Compact), &output);
     QGuiApplication::restoreOverrideCursor();
-    return done ? QCoreApplication::translate("ClientPatches", "added %n server sound(s) to the Sound Emitter list in data.unity3d", nullptr, int(list.size()))
-                : QCoreApplication::translate("ClientPatches", "could not add the server sounds to the Sound Emitter list, the game keeps its own");
+    if (result == NothingToChange) return restore();
+    if (result != 0) {
+        restore();
+        return {QCoreApplication::translate("ClientPatches", "could not add the server's sounds and themes to %1, the game keeps its own").arg(name)};
+    }
+
+    QStringList notes;
+    if (!soundList.isEmpty())
+        notes << QCoreApplication::translate("ClientPatches", "added %n server sound(s) to the Sound Emitter list in data.unity3d", nullptr, int(soundList.size()));
+    *themed = !themes.isEmpty() && !output.contains(ThemesUnchanged);
+    if (*themed) notes << QCoreApplication::translate("ClientPatches", "added the server's themes to the theme list in %1").arg(name);
+    return notes;
 }
 
 QString managedAssembly(const QString &instancePath) {
@@ -198,6 +226,53 @@ QString managedAssembly(const QString &instancePath) {
 QString gameAssembly(const QString &instancePath) {
     const QString file = QDir(instancePath).filePath("GameAssembly.dll");
     return QFile::exists(file) ? file : QString();
+}
+
+bool is64Bit(const QString &file) {
+    QFile binary(file);
+    if (!binary.open(QIODevice::ReadOnly)) return false;
+    const QByteArray head = binary.read(4096);
+    if (head.size() < 0x40) return false;
+    const qint32 pe = qFromLittleEndian<qint32>(head.constData() + 0x3C);
+    return pe > 0 && pe + 6 <= head.size() && qFromLittleEndian<quint16>(head.constData() + pe + 4) == PeMachine64;
+}
+
+bool sameBytes(const QString &first, const QString &second) {
+    QFile a(first), b(second);
+    if (!a.open(QIODevice::ReadOnly) || !b.open(QIODevice::ReadOnly) || a.size() != b.size()) return false;
+    return a.readAll() == b.readAll();
+}
+
+bool copyIfChanged(const QString &from, const QString &to) {
+    return sameBytes(from, to) || replace(from, to);
+}
+
+bool stageLoader(const QString &instancePath) {
+    const QString loader = QDir(Paths::server()).filePath(ModLoader);
+    return QFile::exists(loader) && copyIfChanged(loader, QDir(instancePath).filePath(ModLoader));
+}
+
+QString stageMods(const QString &instancePath, const QString &gameAssembly, bool on) {
+    const QDir instance(instancePath);
+    QDir staged(instance.filePath("mods"));
+    if (!on) {
+        if (!QFile::exists(instance.filePath(ModLoader)) && !staged.exists()) return {};
+        QFile binary(gameAssembly);
+        if (binary.open(QIODevice::ReadOnly) && binary.readAll().contains(ModLoader.toLatin1() + '\0')) return {};
+        QFile::remove(instance.filePath(ModLoader));
+        staged.removeRecursively();
+        return QCoreApplication::translate("ClientPatches", "took okmod.dll and the mods out of the game");
+    }
+
+    const QDir source(Paths::mods());
+    const QStringList wanted = source.entryList({"*.dll"}, QDir::Files);
+    staged.mkpath(".");
+    for (const QString &old : staged.entryList({"*.dll"}, QDir::Files))
+        if (!wanted.contains(old, Qt::CaseInsensitive)) staged.remove(old);
+    int loaded = 0;
+    for (const QString &mod : wanted)
+        if (copyIfChanged(source.filePath(mod), staged.filePath(mod))) loaded++;
+    return QCoreApplication::translate("ClientPatches", "the game loads okmod.dll with %n mod(s) from the launcher's mods folder", nullptr, loaded);
 }
 
 QString fixCode(const QString &file, const QStringList &fixes, QStringList &applied) {
@@ -245,6 +320,7 @@ QString describe(const QString &fix) {
     if (fix == ColossusLaser) return QCoreApplication::translate("ClientPatches", "wrapped GodzillaLaser.OnUnequip in Assembly-CSharp.dll in a try block");
     if (fix == WorldSwitch) return QCoreApplication::translate("ClientPatches", "the game can switch worlds without restarting");
     if (fix == Tcp) return QCoreApplication::translate("ClientPatches", "the game connects over TCP, because its UDP traffic does not reach this server");
+    if (fix == ServerTeleport) return QCoreApplication::translate("ClientPatches", "the server can move your avatar at once");
     return fix;
 }
 
@@ -258,6 +334,11 @@ const QList<ClientPatch> &ClientPatches::all() {
          QCoreApplication::translate("ClientPatches",
              "Adds the server's own sounds to the Sound Emitter list of 3.5 by rewriting kogama_Data/data.unity3d. "
              "The original stays as data.unity3d.original and comes back when the server has none or this is off.")},
+        {ServerThemes, QCoreApplication::translate("ClientPatches", "Server themes"),
+         QCoreApplication::translate("ClientPatches",
+             "Adds the server's own sky themes to the theme menu and gives the game's themes the pictures the server replaced, "
+             "by rewriting the theme list in kogama_Data/sharedassets0.assets, or in kogama_Data/data.unity3d on 3.5. "
+             "The original stays as .original next to it and comes back when the server has none or this is off.")},
         {FreshBundles, QCoreApplication::translate("ClientPatches", "Fresh copies of replaced bundles"),
          QCoreApplication::translate("ClientPatches", "Removes the game's cached copies of bundles the server replaces, so the game downloads the server's version.")},
         {ColossusLaser, QCoreApplication::translate("ClientPatches", "Colossus laser fix"),
@@ -276,28 +357,42 @@ const QList<ClientPatch> &ClientPatches::all() {
              "blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection "
              "in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. "
              "The original stays as .original next to it and comes back on the next launch over UDP.")},
+        {ServerTeleport, QCoreApplication::translate("ClientPatches", "Server teleport"),
+         QCoreApplication::translate("ClientPatches",
+             "Lets the server move your avatar at once, without the hidden vehicles and teleporters it uses otherwise: when the server sends "
+             "your own avatar a teleport, the game puts it there. Adds a check after MVNetworkGame.OnUpdateWorldObjectEvent reads a "
+             "transform in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions, where the check goes "
+             "in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.")},
+        {Mods, QCoreApplication::translate("ClientPatches", "Mods"),
+         QCoreApplication::translate("ClientPatches",
+             "Loads the mods from the mods folder in the launcher's data folder into 3.5. Adds okmod.dll to the imports of GameAssembly.dll "
+             "with hooks the mods use, and puts okmod.dll and the mods next to the game. Antivirus programs may not like DLLs next to a game, "
+             "so this stays off until you turn it on. The original stays as GameAssembly.dll.original and comes back when this is off."),
+         false},
     };
     return patches;
 }
 
 QStringList ClientPatches::apply(const QString &instancePath, const QString &serverUrl, const QString &version, const std::optional<QStringList> &features,
-    QStringList *active) {
+    QStringList *active, QString *themes) {
     QStringList notes;
     if (Settings::clientPatch(SeveralWindows))
         if (const int released = SingleInstance::release(Paths::instances()); released > 0)
             notes << QCoreApplication::translate("ClientPatches", "closed the one window lock in %n running game(s)", nullptr, released);
 
     const bool sounds = Settings::clientPatch(SoundEmitterList);
+    const bool skies = Settings::clientPatch(ServerThemes);
     const bool fresh = Settings::clientPatch(FreshBundles);
-    const QJsonObject served = (sounds || fresh) && ServerFeatures::allows(features, "content") ? content(serverUrl, version) : QJsonObject();
+    const QJsonObject served = (sounds || skies || fresh) && ServerFeatures::allows(features, "content") ? content(serverUrl, version) : QJsonObject();
     if (fresh)
         if (const int removed = dropReplaced(instancePath, served.value("replaced").toArray()); removed > 0)
             notes << QCoreApplication::translate("ClientPatches", "removed %n cached bundle(s) the server replaces", nullptr, removed);
-    if (const QString note = soundEmitterList(instancePath, sounds ? served.value("sounds").toArray() : QJsonArray()); !note.isEmpty())
-        notes << note;
+    bool themed = false;
+    notes << gameData(instancePath, sounds ? served.value("sounds").toArray() : QJsonArray(), skies ? served.value("themes").toArray() : QJsonArray(), &themed);
     QStringList fixes;
     if (Settings::clientPatch(ColossusLaser)) fixes << ColossusLaser;
     if (Settings::clientPatch(WorldSwitch)) fixes << WorldSwitch;
+    if (Settings::clientPatch(ServerTeleport)) fixes << ServerTeleport;
     if (Settings::clientPatch(Tcp) && features && features->contains(Tcp) && !udpReaches(serverUrl, ServerFeatures::udpPort(serverUrl)))
         fixes << Tcp;
     QStringList applied;
@@ -305,11 +400,16 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
         if (const QString note = fixCode(assembly, fixes, applied); !note.isEmpty()) notes << note;
     if (const QString native = gameAssembly(instancePath); !native.isEmpty()) {
         QStringList nativeFixes;
-        for (const QString &fix : {WorldSwitch, Tcp})
+        for (const QString &fix : {WorldSwitch, Tcp, ServerTeleport})
             if (fixes.contains(fix)) nativeFixes << fix;
+        if (Settings::clientPatch(Mods, false) && is64Bit(native) && stageLoader(instancePath)) nativeFixes << Mods;
         if (const QString note = fixCode(native, nativeFixes, applied); !note.isEmpty()) notes << note;
+        if (const QString note = stageMods(instancePath, native, applied.contains(Mods)); !note.isEmpty()) notes << note;
     }
-    for (const QString &fix : applied) notes << describe(fix);
+    for (const QString &fix : applied)
+        if (fix != Mods) notes << describe(fix);
+    if (themed) applied << "themes";
     if (active) *active = applied;
+    if (themes) *themes = themed ? served.value("themesVersion").toString() : QString();
     return notes;
 }

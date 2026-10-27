@@ -56,7 +56,7 @@ void setConsoleOnCrash(bool enabled);
 bool discordPresence();
 void setDiscordPresence(bool enabled);
 
-bool clientPatch(const QString &id);
+bool clientPatch(const QString &id, bool byDefault = true);
 void setClientPatch(const QString &id, bool enabled);
 
 QString language();

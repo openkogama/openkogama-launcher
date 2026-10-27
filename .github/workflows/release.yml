@@ -37,6 +37,10 @@ jobs:
         with:
           repository: openkogama/openkogama-photon
           path: openkogama-photon
+      - uses: actions/checkout@v4
+        with:
+          repository: openkogama/openkogama-mods
+          path: openkogama-mods
       - uses: jurplel/install-qt-action@v4
         with:
           version: 6.10.2
@@ -49,6 +53,12 @@ jobs:
 
       - name: server
         run: dotnet publish openkogama-server/openkogama-server.csproj -c Release -r win-x64 --self-contained -o dist/server
+      - name: okmod
+        shell: cmd
+        run: |
+          cmake -S openkogama-mods/core -B build/okmod -A x64 || exit /b 1
+          cmake --build build/okmod --config Release --target okmod || exit /b 1
+          copy build\okmod\Release\okmod.dll dist\server\ || exit /b 1
 
       - uses: ilammy/msvc-dev-cmd@v1
         with:

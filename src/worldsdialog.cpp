@@ -28,6 +28,7 @@
 static constexpr int NameRole = Qt::UserRole + 1;
 static constexpr int ImageRole = Qt::UserRole + 2;
 static constexpr int ActiveRole = Qt::UserRole + 3;
+static constexpr int PlatformerRole = Qt::UserRole + 4;
 static const QUrl MapsArchive("https://cdn.openkogama.org/maps/v1/");
 static const QString GameModelName("CubeModel");
 
@@ -60,6 +61,11 @@ static const QString GameModelName("CubeModel");
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
 #include <QUrlQuery>
+
+static QString platformerTip()
+{
+    return QCoreApplication::translate("WorldsDialog", "Side view on game versions 1.25 to 2.5. Newer versions play the world in 3D.");
+}
 
 static QString instanceTitle(const QString &path)
 {
@@ -173,6 +179,14 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     auto *worldMenu = new QMenu(this);
     worldMenu->addAction(tr("Export..."), this, &WorldsDialog::exportWorld);
     worldMenu->addAction(tr("Rename"), this, &WorldsDialog::renameWorld);
+    QAction *platformer = worldMenu->addAction(tr("Switch to Platformer 2D"), this, [this]() {
+        if (QListWidgetItem *item = ui->worldsList->currentItem()) setPlatformer(!item->data(PlatformerRole).toBool());
+    });
+    connect(worldMenu, &QMenu::aboutToShow, this, [this, platformer]() {
+        QListWidgetItem *item = ui->worldsList->currentItem();
+        platformer->setEnabled(item != nullptr);
+        platformer->setText(item && item->data(PlatformerRole).toBool() ? tr("Switch to Classic") : tr("Switch to Platformer 2D"));
+    });
     worldMenu->addSeparator();
     worldMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteWorld);
     ui->moreWorldButton->setMenu(worldMenu);
@@ -448,6 +462,7 @@ void WorldsDialog::loadWorlds(int select) {
                 + (world["publishedAt"].isString() ? tr("Published: %1").arg(date(world["publishedAt"])) : tr("Not published"));
             if (item->toolTip() != tip)
                 item->setToolTip(tip);
+            item->setData(PlatformerRole, world["platformer"].toBool());
             if (ids[i] == select)
                 ui->worldsList->setCurrentItem(item);
             loadThumbnail(item, ids[i]);
@@ -522,6 +537,10 @@ void WorldsDialog::createWorld() {
     auto *templates = new QComboBox(&dialog);
     for (const auto &[id, title] : std::as_const(m_templates))
         templates->addItem(title, id);
+    auto *type = new QComboBox(&dialog);
+    type->addItem(tr("Classic"), false);
+    type->addItem(tr("Platformer 2D"), true);
+    type->setItemData(1, platformerTip(), Qt::ToolTipRole);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
     auto *create = buttons->button(QDialogButtonBox::Ok);
@@ -539,6 +558,7 @@ void WorldsDialog::createWorld() {
     form->setSpacing(8);
     form->addRow(tr("Name:"), name);
     form->addRow(tr("Template:"), templates);
+    form->addRow(tr("Type:"), type);
     layout->addLayout(form);
     layout->addWidget(buttons);
 
@@ -549,6 +569,8 @@ void WorldsDialog::createWorld() {
     query.addQueryItem("name", name->text().trimmed());
     if (templates->currentIndex() >= 0)
         query.addQueryItem("template", templates->currentData().toString());
+    if (type->currentData().toBool())
+        query.addQueryItem("platformer", "1");
     url.setQuery(query);
 
     QNetworkRequest request(url);
@@ -721,6 +743,25 @@ void WorldsDialog::deleteWorld() {
     });
 }
 
+void WorldsDialog::setPlatformer(bool on) {
+    QListWidgetItem *item = ui->worldsList->currentItem();
+    if (!item) return;
+
+    QUrl url(LocalServerUrl + "/api/worlds/platformer");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
+    query.addQueryItem("on", on ? "1" : "0");
+    url.setQuery(query);
+
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = m_net->post(request, QByteArray());
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        loadWorlds(selectedWorld());
+    });
+}
+
 void WorldsDialog::showWorldMenu(const QPoint &pos) {
     QListWidgetItem *item = ui->worldsList->itemAt(pos);
     if (!item) return;
@@ -734,6 +775,8 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
     menu.addSeparator();
     QAction *exported = menu.addAction(tr("Export..."));
     QAction *rename = menu.addAction(tr("Rename"));
+    const bool platformerWorld = item->data(PlatformerRole).toBool();
+    QAction *platformer = menu.addAction(platformerWorld ? tr("Switch to Classic") : tr("Switch to Platformer 2D"));
     QAction *remove = menu.addAction(tr("Delete"));
 
     QAction *chosen = menu.exec(ui->worldsList->viewport()->mapToGlobal(pos));
@@ -741,6 +784,7 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
     else if (chosen == build) launch("edit", selectedWorld());
     else if (chosen == exported) exportWorld();
     else if (chosen == rename) renameWorld();
+    else if (chosen == platformer) setPlatformer(!platformerWorld);
     else if (chosen == remove) deleteWorld();
 }
 

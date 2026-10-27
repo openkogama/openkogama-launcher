@@ -149,15 +149,15 @@ QWidget *AdminDialog::adminsPage()
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
     layout->setContentsMargins(0, 8, 0, 0);
-    auto *hint = new QLabel(tr("Players from these IP addresses are admins. Players on this computer always are."), page);
+    auto *hint = new QLabel(tr("Players with these OpenKogama account names or IP addresses are admins. A name only counts for a player signed in with that account. Players on this computer always are."), page);
     hint->setWordWrap(true);
     layout->addWidget(hint);
-    m_admins = table({tr("IP address")}, page);
+    m_admins = table({tr("Name or IP address")}, page);
     showAdmins(ServerConfigDialog::admins());
     layout->addWidget(m_admins, 1);
     auto *row = new QHBoxLayout;
     m_address = new QLineEdit(page);
-    m_address->setPlaceholderText(tr("IP address"));
+    m_address->setPlaceholderText(tr("Account name or IP address"));
     m_add = new QPushButton(tr("Add"), page);
     m_remove = new QPushButton(tr("Remove"), page);
     row->addWidget(m_address, 1);
@@ -292,13 +292,14 @@ void AdminDialog::unban()
 
 void AdminDialog::addAdmin()
 {
-    const QHostAddress address(m_address->text().trimmed());
-    if (address.isNull()) return;
+    const QString entry = m_address->text().trimmed();
+    if (entry.isEmpty()) return;
+    const QHostAddress address(entry);
     bool mapped = false;
     const quint32 ipv4 = address.toIPv4Address(&mapped);
-    const QString text = mapped ? QHostAddress(ipv4).toString() : address.toString();
+    const QString text = address.isNull() ? entry : mapped ? QHostAddress(ipv4).toString() : address.toString();
     QStringList admins = ServerConfigDialog::admins();
-    if (!admins.contains(text)) admins << text;
+    if (!admins.contains(text, Qt::CaseInsensitive)) admins << text;
     saveAdmins(admins);
     m_address->clear();
 }
@@ -355,7 +356,7 @@ void AdminDialog::updateButtons()
     m_kick->setEnabled(removable);
     m_ban->setEnabled(removable);
     m_unban->setEnabled(m_bans->currentItem() != nullptr);
-    m_add->setEnabled(!QHostAddress(m_address->text().trimmed()).isNull());
+    m_add->setEnabled(!m_address->text().trimmed().isEmpty());
     m_remove->setEnabled(m_admins->currentItem() != nullptr);
 }
 

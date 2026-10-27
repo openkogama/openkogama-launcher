@@ -27,6 +27,7 @@ const QString Starter = R"({
     "mixedClients": false,
     "keepPlayChanges": false,
     "public": false,
+    "allow": [],
     "playerSettings": true,
     "playerAvatars": true,
     "playerInventory": true,
@@ -66,7 +67,7 @@ QString withDefaults(QString text)
 {
     for (const auto &[name, value] : Defaults)
         text = withKey(text, name, value ? "true" : "false");
-    return withKey(text, "accounts", "\"optional\"");
+    return withKey(withKey(text, "accounts", "\"optional\""), "allow", "[]");
 }
 
 QString jsonList(const QStringList &values)

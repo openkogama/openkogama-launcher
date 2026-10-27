@@ -54,6 +54,7 @@ private:
     void exportWorld();
     void renameWorld();
     void deleteWorld();
+    void setPlatformer(bool on);
     void onWorldRenamed(QListWidgetItem *item);
     void showWorldMenu(const QPoint &pos);
     QProcess *launch(const QString &mode, int world);
