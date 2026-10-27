@@ -179,13 +179,13 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     auto *worldMenu = new QMenu(this);
     worldMenu->addAction(tr("Export..."), this, &WorldsDialog::exportWorld);
     worldMenu->addAction(tr("Rename"), this, &WorldsDialog::renameWorld);
-    QAction *platformer = worldMenu->addAction(tr("Switch to Platformer 2D"), this, [this]() {
+    QAction *platformer = worldMenu->addAction(tr("Switch to 2D"), this, [this]() {
         if (QListWidgetItem *item = ui->worldsList->currentItem()) setPlatformer(!item->data(PlatformerRole).toBool());
     });
     connect(worldMenu, &QMenu::aboutToShow, this, [this, platformer]() {
         QListWidgetItem *item = ui->worldsList->currentItem();
         platformer->setEnabled(item != nullptr);
-        platformer->setText(item && item->data(PlatformerRole).toBool() ? tr("Switch to Classic") : tr("Switch to Platformer 2D"));
+        platformer->setText(item && item->data(PlatformerRole).toBool() ? tr("Switch to 3D") : tr("Switch to 2D"));
     });
     worldMenu->addSeparator();
     worldMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteWorld);
@@ -538,8 +538,8 @@ void WorldsDialog::createWorld() {
     for (const auto &[id, title] : std::as_const(m_templates))
         templates->addItem(title, id);
     auto *type = new QComboBox(&dialog);
-    type->addItem(tr("Classic"), false);
-    type->addItem(tr("Platformer 2D"), true);
+    type->addItem(tr("3D"), false);
+    type->addItem(tr("2D"), true);
     type->setItemData(1, platformerTip(), Qt::ToolTipRole);
 
     auto *buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
@@ -776,7 +776,7 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
     QAction *exported = menu.addAction(tr("Export..."));
     QAction *rename = menu.addAction(tr("Rename"));
     const bool platformerWorld = item->data(PlatformerRole).toBool();
-    QAction *platformer = menu.addAction(platformerWorld ? tr("Switch to Classic") : tr("Switch to Platformer 2D"));
+    QAction *platformer = menu.addAction(platformerWorld ? tr("Switch to 3D") : tr("Switch to 2D"));
     QAction *remove = menu.addAction(tr("Delete"));
 
     QAction *chosen = menu.exec(ui->worldsList->viewport()->mapToGlobal(pos));

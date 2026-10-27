@@ -1546,20 +1546,20 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Zmień nazwę</translation>
     </message>
     <message>
-        <source>Platformer 2D</source>
-        <translation>Platformówka 2D</translation>
+        <source>2D</source>
+        <translation>2D</translation>
     </message>
     <message>
         <source>Delete...</source>
         <translation>Usuń...</translation>
     </message>
     <message>
-        <source>Switch to Platformer 2D</source>
-        <translation>Zmień na platformówkę 2D</translation>
+        <source>Switch to 2D</source>
+        <translation>Zmień na 2D</translation>
     </message>
     <message>
-        <source>Switch to Classic</source>
-        <translation>Zmień na klasyczny</translation>
+        <source>Switch to 3D</source>
+        <translation>Zmień na 3D</translation>
     </message>
     <message>
         <source>Scale...</source>
@@ -1642,8 +1642,8 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <translation>Nowy świat</translation>
     </message>
     <message>
-        <source>Classic</source>
-        <translation>Klasyczny</translation>
+        <source>3D</source>
+        <translation>3D</translation>
     </message>
     <message>
         <source>Create</source>

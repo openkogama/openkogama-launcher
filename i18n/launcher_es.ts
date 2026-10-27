@@ -1537,7 +1537,7 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Cambiar nombre</translation>
     </message>
     <message>
-        <source>Platformer 2D</source>
+        <source>2D</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1545,11 +1545,11 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Eliminar...</translation>
     </message>
     <message>
-        <source>Switch to Platformer 2D</source>
+        <source>Switch to 2D</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Switch to Classic</source>
+        <source>Switch to 3D</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1631,7 +1631,7 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Nuevo mundo</translation>
     </message>
     <message>
-        <source>Classic</source>
+        <source>3D</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
