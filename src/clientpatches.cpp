@@ -247,6 +247,10 @@ bool copyIfChanged(const QString &from, const QString &to) {
     return sameBytes(from, to) || replace(from, to);
 }
 
+bool hasMods() {
+    return !QDir(Paths::mods()).entryList({"*.dll"}, QDir::Files).isEmpty();
+}
+
 bool stageLoader(const QString &instancePath) {
     const QString loader = QDir(Paths::server()).filePath(ModLoader);
     return QFile::exists(loader) && copyIfChanged(loader, QDir(instancePath).filePath(ModLoader));
@@ -365,10 +369,9 @@ const QList<ClientPatch> &ClientPatches::all() {
              "in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.")},
         {Mods, QCoreApplication::translate("ClientPatches", "Mods"),
          QCoreApplication::translate("ClientPatches",
-             "Loads the mods from the mods folder in the launcher's data folder into 3.5. Adds okmod.dll to the imports of GameAssembly.dll "
-             "with hooks the mods use, and puts okmod.dll and the mods next to the game. Antivirus programs may not like DLLs next to a game, "
-             "so this stays off until you turn it on. The original stays as GameAssembly.dll.original and comes back when this is off."),
-         false},
+             "Loads the mods you put in the mods folder in the launcher's data folder into 3.5. Adds okmod.dll to the imports of "
+             "GameAssembly.dll with hooks the mods use, and puts okmod.dll and the mods next to the game. While the folder has no mods, "
+             "the game stays as it is. The original stays as GameAssembly.dll.original and comes back when this is off or the folder is empty.")},
     };
     return patches;
 }
@@ -402,7 +405,7 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
         QStringList nativeFixes;
         for (const QString &fix : {WorldSwitch, Tcp, ServerTeleport})
             if (fixes.contains(fix)) nativeFixes << fix;
-        if (Settings::clientPatch(Mods, false) && is64Bit(native) && stageLoader(instancePath)) nativeFixes << Mods;
+        if (Settings::clientPatch(Mods) && is64Bit(native) && hasMods() && stageLoader(instancePath)) nativeFixes << Mods;
         if (const QString note = fixCode(native, nativeFixes, applied); !note.isEmpty()) notes << note;
         if (const QString note = stageMods(instancePath, native, applied.contains(Mods)); !note.isEmpty()) notes << note;
     }

@@ -10,7 +10,6 @@ struct ClientPatch
     QString id;
     QString name;
     QString description;
-    bool byDefault = true;
 };
 
 namespace ClientPatches {

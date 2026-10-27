@@ -210,9 +210,9 @@ void setDiscordPresence(bool enabled)
     store().setValue("discord/presence", enabled);
 }
 
-bool clientPatch(const QString &id, bool byDefault)
+bool clientPatch(const QString &id)
 {
-    return store().value("clientPatches/" + id, byDefault).toBool();
+    return store().value("clientPatches/" + id, true).toBool();
 }
 
 void setClientPatch(const QString &id, bool enabled)
