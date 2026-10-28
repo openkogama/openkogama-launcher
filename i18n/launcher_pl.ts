@@ -314,7 +314,11 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into 3.5. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, and puts okmod.dll and the mods next to the game. While the folder has no mods, the game stays as it is. The original stays as GameAssembly.dll.original and comes back when this is off or the folder is empty.</source>
+        <source>the game loads the scripts mod for this server&apos;s Lua scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into 3.5, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, and puts okmod.dll and the mods next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as GameAssembly.dll.original and comes back when this is off or nothing needs it.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
