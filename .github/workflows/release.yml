@@ -57,8 +57,9 @@ jobs:
         shell: cmd
         run: |
           cmake -S openkogama-mods/core -B build/okmod -A x64 || exit /b 1
-          cmake --build build/okmod --config Release --target okmod || exit /b 1
+          cmake --build build/okmod --config Release --target okmod scripts || exit /b 1
           copy build\okmod\Release\okmod.dll dist\server\ || exit /b 1
+          copy build\okmod\Release\scripts.dll dist\server\ || exit /b 1
 
       - uses: ilammy/msvc-dev-cmd@v1
         with:

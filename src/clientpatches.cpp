@@ -44,6 +44,8 @@ const QString Tcp = "tcp";
 const QString ServerTeleport = "teleport";
 const QString Mods = "mods";
 const QString ModLoader = "okmod.dll";
+const QString Scripts = "scripts";
+const QString ScriptsMod = "scripts.dll";
 const QByteArray UdpProbe = "OKUDP?";
 const QByteArray Applied = "client fix: applied ";
 const QByteArray ThemesUnchanged = "themes unchanged";
@@ -251,12 +253,20 @@ bool hasMods() {
     return !QDir(Paths::mods()).entryList({"*.dll"}, QDir::Files).isEmpty();
 }
 
+QString bundledScripts() {
+    return QDir(Paths::server()).filePath(ScriptsMod);
+}
+
+bool serverScripts(const std::optional<QStringList> &features) {
+    return features && features->contains(Scripts) && QFile::exists(bundledScripts());
+}
+
 bool stageLoader(const QString &instancePath) {
     const QString loader = QDir(Paths::server()).filePath(ModLoader);
     return QFile::exists(loader) && copyIfChanged(loader, QDir(instancePath).filePath(ModLoader));
 }
 
-QString stageMods(const QString &instancePath, const QString &gameAssembly, bool on) {
+QString stageMods(const QString &instancePath, const QString &gameAssembly, bool on, bool scripts) {
     const QDir instance(instancePath);
     QDir staged(instance.filePath("mods"));
     if (!on) {
@@ -269,14 +279,18 @@ QString stageMods(const QString &instancePath, const QString &gameAssembly, bool
     }
 
     const QDir source(Paths::mods());
-    const QStringList wanted = source.entryList({"*.dll"}, QDir::Files);
+    const QStringList own = source.entryList({"*.dll"}, QDir::Files);
+    const bool bundled = scripts && !own.contains(ScriptsMod, Qt::CaseInsensitive);
     staged.mkpath(".");
     for (const QString &old : staged.entryList({"*.dll"}, QDir::Files))
-        if (!wanted.contains(old, Qt::CaseInsensitive)) staged.remove(old);
+        if (!own.contains(old, Qt::CaseInsensitive) && !(bundled && old.compare(ScriptsMod, Qt::CaseInsensitive) == 0)) staged.remove(old);
     int loaded = 0;
-    for (const QString &mod : wanted)
+    for (const QString &mod : own)
         if (copyIfChanged(source.filePath(mod), staged.filePath(mod))) loaded++;
-    return QCoreApplication::translate("ClientPatches", "the game loads okmod.dll with %n mod(s) from the launcher's mods folder", nullptr, loaded);
+    const QString mods = QCoreApplication::translate("ClientPatches", "the game loads okmod.dll with %n mod(s) from the launcher's mods folder", nullptr, loaded);
+    if (!bundled || !copyIfChanged(bundledScripts(), staged.filePath(ScriptsMod))) return mods;
+    const QString lua = QCoreApplication::translate("ClientPatches", "the game loads the scripts mod for this server's Lua scripts");
+    return loaded ? mods + ", " + lua : lua;
 }
 
 QString fixCode(const QString &file, const QStringList &fixes, QStringList &applied) {
@@ -369,9 +383,11 @@ const QList<ClientPatch> &ClientPatches::all() {
              "in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.")},
         {Mods, QCoreApplication::translate("ClientPatches", "Mods"),
          QCoreApplication::translate("ClientPatches",
-             "Loads the mods you put in the mods folder in the launcher's data folder into 3.5. Adds okmod.dll to the imports of "
-             "GameAssembly.dll with hooks the mods use, and puts okmod.dll and the mods next to the game. While the folder has no mods, "
-             "the game stays as it is. The original stays as GameAssembly.dll.original and comes back when this is off or the folder is empty.")},
+             "Loads the mods you put in the mods folder in the launcher's data folder into 3.5, and the launcher's own scripts mod "
+             "when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, "
+             "and puts okmod.dll and the mods next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher's. "
+             "While the folder has no mods and the server no scripts, the game stays as it is. "
+             "The original stays as GameAssembly.dll.original and comes back when this is off or nothing needs it.")},
     };
     return patches;
 }
@@ -405,9 +421,10 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
         QStringList nativeFixes;
         for (const QString &fix : {WorldSwitch, Tcp, ServerTeleport})
             if (fixes.contains(fix)) nativeFixes << fix;
-        if (Settings::clientPatch(Mods) && is64Bit(native) && hasMods() && stageLoader(instancePath)) nativeFixes << Mods;
+        const bool scripts = serverScripts(features);
+        if (Settings::clientPatch(Mods) && is64Bit(native) && (hasMods() || scripts) && stageLoader(instancePath)) nativeFixes << Mods;
         if (const QString note = fixCode(native, nativeFixes, applied); !note.isEmpty()) notes << note;
-        if (const QString note = stageMods(instancePath, native, applied.contains(Mods)); !note.isEmpty()) notes << note;
+        if (const QString note = stageMods(instancePath, native, applied.contains(Mods), scripts); !note.isEmpty()) notes << note;
     }
     for (const QString &fix : applied)
         if (fix != Mods) notes << describe(fix);
