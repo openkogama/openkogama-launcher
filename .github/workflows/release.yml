@@ -60,6 +60,13 @@ jobs:
           cmake --build build/okmod --config Release --target okmod scripts || exit /b 1
           copy build\okmod\Release\okmod.dll dist\server\ || exit /b 1
           copy build\okmod\Release\scripts.dll dist\server\ || exit /b 1
+          cmake -S openkogama-mods/core -B build/okmod86 -A Win32 || exit /b 1
+          cmake --build build/okmod86 --config Release --target okmod scripts || exit /b 1
+          mkdir dist\server\x86
+          copy build\okmod86\Release\okmod.dll dist\server\x86\ || exit /b 1
+          copy build\okmod86\Release\scripts.dll dist\server\x86\ || exit /b 1
+          dotnet build openkogama-mods/shim/OkModShim.csproj -c Release -o build/shim || exit /b 1
+          copy build\shim\OkModShim.dll dist\server\ || exit /b 1
 
       - uses: ilammy/msvc-dev-cmd@v1
         with:
