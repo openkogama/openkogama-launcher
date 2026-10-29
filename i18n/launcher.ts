@@ -310,7 +310,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into 3.5, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, and puts okmod.dll and the mods next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as GameAssembly.dll.original and comes back when this is off or nothing needs it.</source>
+        <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into the game, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, or the same hooks to kogama_Data/Managed/Assembly-CSharp.dll on versions before IL2CPP, and puts okmod.dll and the mods built for the game&apos;s 32 or 64 bits next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as .original next to it and comes back when this is off or nothing needs it.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
