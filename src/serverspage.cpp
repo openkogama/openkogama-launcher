@@ -449,9 +449,7 @@ void ServersPage::fetchPublic()
         for (const PublicServer &server : std::as_const(m_public)) {
             if (!server.thumbnail || m_thumbnails.contains(server.address)) continue;
             m_thumbnails.insert(server.address, {});
-            fetchThumbnail(server.address, Tunnel::isAddress(server.address)
-                ? Settings::publicList() + "/thumbnail?address=" + QString::fromLatin1(QUrl::toPercentEncoding(server.address))
-                : server.address + "/api/server/thumbnail");
+            fetchThumbnail(server.address, Settings::publicList() + "/thumbnail?address=" + QString::fromLatin1(QUrl::toPercentEncoding(server.address)));
         }
     });
 }
