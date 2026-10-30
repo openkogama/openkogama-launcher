@@ -208,6 +208,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         if (meta.open(QIODevice::ReadOnly)) info = QJsonDocument::fromJson(meta.readAll()).object();
         QString version = info.value("version").toString();
         QString file = QDir::toNativeSeparators(QDir(path).filePath(exe));
+        notes += ClientPatches::applyWeb(QDir(path).filePath(exe));
         client->setProgram(Paths::player());
         if (info.value("unityVersion").toString().startsWith("3.4")) {
             if (mode == "avatar") {

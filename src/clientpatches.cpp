@@ -42,6 +42,7 @@ const QString ColossusLaser = "colossus-laser";
 const QString WorldSwitch = "world-switch";
 const QString Tcp = "tcp";
 const QString ServerTeleport = "teleport";
+const QString Camera = "camera";
 const QString Mods = "mods";
 const QString ModLoader = "okmod.dll";
 const QString Scripts = "scripts";
@@ -355,6 +356,7 @@ QString describe(const QString &fix) {
     if (fix == WorldSwitch) return QCoreApplication::translate("ClientPatches", "the game can switch worlds without restarting");
     if (fix == Tcp) return QCoreApplication::translate("ClientPatches", "the game connects over TCP, because its UDP traffic does not reach this server");
     if (fix == ServerTeleport) return QCoreApplication::translate("ClientPatches", "the server can move your avatar at once");
+    if (fix == Camera) return QCoreApplication::translate("ClientPatches", "the camera no longer leaves only the sky after it touches a wall");
     return fix;
 }
 
@@ -397,6 +399,12 @@ const QList<ClientPatch> &ClientPatches::all() {
              "your own avatar a teleport, the game puts it there. Adds a check after MVNetworkGame.OnUpdateWorldObjectEvent reads a "
              "transform in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions, where the check goes "
              "in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.")},
+        {Camera, QCoreApplication::translate("ClientPatches", "Camera fix"),
+         QCoreApplication::translate("ClientPatches",
+             "Keeps the camera of 1.8 to 1.32.3 from breaking when it touches a wall, mostly on edges and far from the middle of the world, "
+             "where only the sky stayed on screen until a respawn. Clamps the square root in PlaymodeCamera like the game itself did from 1.32.4, "
+             "in kogama_Data/Managed/Assembly-CSharp.dll, or in the Assembly-CSharp.dll inside the .unityweb of web player versions. "
+             "The original stays as .original next to it and comes back when this is off.")},
         {Mods, QCoreApplication::translate("ClientPatches", "Mods"),
          QCoreApplication::translate("ClientPatches",
              "Loads the mods you put in the mods folder in the launcher's data folder into the game, and the launcher's own scripts mod "
@@ -429,6 +437,7 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
     if (Settings::clientPatch(ColossusLaser)) fixes << ColossusLaser;
     if (Settings::clientPatch(WorldSwitch)) fixes << WorldSwitch;
     if (Settings::clientPatch(ServerTeleport)) fixes << ServerTeleport;
+    if (Settings::clientPatch(Camera)) fixes << Camera;
     if (Settings::clientPatch(Tcp) && features && features->contains(Tcp) && !udpReaches(serverUrl, ServerFeatures::udpPort(serverUrl)))
         fixes << Tcp;
     QStringList applied;
@@ -458,5 +467,15 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
     if (themed) applied << "themes";
     if (active) *active = applied;
     if (themes) *themes = themed ? served.value("themesVersion").toString() : QString();
+    return notes;
+}
+
+QStringList ClientPatches::applyWeb(const QString &file) {
+    QStringList fixes;
+    for (const QString &fix : {ColossusLaser, WorldSwitch, ServerTeleport, Camera})
+        if (Settings::clientPatch(fix)) fixes << fix;
+    QStringList applied, notes;
+    if (const QString note = fixCode(file, fixes, applied); !note.isEmpty()) notes << note;
+    for (const QString &fix : applied) notes << describe(fix);
     return notes;
 }
