@@ -313,6 +313,18 @@
         <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into the game, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, or the same hooks to kogama_Data/Managed/Assembly-CSharp.dll on versions before IL2CPP, and puts okmod.dll and the mods built for the game&apos;s 32 or 64 bits next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as .original next to it and comes back when this is off or nothing needs it.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>the camera no longer leaves only the sky after it touches a wall</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Camera fix</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keeps the camera of 1.8 to 1.32.3 from breaking when it touches a wall, mostly on edges and far from the middle of the world, where only the sky stayed on screen until a respawn. Clamps the square root in PlaymodeCamera like the game itself did from 1.32.4, in kogama_Data/Managed/Assembly-CSharp.dll, or in the Assembly-CSharp.dll inside the .unityweb of web player versions. The original stays as .original next to it and comes back when this is off.</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>ConsoleWindow</name>
