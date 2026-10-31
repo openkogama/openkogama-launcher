@@ -23,6 +23,7 @@ qt_add_executable(openkogama-launcher
     src/serverfeatures.h src/serverfeatures.cpp
     src/playerprofile.h src/playerprofile.cpp
     src/discordpresence.h src/discordpresence.cpp
+    src/seasonalknock.h src/seasonalknock.cpp
     src/links.h src/links.cpp
     src/serverspage.h src/serverspage.cpp
     src/tunnel.h src/tunnel.cpp
@@ -57,6 +58,7 @@ qt_add_resources(openkogama-launcher "resources"
         resources/logo.png
         resources/openkogama-font.ttf
         resources/launcher.qss
+        resources/halloween-knock.wav
         resources/arrow-down.svg
         resources/check.svg
         resources/plus.svg
@@ -89,6 +91,7 @@ target_link_libraries(openkogama-launcher
         Qt::Concurrent
         velopack
         crypt32
+        winmm
 )
 
 add_custom_command(TARGET openkogama-launcher POST_BUILD
@@ -122,13 +125,18 @@ option(BUILD_TESTING "Build launcher tests" OFF)
 include(CTest)
 if(BUILD_TESTING)
     find_package(Qt6 REQUIRED COMPONENTS Test)
+    qt_add_executable(knock-tests tests/seasonalknock_test.cpp)
+    target_include_directories(knock-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(knock-tests PRIVATE Qt::Core)
+    add_test(NAME launcher-knock COMMAND knock-tests)
     qt_add_executable(launcher-tests tests/serverspage_test.cpp src/serverspage.cpp src/serverspage.h src/tilegrid.cpp src/tilegrid.h src/settings.cpp src/settings.h src/tunnel.cpp src/tunnel.h src/sharebar.cpp src/sharebar.h src/serverconfigdialog.cpp src/serverconfigdialog.h
         src/gamelauncher.cpp src/gamelauncher.h src/singleinstance.cpp src/singleinstance.h src/clientpatches.cpp src/clientpatches.h src/serverfeatures.cpp src/serverfeatures.h src/account.cpp src/account.h src/playerprofile.cpp src/playerprofile.h src/discordpresence.cpp src/discordpresence.h src/consolewindow.cpp src/consolewindow.h src/webplayerruntime.cpp src/webplayerruntime.h src/paths.cpp src/paths.h src/theme.cpp src/theme.h
-        src/launchdialog.cpp src/launchdialog.h src/launchdialog.ui src/assetinstaller.cpp src/assetinstaller.h)
+        src/launchdialog.cpp src/launchdialog.h src/launchdialog.ui src/assetinstaller.cpp src/assetinstaller.h
+        src/seasonalknock.cpp src/seasonalknock.h)
     target_include_directories(launcher-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_compile_definitions(launcher-tests PRIVATE LAUNCHER_TRANSLATIONS="${CMAKE_CURRENT_BINARY_DIR}")
     add_dependencies(launcher-tests openkogama-launcher_lrelease)
-    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate crypt32)
+    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate crypt32 winmm)
     qt_add_resources(launcher-tests "test_resources" PREFIX "/" BASE resources FILES resources/logo.png)
     add_test(NAME launcher-servers COMMAND launcher-tests -o ${CMAKE_CURRENT_BINARY_DIR}/launcher-tests.txt,txt)
     set_tests_properties(launcher-servers PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

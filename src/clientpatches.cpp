@@ -44,6 +44,7 @@ const QString Tcp = "tcp";
 const QString ServerTeleport = "teleport";
 const QString Camera = "camera";
 const QString Mods = "mods";
+const QString BuilderTool = "builder-tool";
 const QString ModLoader = "okmod.dll";
 const QString Scripts = "scripts";
 const QString ScriptsMod = "scripts.dll";
@@ -434,6 +435,7 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
     bool themed = false;
     notes << gameData(instancePath, sounds ? served.value("sounds").toArray() : QJsonArray(), skies ? served.value("themes").toArray() : QJsonArray(), &themed);
     QStringList fixes;
+    if (features && features->contains(BuilderTool)) fixes << BuilderTool;
     if (Settings::clientPatch(ColossusLaser)) fixes << ColossusLaser;
     if (Settings::clientPatch(WorldSwitch)) fixes << WorldSwitch;
     if (Settings::clientPatch(ServerTeleport)) fixes << ServerTeleport;
@@ -455,7 +457,7 @@ QStringList ClientPatches::apply(const QString &instancePath, const QString &ser
     if (!native.isEmpty()) {
         const bool wide = is64Bit(native);
         QStringList nativeFixes;
-        for (const QString &fix : {WorldSwitch, Tcp, ServerTeleport})
+        for (const QString &fix : {WorldSwitch, Tcp, ServerTeleport, BuilderTool})
             if (fixes.contains(fix)) nativeFixes << fix;
         const bool scripts = serverScripts(features, wide);
         if (mods && (!ownMods(wide).isEmpty() || scripts) && stageLoader(instancePath, wide)) nativeFixes << Mods;
