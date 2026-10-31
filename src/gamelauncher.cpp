@@ -10,6 +10,7 @@
 #include "consolewindow.h"
 #include "settings.h"
 #include "discordpresence.h"
+#include "seasonalknock.h"
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDesktopServices>
@@ -283,6 +284,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         return nullptr;
     }
     DiscordPresence::show(client, presenceDetails(url, mode), title);
+    if (mode == "play") SeasonalKnock::watch(client);
     if (Settings::consoleOnLaunch())
         console->show();
     return client;
