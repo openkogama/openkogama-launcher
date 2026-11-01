@@ -678,7 +678,7 @@ void MainWindow::joinServer(const QString &address) {
     if (path.isEmpty()) return;
     QString exe;
     if (!prepareInstance(path, &exe)) return;
-    QProcess *client = GameLauncher::start(path, exe, address, "play", 0, this, this, false, [this, address]() { joinServer(address); });
+    QProcess *client = GameLauncher::start(path, exe, address, "play", 0, this, this, {}, [this, address]() { joinServer(address); });
     if (!client) return;
     if (m_servers->isPublic(address)) {
         DiscordPresence::join(client, address, m_servers->titleOf(address));
@@ -814,10 +814,10 @@ void MainWindow::joinCode(const QString &address) {
         progress->disconnect(this);
         progress->close();
     };
-    auto launch = [this, address, trip, tunnel, dismiss]() {
+    auto launch = [this, address, code, trip, tunnel, dismiss]() {
         if (trip->launched || trip->path.isEmpty() || trip->port == 0) return;
         dismiss();
-        QProcess *client = GameLauncher::start(trip->path, trip->exe, "http://127.0.0.1:" + QString::number(trip->port), "play", trip->world, this, this, true);
+        QProcess *client = GameLauncher::start(trip->path, trip->exe, "http://127.0.0.1:" + QString::number(trip->port), "play", trip->world, this, this, code);
         if (!client) {
             if (tunnel) tunnel->stop();
             return;

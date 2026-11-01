@@ -8,16 +8,19 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 
-static constexpr int FetchTimeout = 3000;
-
 static QHash<QString, int> &udpPorts() {
     static QHash<QString, int> ports;
     return ports;
 }
 
-std::optional<QStringList> ServerFeatures::fetch(const QString &serverUrl) {
+static QHash<QString, QString> &addresses() {
+    static QHash<QString, QString> given;
+    return given;
+}
+
+std::optional<QStringList> ServerFeatures::fetch(const QString &serverUrl, int timeout) {
     QNetworkRequest request(QUrl(serverUrl + "/api/server"));
-    request.setTransferTimeout(FetchTimeout);
+    request.setTransferTimeout(timeout);
     QNetworkAccessManager net;
     QNetworkReply *reply = net.get(request);
     QEventLoop wait;
@@ -28,12 +31,17 @@ std::optional<QStringList> ServerFeatures::fetch(const QString &serverUrl) {
 
     const QJsonObject server = QJsonDocument::fromJson(reply->readAll()).object();
     if (const int port = server.value("udp").toInt(); port > 0) udpPorts().insert(serverUrl, port);
+    addresses().insert(serverUrl, server.value("url").toString());
     const QJsonValue listed = server.value("features");
     if (!listed.isArray()) return std::nullopt;
     QStringList features;
     for (const QJsonValue &feature : listed.toArray())
         if (feature.isString()) features << feature.toString();
     return features;
+}
+
+QString ServerFeatures::address(const QString &serverUrl) {
+    return addresses().value(serverUrl);
 }
 
 int ServerFeatures::udpPort(const QString &serverUrl) {

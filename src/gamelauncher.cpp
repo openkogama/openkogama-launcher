@@ -16,6 +16,7 @@
 #include <QDir>
 #include <QEventLoop>
 #include <QFile>
+#include <QHostAddress>
 #include <QInputDialog>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -36,6 +37,8 @@
 namespace {
 
 constexpr int NameTimeout = 3000;
+constexpr int ServerTimeout = 5000;
+constexpr int TunnelTimeout = 10000;
 constexpr int MaxNickname = 20;
 constexpr qint64 PendingLifeMs = 10 * 60 * 1000;
 std::function<void()> pendingJoin;
@@ -60,6 +63,16 @@ void signInThenJoin(const std::function<void()> &retry)
     pendingJoin = retry;
     pendingSince = QDateTime::currentMSecsSinceEpoch();
     QDesktopServices::openUrl(Account::signInPage());
+}
+
+QString preferredAddress(const QString &url, const QString &given)
+{
+    const QUrl from(url);
+    const QUrl to(given);
+    if (given.isEmpty() || !to.isValid() || (to.scheme() != "https" && to.scheme() != "http")) return url;
+    if (from.scheme() == "https" && to.scheme() != "https") return url;
+    if (to.host() == "localhost" || QHostAddress(to.host()).isLoopback()) return url;
+    return from.matches(to, QUrl::StripTrailingSlash) ? url : given;
 }
 
 QPushButton *primary(QMessageBox &box, const QString &text)
@@ -146,16 +159,25 @@ bool GameLauncher::resumeJoin()
     return true;
 }
 
-QProcess *GameLauncher::start(const QString &path, const QString &exe, const QString &url, const QString &mode, int world, QWidget *owner, QWidget *parent, bool viaCode, const std::function<void()> &retry) {
+QProcess *GameLauncher::start(const QString &path, const QString &exe, const QString &url, const QString &mode, int world, QWidget *owner, QWidget *parent, const QString &code, const std::function<void()> &retry) {
     const QString title = instanceTitle(path);
     const bool local = url == LocalServerUrl;
+    const bool viaCode = !code.isEmpty();
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     if (local) {
         env.insert("http_proxy", "http://127.0.0.1:8081");
         env.insert("no_proxy", "127.0.0.1,localhost");
     }
 
-    QString session = url + "/session?mode=" + mode + (world ? "&world=" + QString::number(world) : QString());
+    const std::optional<QStringList> features = ServerFeatures::fetch(url, viaCode ? TunnelTimeout : ServerTimeout);
+    const QString server = local || viaCode ? url : preferredAddress(url, ServerFeatures::address(url));
+    QStringList notes;
+    if (!features && !local)
+        notes << QCoreApplication::translate("GameLauncher", "the server did not say what it has, so its scripts, sounds and themes may be missing");
+    if (server != url)
+        notes << QCoreApplication::translate("GameLauncher", "joining through %1, the address this server gives").arg(server);
+
+    QString session = server + "/session?mode=" + mode + (world ? "&world=" + QString::number(world) : QString());
     const QString nickname = Settings::nickname();
     if (!nickname.isEmpty())
         session += "&name=" + QString::fromLatin1(QUrl::toPercentEncoding(nickname));
@@ -165,35 +187,17 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     session += "&key=" + settingsKey;
     session += "&language=" + QString::fromLatin1(QUrl::toPercentEncoding(Languages::current()));
 
-    const std::optional<QStringList> features = ServerFeatures::fetch(url);
-    QStringList notes;
-    if (!local && !viaCode && features && features->contains("accounts")) {
-        const bool required = features->contains("accounts-required");
-        bool signedIn = false;
-        if (!Account::name().isEmpty()) {
-            const Account::Reply ticket = Account::ticket(url);
-            if (ticket.ok()) {
-                session += "&ticket=" + QString::fromLatin1(QUrl::toPercentEncoding(ticket.body.value("ticket").toString()));
-                notes << QCoreApplication::translate("GameLauncher", "signed in as %1").arg(ticket.body.value("name").toString());
-                signedIn = true;
-            } else if (!Account::name().isEmpty()) {
-                if (required || nameClaimed(url, nickname)) {
-                    QMessageBox::warning(parent, QCoreApplication::translate("GameLauncher", "Sign in"),
-                        QCoreApplication::translate("GameLauncher", "Could not sign in to this server. %1").arg(ticket.error()));
-                    return nullptr;
-                }
-                notes << QCoreApplication::translate("GameLauncher", "could not sign in here, playing as a guest: %1").arg(ticket.error());
-            }
+    const bool accounts = !local && (features ? features->contains("accounts") : !viaCode);
+    const bool required = features && features->contains("accounts-required");
+    const bool signedIn = !Account::name().isEmpty();
+    if (accounts && !signedIn && features) {
+        if (required) {
+            askToSignIn(parent, retry);
+            return nullptr;
         }
-        if (!signedIn && Account::name().isEmpty()) {
-            if (required) {
-                askToSignIn(parent, retry);
-                return nullptr;
-            }
-            if (nameClaimed(url, nickname)) {
-                askAboutName(parent, nickname, retry);
-                return nullptr;
-            }
+        if (nameClaimed(server, nickname)) {
+            askAboutName(parent, nickname, retry);
+            return nullptr;
         }
     }
 
@@ -202,6 +206,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     logs.mkpath(".");
     QString log = logs.filePath("client-" + QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss-zzz") + ".log");
 
+    std::function<QStringList(const QString &)> arguments;
     if (WebPlayerRuntime::isWebPlayerFile(exe)) {
         QFile meta(QDir(path).filePath("instance.json"));
         QJsonObject info;
@@ -222,8 +227,10 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
             client->setArguments({file + query, "--serve-as", url + "/kogama2012/WebPlayer.unity3d",
                 "--title", title, "--log", QDir::toNativeSeparators(log)});
         } else {
-            client->setArguments({file, "--version", version,
-                "--reply", "sendPlayerParams=" + session + "&client=" + version, "--title", title, "--log", QDir::toNativeSeparators(log)});
+            arguments = [file, version, title, log](const QString &ready) {
+                return QStringList{file, "--version", version,
+                    "--reply", "sendPlayerParams=" + ready + "&client=" + version, "--title", title, "--log", QDir::toNativeSeparators(log)};
+            };
         }
     } else {
         client->setProgram(QDir(path).filePath(exe));
@@ -243,7 +250,9 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
             session += "&patches=" + active.join(',');
         if (!themes.isEmpty())
             session += "&themes=" + themes;
-        client->setArguments({"kogamaPackage:" + QString::fromLatin1(session.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)});
+        arguments = [log](const QString &ready) {
+            return QStringList{"kogamaPackage:" + QString::fromLatin1(ready.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)};
+        };
     }
     client->setWorkingDirectory(path);
     client->setProcessEnvironment(env);
@@ -273,6 +282,24 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     QObject::connect(client, &QProcess::finished, client, &QObject::deleteLater);
     if (const QString sent = PlayerProfile::send(url, settingsKey, !local, features); !sent.isEmpty())
         console->note(sent);
+
+    if (accounts && signedIn) {
+        const Account::Reply ticket = Account::ticket(viaCode ? "p2p:" + code : server);
+        if (ticket.ok()) {
+            session += "&ticket=" + QString::fromLatin1(QUrl::toPercentEncoding(ticket.body.value("ticket").toString()));
+            console->note(QCoreApplication::translate("GameLauncher", "signed in as %1").arg(ticket.body.value("name").toString()));
+        } else if (required || (features && nameClaimed(server, nickname))) {
+            client->deleteLater();
+            console->deleteLater();
+            QMessageBox::warning(parent, QCoreApplication::translate("GameLauncher", "Sign in"),
+                QCoreApplication::translate("GameLauncher", "Could not sign in to this server. %1").arg(ticket.error()));
+            return nullptr;
+        } else {
+            console->note(QCoreApplication::translate("GameLauncher", "could not sign in here, playing as a guest: %1").arg(ticket.error()));
+        }
+    }
+    if (arguments)
+        client->setArguments(arguments(session));
     client->start();
 
     if (!client->waitForStarted()) {
