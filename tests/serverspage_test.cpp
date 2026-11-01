@@ -212,7 +212,7 @@ private slots:
             QVERIFY(page.isPublic(server.url()));
             QVERIFY(page.isPublic("p2p:ABCDEF"));
             QCOMPARE(page.clientsOf(server.url()), QStringList({"3.5.20"}));
-            QTRY_VERIFY(server.requests.contains("/api/server/thumbnail"));
+            QTRY_VERIFY(!server.requests.filter("/thumbnail?address=").isEmpty());
             list->setCurrentRow(0);
             QAction *save = nullptr;
             for (QAction *action : page.findChild<QToolButton *>("moreServerButton")->menu()->actions())
