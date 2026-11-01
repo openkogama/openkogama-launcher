@@ -380,8 +380,8 @@
         <translation>Por dar a conocer OpenKogama en su servidor.</translation>
     </message>
     <message>
-        <source>Translating the website into French.</source>
-        <translation>Por traducir la web al francés.</translation>
+        <source>Translating the website and the launcher into French.</source>
+        <translation>Por traducir la web y el lanzador al francés.</translation>
     </message>
     <message>
         <source>Translating the website and the launcher into Spanish.</source>

@@ -384,8 +384,8 @@
         <translation>Udostępnienie OpenKogama na swoim serwerze.</translation>
     </message>
     <message>
-        <source>Translating the website into French.</source>
-        <translation>Przetłumaczenie strony na francuski.</translation>
+        <source>Translating the website and the launcher into French.</source>
+        <translation>Przetłumaczenie strony i launchera na francuski.</translation>
     </message>
     <message>
         <source>Translating the website and the launcher into Spanish.</source>

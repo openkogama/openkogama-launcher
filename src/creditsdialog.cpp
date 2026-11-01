@@ -22,7 +22,7 @@ const Credit Thanks[] = {
     {"Dylinn", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama on Regama.")},
     {"Zpayer", QT_TRANSLATE_NOOP("CreditsDialog", "Announcing OpenKogama.")},
     {"loafio", QT_TRANSLATE_NOOP("CreditsDialog", "Sharing OpenKogama on his server.")},
-    {"Limeen", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website into French.")},
+    {"Limeen", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website and the launcher into French.")},
     {"lordscorpioni", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website and the launcher into Spanish.")},
     {"podleshik", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the launcher into Russian.")},
 };

@@ -380,7 +380,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Translating the website into French.</source>
+        <source>Translating the website and the launcher into French.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

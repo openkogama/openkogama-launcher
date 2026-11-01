@@ -384,8 +384,8 @@
         <translation>Поделитесь OpenKogama на его сервере.</translation>
     </message>
     <message>
-        <source>Translating the website into French.</source>
-        <translation>Перевод сайта на французский.</translation>
+        <source>Translating the website and the launcher into French.</source>
+        <translation>Перевод сайта и лаунчера на французский.</translation>
     </message>
     <message>
         <source>Translating the website and the launcher into Spanish.</source>
