@@ -13,6 +13,7 @@
 
 class WorldsDialog;
 class ShareBar;
+class QAction;
 class QNetworkAccessManager;
 class ServersPage;
 class QProcess;
@@ -29,6 +30,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void openLink(const QString &link);
+    void checkForUpdates();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -69,6 +71,7 @@ private:
 
     QPointer<WorldsDialog> m_worlds;
     ShareBar *m_share;
+    QAction *m_updates = nullptr;
     QNetworkAccessManager *m_net = nullptr;
     ServersPage *m_servers;
     QList<QPointer<QProcess>> m_remoteClients;

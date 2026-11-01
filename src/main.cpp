@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
     MainWindow w;
     Links::listen(&w, [&w](const QString &opened) { w.openLink(opened); });
     w.show();
-    Updater::check(&w);
+    w.checkForUpdates();
     if (!link.isEmpty()) QTimer::singleShot(0, &w, [&w, link]() { w.openLink(link); });
     return QApplication::exec();
 }

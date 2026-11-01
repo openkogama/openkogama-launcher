@@ -19,6 +19,7 @@
 #include "tunnel.h"
 #include "paths.h"
 #include "theme.h"
+#include "updater.h"
 #include "webplayerruntime.h"
 #include <QAction>
 #include <QApplication>
@@ -49,6 +50,7 @@
 #include <QSignalBlocker>
 #include <QTimer>
 #include <QUrl>
+#include <QUrlQuery>
 #include <QStyle>
 #include <QPushButton>
 #include <QVBoxLayout>
@@ -78,6 +80,13 @@ static QString versionTitle(const QString &name, const QString &version) {
 
 static QIcon unknownIcon() {
     return Theme::icon(":/unknown.png");
+}
+
+static void openSite(const QString &page) {
+    QUrl url("https://openkogama.org/" + page);
+    const QString language = Settings::language();
+    if (!language.isEmpty()) url.setQuery(QUrlQuery({{"lang", language}}));
+    QDesktopServices::openUrl(url);
 }
 
 static QIcon instanceIcon(const QDir &dir, const QFileIconProvider &provider) {
@@ -147,6 +156,18 @@ MainWindow::MainWindow(QWidget *parent)
         QDesktopServices::openUrl(QUrl("https://github.com/openkogama/openkogama-server/blob/main/HOSTING.md"));
     });
     ui->menuHelp->insertAction(ui->actionCredits, guide);
+    m_updates = new QAction(tr("Check for updates..."), this);
+    connect(m_updates, &QAction::triggered, this, [this]() { Updater::check(this, m_updates, true); });
+    ui->menuHelp->insertAction(ui->actionCredits, m_updates);
+    auto *terms = new QAction(tr("Terms of Use"), this);
+    connect(terms, &QAction::triggered, this, []() { openSite("terms/"); });
+    ui->menuHelp->insertAction(ui->actionCredits, terms);
+    auto *privacy = new QAction(tr("Privacy Policy"), this);
+    connect(privacy, &QAction::triggered, this, []() { openSite("privacy/"); });
+    ui->menuHelp->insertAction(ui->actionCredits, privacy);
+    ui->menuHelp->addSeparator();
+    const QString version = Updater::version();
+    ui->menuHelp->addAction(tr("OpenKogama Launcher %1").arg(version.isEmpty() ? QStringLiteral("dev") : version))->setEnabled(false);
     auto *serverSettings = new QAction(tr("Server settings..."), this);
     connect(serverSettings, &QAction::triggered, this, &MainWindow::editServerSettings);
     ui->menuFile->addAction(serverSettings);
@@ -738,6 +759,10 @@ void MainWindow::openLink(const QString &link) {
         : Tunnel::isAddress(address) ? Tunnel::display(Tunnel::code(address)) : QUrl(address).host();
     if (QMessageBox::question(this, tr("Join"), tr("Join %1?").arg(shown)) != QMessageBox::Yes) return;
     joinServer(address);
+}
+
+void MainWindow::checkForUpdates() {
+    Updater::check(this, m_updates, false);
 }
 
 void MainWindow::editServerSettings() {
