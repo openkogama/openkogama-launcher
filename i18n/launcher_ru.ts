@@ -120,15 +120,15 @@
     </message>
     <message>
         <source>Players with these OpenKogama account names or IP addresses are admins. A name only counts for a player signed in with that account. Players on this computer always are.</source>
-        <translation type="unfinished"></translation>
+        <translation>Игроки с такими именами учётных записей OpenKogama или IP-адресами являются администраторами. Имя учитывается только в том случае, если игрок вошёл в систему под соответствующей учётной записью. Игроки, использующие этот компьютер, являются администраторами всегда.</translation>
     </message>
     <message>
         <source>Name or IP address</source>
-        <translation type="unfinished"></translation>
+        <translation>Название или IP адресс</translation>
     </message>
     <message>
         <source>Account name or IP address</source>
-        <translation type="unfinished"></translation>
+        <translation>Имя акаунта или IP адресс</translation>
     </message>
     <message>
         <source>Remove</source>
@@ -203,7 +203,7 @@
     </message>
     <message>
         <source>the game connects over TCP, because its UDP traffic does not reach this server</source>
-        <translation type="unfinished"></translation>
+        <translation>игра устанавливает соединение по протоколу TCP, поскольку её UDP трафик не доходит до этого сервера</translation>
     </message>
     <message>
         <source>Several game windows</source>
@@ -247,11 +247,11 @@
     </message>
     <message>
         <source>TCP when UDP is blocked</source>
-        <translation type="unfinished"></translation>
+        <translation>использовать TCP когда UDP заблокирован</translation>
     </message>
     <message>
         <source>Before joining a server that offers it, the launcher checks whether the game&apos;s UDP traffic gets through. When your network or VPN blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back on the next launch over UDP.</source>
-        <translation type="unfinished"></translation>
+        <translation>Перед подключением к серверу, поддерживающему такой режим, лаунчер проверяет, проходит ли UDP-трафик игры. Если ваша сеть или VPN блокируют его, игра при данном запуске переключается на протокол TCP — подобно тому, как это происходит при обращении к веб-сайту. Для этого вносятся изменения в механизм установки соединения (класс `MVNetworkGame`) внутри файла `kogama_Data/Managed/Assembly-CSharp.dll` (или `GameAssembly.dll` в версиях на базе IL2CPP). Исходный файл сохраняется рядом с измененным под расширением `.original` и восстанавливается при следующем запуске, если возможна работа по протоколу UDP.</translation>
     </message>
     <message numerus="yes">
         <source>closed the one window lock in %n running game(s)</source>
@@ -271,67 +271,67 @@
     </message>
     <message>
         <source>could not add the server&apos;s sounds and themes to %1, the game keeps its own</source>
-        <translation type="unfinished"></translation>
+        <translation>Не удалось добавить звуки и темы сервера в %1, игра сохраняет свои собственные</translation>
     </message>
     <message>
         <source>added the server&apos;s themes to the theme list in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>добавлены серверные темы в список тем в %1</translation>
     </message>
     <message>
         <source>took okmod.dll and the mods out of the game</source>
-        <translation type="unfinished"></translation>
+        <translation>убрал okmod.dll и моды из игры</translation>
     </message>
     <message numerus="yes">
         <source>the game loads okmod.dll with %n mod(s) from the launcher&apos;s mods folder</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>Игра загружает okmod.dll вместе с %n модом из папки модов в лаунчере</numerusform>
+            <numerusform>Игра загружает okmod.dll вместе с %n модами из папки модов в лаунчере</numerusform>
+            <numerusform>Игра загружает okmod.dll вместе с %n модами из папки модов в лаунчере</numerusform>
         </translation>
     </message>
     <message>
         <source>the server can move your avatar at once</source>
-        <translation type="unfinished"></translation>
+        <translation>сервер может сразу перенести ваш аватар</translation>
     </message>
     <message>
         <source>Server themes</source>
-        <translation type="unfinished"></translation>
+        <translation>Серверные темы</translation>
     </message>
     <message>
         <source>Adds the server&apos;s own sky themes to the theme menu and gives the game&apos;s themes the pictures the server replaced, by rewriting the theme list in kogama_Data/sharedassets0.assets, or in kogama_Data/data.unity3d on 3.5. The original stays as .original next to it and comes back when the server has none or this is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавляет собственные темы оформления неба, созданные сервером, в меню выбора тем, а также возвращает игровым темам те изображения, которые были заменены сервером. Это достигается путем перезаписи списка тем в файле `kogama_Data/sharedassets0.assets` (или `kogama_Data/data.unity3d` в версии 3.5). Исходный файл сохраняется рядом с расширением `.original` и восстанавливается, если у сервера нет собственных тем или если данная функция отключена.</translation>
     </message>
     <message>
         <source>Server teleport</source>
-        <translation type="unfinished"></translation>
+        <translation>Серверный телепорт</translation>
     </message>
     <message>
         <source>Lets the server move your avatar at once, without the hidden vehicles and teleporters it uses otherwise: when the server sends your own avatar a teleport, the game puts it there. Adds a check after MVNetworkGame.OnUpdateWorldObjectEvent reads a transform in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions, where the check goes in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>Позволяет серверу мгновенно перемещать вашего аватара, минуя скрытые транспортные средства или телепорты, которые обычно используются для этой цели: когда сервер отправляет команду на телепортацию вашего аватара, игра сразу перемещает его в указанное место. В код (в файле `kogama_Data/Managed/Assembly-CSharp.dll` или `GameAssembly.dll` для версий на базе IL2CPP) добавляется проверка, выполняемая после того, как `MVNetworkGame.OnUpdateWorldObjectEvent` считывает данные о трансформации (положении/ориентации объекта). Эта проверка встраивается на место метода `OnDrawGizmos`, который игрой фактически никогда не вызывается. Оригинальный код сохраняется рядом с пометкой `.original` и восстанавливается, если данная функция отключена.</translation>
     </message>
     <message>
         <source>Mods</source>
-        <translation type="unfinished"></translation>
+        <translation>Моды</translation>
     </message>
     <message>
         <source>the game loads the scripts mod for this server&apos;s Lua scripts</source>
-        <translation type="unfinished"></translation>
+        <translation>игра загружает скриптовый мод для Lua-скриптов этого сервера</translation>
     </message>
     <message>
         <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into the game, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, or the same hooks to kogama_Data/Managed/Assembly-CSharp.dll on versions before IL2CPP, and puts okmod.dll and the mods built for the game&apos;s 32 or 64 bits next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as .original next to it and comes back when this is off or nothing needs it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Модификации, помещенные в папку `mods` (находящуюся в директории данных лаунчера), загружаются в игру. Также загружается встроенный в лаунчер скриптовый мод — в тех случаях, когда сервер предоставляет Lua-скрипты для игроков. Система добавляет `okmod.dll` в список импортов `GameAssembly.dll` (используя хуки, необходимые для работы модов) — либо, в версиях игры до перехода на IL2CPP, внедряет аналогичные хуки в `kogama_Data/Managed/Assembly-CSharp.dll`. Файл `okmod.dll` вместе с модами (собранными для 32- или 64-битной версии игры) размещается рядом с исполняемым файлом игры. Если в папке `mods` присутствует собственный файл `scripts.dll`, он заменяет собой скриптовый модуль лаунчера. Если в папке нет модов, а сервер не предоставляет скриптов, игра остается в исходном состоянии. Оригинальные файлы сохраняются с расширением `.original` и восстанавливаются, когда использование модов отключено или в них нет необходимости.</translation>
     </message>
     <message>
         <source>the camera no longer leaves only the sky after it touches a wall</source>
-        <translation type="unfinished"></translation>
+        <translation>камера больше не улетает в небо после касания стены</translation>
     </message>
     <message>
         <source>Camera fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Камера фикс</translation>
     </message>
     <message>
         <source>Keeps the camera of 1.8 to 1.32.3 from breaking when it touches a wall, mostly on edges and far from the middle of the world, where only the sky stayed on screen until a respawn. Clamps the square root in PlaymodeCamera like the game itself did from 1.32.4, in kogama_Data/Managed/Assembly-CSharp.dll, or in the Assembly-CSharp.dll inside the .unityweb of web player versions. The original stays as .original next to it and comes back when this is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>Предотвращает поломку камеры (в версиях с 1.8 по 1.32.3) при её соприкосновении со стеной — чаще всего это происходило на краях карты или далеко от центра мира, из-за чего на экране оставалось только небо вплоть до момента возрождения персонажа. Вносит ограничение (clamp) для квадратного корня в классе `PlaymodeCamera` — аналогично тому, как это было реализовано в самой игре начиная с версии 1.32.4 (в файле `kogama_Data/Managed/Assembly-CSharp.dll` или в `Assembly-CSharp.dll` внутри архива `.unityweb` для версий под веб-плеер). Оригинальный файл сохраняется рядом с расширением `.original` и восстанавливается при отключении данной модификации.</translation>
     </message>
 </context>
 <context>
@@ -700,11 +700,11 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Search your versions...</source>
-        <translation>Поиск вашей версии...</translation>
+        <translation>Поиск в ваших версиях...</translation>
     </message>
     <message>
         <source>Search your versions</source>
-        <translation>Поиск вашей версии</translation>
+        <translation>Поиск в ваших версиях</translation>
     </message>
     <message>
         <source>No versions yet</source>
@@ -796,7 +796,7 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Host a server that stays online...</source>
-        <translation>Запустите сервер, который будет оставаться онлайн...</translation>
+        <translation>Как запустить сервер который будет оставаться онлайн...</translation>
     </message>
     <message>
         <source>Server settings...</source>
@@ -809,9 +809,9 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message numerus="yes">
         <source>Search %n version(s)...</source>
         <translation>
-            <numerusform>Ищем %n версию...</numerusform>
-            <numerusform>Ищем %n версии...</numerusform>
-            <numerusform>Ищем %n версий...</numerusform>
+            <numerusform>Поиск из %n версии...</numerusform>
+            <numerusform>Поиск в %n версиях...</numerusform>
+            <numerusform>Поиск в %n версий...</numerusform>
         </translation>
     </message>
     <message>
@@ -1467,11 +1467,11 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Search your worlds...</source>
-        <translation>Поиск ваших миров...</translation>
+        <translation>Поиск в ваших мирах...</translation>
     </message>
     <message>
         <source>Search your worlds</source>
-        <translation>Поиск ваших миров</translation>
+        <translation>Поиск в ваших мирах</translation>
     </message>
     <message>
         <source>&amp;New world...</source>
@@ -1519,7 +1519,7 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Search your avatars</source>
-        <translation>Поиск ваших аватаров</translation>
+        <translation>Поиск в ваших аватарах</translation>
     </message>
     <message>
         <source>Loading your avatars...</source>
@@ -1543,11 +1543,11 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Search your inventory...</source>
-        <translation>Поиск вашего инвентаря...</translation>
+        <translation>Поиск в вашем инвентаре...</translation>
     </message>
     <message>
         <source>Search your inventory</source>
-        <translation>Поиск вашего инвентаря</translation>
+        <translation>Поиск в вашем инвентаре</translation>
     </message>
     <message>
         <source>Loading your inventory...</source>
@@ -1563,31 +1563,31 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Side view on game versions 1.25 to 2.5. Newer versions play the world in 3D.</source>
-        <translation type="unfinished"></translation>
+        <translation>Вид сбоку в версиях игры с 1.25 по 2.5. В более новых версиях игровой мир представлен в 3D.</translation>
     </message>
     <message>
         <source>Small (0.125)</source>
-        <translation type="unfinished"></translation>
+        <translation>Маленький (0.125)</translation>
     </message>
     <message>
         <source>Medium (0.25)</source>
-        <translation type="unfinished"></translation>
+        <translation>Средний (0.25)</translation>
     </message>
     <message>
         <source>Large (0.5)</source>
-        <translation type="unfinished"></translation>
+        <translation>Большой (0.5)</translation>
     </message>
     <message>
         <source>Size of one cube in the game.</source>
-        <translation type="unfinished"></translation>
+        <translation>Размер одного куба в игре.</translation>
     </message>
     <message>
         <source>Custom</source>
-        <translation type="unfinished"></translation>
+        <translation>свой</translation>
     </message>
     <message>
         <source>Size:</source>
-        <translation type="unfinished"></translation>
+        <translation>Размер:</translation>
     </message>
     <message>
         <source>Scale:</source>
@@ -1603,7 +1603,7 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>2D</source>
-        <translation type="unfinished"></translation>
+        <translation>2Д</translation>
     </message>
     <message>
         <source>Delete...</source>
@@ -1611,11 +1611,11 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Switch to 2D</source>
-        <translation type="unfinished"></translation>
+        <translation>Перейти в 2Д</translation>
     </message>
     <message>
         <source>Switch to 3D</source>
-        <translation type="unfinished"></translation>
+        <translation>Перейти в 3Д</translation>
     </message>
     <message>
         <source>Scale...</source>
@@ -1636,9 +1636,9 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message numerus="yes">
         <source>Search %n world(s)...</source>
         <translation>
-            <numerusform>Ищем %n мир...</numerusform>
-            <numerusform>Ищем %n мира...</numerusform>
-            <numerusform>Ищем %n миров...</numerusform>
+            <numerusform>Поиск из %n мира...</numerusform>
+            <numerusform>Поиск в %n мирах...</numerusform>
+            <numerusform>Поиск в %n мирах...</numerusform>
         </translation>
     </message>
     <message>
@@ -1652,9 +1652,9 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message numerus="yes">
         <source>Search %n avatar(s)...</source>
         <translation>
-            <numerusform>Ищем %n аватар...</numerusform>
-            <numerusform>Ищем %n аватара...</numerusform>
-            <numerusform>Ищем %n аватаров...</numerusform>
+            <numerusform>Поиск из %n аватара...</numerusform>
+            <numerusform>Поиск в %n аватарах...</numerusform>
+            <numerusform>Поиск в %n аватарах...</numerusform>
         </translation>
     </message>
     <message>
@@ -1699,7 +1699,7 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>3D</source>
-        <translation type="unfinished"></translation>
+        <translation>3Д</translation>
     </message>
     <message>
         <source>Create</source>
@@ -1715,7 +1715,7 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>Type:</source>
-        <translation type="unfinished"></translation>
+        <translation>Тип:</translation>
     </message>
     <message>
         <source>Import worlds</source>
@@ -1862,9 +1862,9 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message numerus="yes">
         <source>Search %n item(s)...</source>
         <translation>
-            <numerusform>Ищем %n предмет...</numerusform>
-            <numerusform>Ищем %n предмета...</numerusform>
-            <numerusform>Ищем %n предметов...</numerusform>
+            <numerusform>Поиск из %n предмета...</numerusform>
+            <numerusform>Поиск в %n предметах...</numerusform>
+            <numerusform>Поиск в %n предметах...</numerusform>
         </translation>
     </message>
     <message>
