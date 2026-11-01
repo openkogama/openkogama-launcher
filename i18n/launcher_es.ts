@@ -482,6 +482,14 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <source>Could not start %1</source>
         <translation>No se ha podido iniciar %1</translation>
     </message>
+    <message>
+        <source>the server did not say what it has, so its scripts, sounds and themes may be missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>joining through %1, the address this server gives</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>

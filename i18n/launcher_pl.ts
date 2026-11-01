@@ -486,6 +486,14 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
         <source>Could not start %1</source>
         <translation>Nie udało się uruchomić %1</translation>
     </message>
+    <message>
+        <source>the server did not say what it has, so its scripts, sounds and themes may be missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>joining through %1, the address this server gives</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>
