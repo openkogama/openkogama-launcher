@@ -1004,6 +1004,22 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <source>Could not connect to the host.</source>
         <translation>Не удалось подключиться к хосту.</translation>
     </message>
+    <message>
+        <source>Check for updates...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Terms of Use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Privacy Policy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OpenKogama Launcher %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PlayerProfile</name>
@@ -1420,6 +1436,22 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message>
         <source>OpenKogama Launcher %1 is ready. Restart now to update?</source>
         <translation>OpenKogama Launcher %1 готов. Перезапустить чтобы обновить?</translation>
+    </message>
+    <message>
+        <source>Downloading %1... %2%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for updates...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You have the newest version (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not check for updates: %1</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
