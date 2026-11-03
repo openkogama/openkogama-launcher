@@ -8,6 +8,7 @@
 #include "assetinstaller.h"
 #include "settingsdialog.h"
 #include "worldsdialog.h"
+#include "pluginspage.h"
 #include "serverspage.h"
 #include "gamelauncher.h"
 #include "discordpresence.h"
@@ -142,6 +143,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mainTabs->setCornerWidget(ui->headerBar, Qt::TopRightCorner);
     m_servers = new ServersPage(this);
     ui->mainTabs->insertTab(1, m_servers, tr("&Servers"));
+    ui->mainTabs->insertTab(ui->mainTabs->indexOf(ui->versionsTab), new PluginsPage(this), tr("&Plugins"));
     connect(m_servers, &ServersPage::joinRequested, this, &MainWindow::joinServer);
     m_share = new ShareBar(this);
     ui->verticalLayout->insertWidget(ui->verticalLayout->indexOf(ui->mainTabs), m_share);

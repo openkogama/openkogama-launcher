@@ -114,9 +114,9 @@ QGroupBox { border: none; margin-top: 20px; }
 QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; left: 0; padding: 0; color: @text@; }
 
 QCheckBox { spacing: 8px; }
-QCheckBox::indicator { width: 14px; height: 14px; border: 1px solid @check-border@; border-radius: 3px; background: @field@; }
-QCheckBox::indicator:hover { border-color: #3a7a80; }
-QCheckBox::indicator:checked { background: #3a7a80; border-color: #3a7a80; image: url(:/check.svg); }
+QCheckBox::indicator, QTreeView::indicator { width: 14px; height: 14px; border: 1px solid @check-border@; border-radius: 3px; background: @field@; }
+QCheckBox::indicator:hover, QTreeView::indicator:hover { border-color: #3a7a80; }
+QCheckBox::indicator:checked, QTreeView::indicator:checked { background: #3a7a80; border-color: #3a7a80; image: url(:/check.svg); }
 
 QProgressBar { background: @field@; border: 1px solid @border@; border-radius: 4px; text-align: center; color: @text@; }
 QProgressBar::chunk { background: #3a7a80; border-radius: 3px; }

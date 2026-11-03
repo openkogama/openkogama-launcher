@@ -25,6 +25,7 @@ qt_add_executable(openkogama-launcher
     src/discordpresence.h src/discordpresence.cpp
     src/links.h src/links.cpp
     src/serverspage.h src/serverspage.cpp
+    src/pluginspage.h src/pluginspage.cpp
     src/tunnel.h src/tunnel.cpp
     src/sharebar.h src/sharebar.cpp
     src/serverconfigdialog.h src/serverconfigdialog.cpp
