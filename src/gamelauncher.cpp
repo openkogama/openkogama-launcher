@@ -26,6 +26,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
+#include <QProgressDialog>
 #include <QPushButton>
 #include <QStyle>
 #include <QTimer>
@@ -39,6 +40,7 @@ namespace {
 constexpr int NameTimeout = 3000;
 constexpr int ServerTimeout = 5000;
 constexpr int TunnelTimeout = 10000;
+constexpr int PluginsPoll = 250;
 constexpr int MaxNickname = 20;
 constexpr qint64 PendingLifeMs = 10 * 60 * 1000;
 std::function<void()> pendingJoin;
@@ -134,6 +136,24 @@ bool acceptRules(QWidget *parent, const QString &address, const QStringList &rul
     return true;
 }
 
+bool waitForPlugins(QWidget *parent, const QString &url)
+{
+    if (!ServerFeatures::starting(url, ServerTimeout)) return true;
+    QProgressDialog progress(QCoreApplication::translate("GameLauncher", "Loading the server's plugins..."),
+        QCoreApplication::translate("GameLauncher", "Cancel"), 0, 0, parent);
+    progress.setWindowTitle(QCoreApplication::translate("GameLauncher", "Starting server"));
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(0);
+    progress.show();
+    while (!progress.wasCanceled()) {
+        QEventLoop pause;
+        QTimer::singleShot(PluginsPoll, &pause, &QEventLoop::quit);
+        pause.exec();
+        if (!ServerFeatures::starting(url, ServerTimeout)) return true;
+    }
+    return false;
+}
+
 }
 
 static QString instanceTitle(const QString &path)
@@ -182,6 +202,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     if (local) {
         env.insert("http_proxy", "http://127.0.0.1:8081");
         env.insert("no_proxy", "127.0.0.1,localhost");
+        if (!waitForPlugins(parent, url)) return nullptr;
     }
 
     const std::optional<QStringList> features = ServerFeatures::fetch(url, viaCode ? TunnelTimeout : ServerTimeout);

@@ -59,6 +59,10 @@ QStringList ServerFeatures::rules(const QString &serverUrl, int timeout) {
     return rules;
 }
 
+bool ServerFeatures::starting(const QString &serverUrl, int timeout) {
+    return get(serverUrl + "/api/server", timeout).value_or(QJsonObject()).value("starting").toBool();
+}
+
 QString ServerFeatures::address(const QString &serverUrl) {
     return addresses().value(serverUrl);
 }

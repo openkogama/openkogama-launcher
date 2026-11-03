@@ -29,6 +29,7 @@ static constexpr int NameRole = Qt::UserRole + 1;
 static constexpr int ImageRole = Qt::UserRole + 2;
 static constexpr int ActiveRole = Qt::UserRole + 3;
 static constexpr int PlatformerRole = Qt::UserRole + 4;
+static constexpr int PluginsTimeout = 120000;
 static const QUrl MapsArchive("https://cdn.openkogama.org/maps/v1/");
 static const QString GameModelName("CubeModel");
 
@@ -516,7 +517,9 @@ bool WorldsDialog::eventFilter(QObject *watched, QEvent *event) {
 }
 
 void WorldsDialog::loadTemplates() {
-    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/templates")));
+    QNetworkRequest request(QUrl(LocalServerUrl + "/api/templates"));
+    request.setTransferTimeout(PluginsTimeout);
+    QNetworkReply *reply = m_net->get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
         m_templates.clear();
@@ -575,6 +578,7 @@ void WorldsDialog::createWorld() {
 
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    request.setTransferTimeout(PluginsTimeout);
     QNetworkReply *reply = m_net->post(request, QByteArray());
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
