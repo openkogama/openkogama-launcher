@@ -494,6 +494,30 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <source>joining through %1, the address this server gives</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Server rules</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This server has its own rules:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Join</source>
+        <translation type="unfinished">Присоединиться</translation>
+    </message>
+    <message>
+        <source>Loading the server&apos;s plugins...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Отмена</translation>
+    </message>
+    <message>
+        <source>Starting server</source>
+        <translation type="unfinished">Запускаем сервер</translation>
+    </message>
 </context>
 <context>
     <name>InstallDialog</name>
@@ -1020,6 +1044,10 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <source>OpenKogama Launcher %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>&amp;Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>PlayerProfile</name>
@@ -1046,6 +1074,113 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message>
         <source>the server did not take your avatar and models</source>
         <translation>сервер не принял ваш аватар и модели</translation>
+    </message>
+</context>
+<context>
+    <name>PluginsPage</name>
+    <message>
+        <source>Only add plugins you trust: they run on this computer like any other program.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load the plugins again on the server on this computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open folder</source>
+        <translation type="unfinished">Открыть папку</translation>
+    </message>
+    <message>
+        <source>Add plugin...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No plugins yet. Drop a .dll or .zip file here or click Add plugin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The server on this computer is not running, so plugins load the next time it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>On</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not loaded yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click Reload to load it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed to load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Library</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has no plugin of its own, other plugins can use it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Running</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plugins (*.dll *.zip)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No plugin could be added from %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not move %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove plugin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove the plugin &quot;%1&quot;? Its saved data is kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in Explorer</source>
+        <translation type="unfinished">Показать в Проводнике</translation>
+    </message>
+    <message>
+        <source>Remove...</source>
+        <translation type="unfinished">Убрать...</translation>
     </message>
 </context>
 <context>
