@@ -119,6 +119,21 @@ void askAboutName(QWidget *parent, const QString &name, const std::function<void
     if (retry) QTimer::singleShot(0, parent, retry);
 }
 
+bool acceptRules(QWidget *parent, const QString &address, const QStringList &rules)
+{
+    if (rules.isEmpty() || Settings::rulesSeen(address, rules)) return true;
+    const QString bullet = QString::fromUtf8("\u2022 ");
+    QMessageBox box(QMessageBox::Information, QCoreApplication::translate("GameLauncher", "Server rules"),
+        QCoreApplication::translate("GameLauncher", "This server has its own rules:") + "\n\n" + bullet + rules.join("\n" + bullet),
+        QMessageBox::Cancel, parent);
+    box.setTextFormat(Qt::PlainText);
+    QPushButton *join = primary(box, QCoreApplication::translate("GameLauncher", "Join"));
+    box.exec();
+    if (box.clickedButton() != join) return false;
+    Settings::setRulesSeen(address, rules);
+    return true;
+}
+
 }
 
 static QString instanceTitle(const QString &path)
@@ -170,6 +185,10 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     }
 
     const std::optional<QStringList> features = ServerFeatures::fetch(url, viaCode ? TunnelTimeout : ServerTimeout);
+    if (!local && features) {
+        const QStringList rules = ServerFeatures::rules(url, viaCode ? TunnelTimeout : ServerTimeout);
+        if (!acceptRules(parent, viaCode ? code : url, rules)) return nullptr;
+    }
     const QString server = local || viaCode ? url : preferredAddress(url, ServerFeatures::address(url));
     QStringList notes;
     if (!features && !local)

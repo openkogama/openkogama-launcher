@@ -26,6 +26,8 @@ bool publicView();
 void setPublicView(bool shown);
 QString currentServer();
 void setCurrentServer(const QString &address);
+bool rulesSeen(const QString &address, const QStringList &rules);
+void setRulesSeen(const QString &address, const QStringList &rules);
 
 QString lastInstance();
 void setLastInstance(const QString &path);

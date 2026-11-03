@@ -2,6 +2,7 @@
 #include "paths.h"
 #include "tunnel.h"
 
+#include <QCryptographicHash>
 #include <QSettings>
 #include <QUrl>
 #include <QVersionNumber>
@@ -12,6 +13,11 @@ namespace {
 QSettings store()
 {
     return QSettings(Paths::data() + "/settings.ini", QSettings::IniFormat);
+}
+
+QString digest(const QString &text)
+{
+    return QString::fromLatin1(QCryptographicHash::hash(text.toUtf8(), QCryptographicHash::Sha256).toHex());
 }
 
 }
@@ -83,6 +89,16 @@ QString currentServer()
 void setCurrentServer(const QString &address)
 {
     store().setValue("launcher/server", address);
+}
+
+bool rulesSeen(const QString &address, const QStringList &rules)
+{
+    return store().value("seenRules/" + digest(address)).toString() == digest(rules.join('\n'));
+}
+
+void setRulesSeen(const QString &address, const QStringList &rules)
+{
+    store().setValue("seenRules/" + digest(address), digest(rules.join('\n')));
 }
 
 QString lastInstance()
