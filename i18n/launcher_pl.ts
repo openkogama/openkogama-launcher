@@ -488,35 +488,35 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     </message>
     <message>
         <source>the server did not say what it has, so its scripts, sounds and themes may be missing</source>
-        <translation type="unfinished"></translation>
+        <translation>serwer nie powiedział, co ma, więc jego skrypty, dźwięki i motywy mogą nie działać</translation>
     </message>
     <message>
         <source>joining through %1, the address this server gives</source>
-        <translation type="unfinished"></translation>
+        <translation>dołączanie przez %1, adres podany przez ten serwer</translation>
     </message>
     <message>
         <source>Server rules</source>
-        <translation type="unfinished"></translation>
+        <translation>Zasady serwera</translation>
     </message>
     <message>
         <source>This server has its own rules:</source>
-        <translation type="unfinished"></translation>
+        <translation>Ten serwer ma własne zasady:</translation>
     </message>
     <message>
         <source>Join</source>
-        <translation type="unfinished">Dołącz</translation>
+        <translation>Dołącz</translation>
     </message>
     <message>
         <source>Loading the server&apos;s plugins...</source>
-        <translation type="unfinished"></translation>
+        <translation>Ładowanie pluginów serwera...</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
+        <translation>Anuluj</translation>
     </message>
     <message>
         <source>Starting server</source>
-        <translation type="unfinished">Uruchamianie serwera</translation>
+        <translation>Uruchamianie serwera</translation>
     </message>
 </context>
 <context>
@@ -1030,23 +1030,23 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     </message>
     <message>
         <source>Check for updates...</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdź aktualizacje...</translation>
     </message>
     <message>
         <source>Terms of Use</source>
-        <translation type="unfinished"></translation>
+        <translation>Regulamin</translation>
     </message>
     <message>
         <source>Privacy Policy</source>
-        <translation type="unfinished"></translation>
+        <translation>Polityka prywatności</translation>
     </message>
     <message>
         <source>OpenKogama Launcher %1</source>
-        <translation type="unfinished"></translation>
+        <translation>OpenKogama Launcher %1</translation>
     </message>
     <message>
         <source>&amp;Plugins</source>
-        <translation type="unfinished"></translation>
+        <translation>Plu&amp;giny</translation>
     </message>
 </context>
 <context>
@@ -1080,107 +1080,107 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     <name>PluginsPage</name>
     <message>
         <source>Only add plugins you trust: they run on this computer like any other program.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodawaj tylko pluginy, którym ufasz: działają na tym komputerze jak każdy inny program.</translation>
     </message>
     <message>
         <source>Reload</source>
-        <translation type="unfinished"></translation>
+        <translation>Przeładuj</translation>
     </message>
     <message>
         <source>Load the plugins again on the server on this computer</source>
-        <translation type="unfinished"></translation>
+        <translation>Załaduj pluginy jeszcze raz na serwerze na tym komputerze</translation>
     </message>
     <message>
         <source>Open folder</source>
-        <translation type="unfinished">Otwórz folder</translation>
+        <translation>Otwórz folder</translation>
     </message>
     <message>
         <source>Add plugin...</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj plugin...</translation>
     </message>
     <message>
         <source>No plugins yet. Drop a .dll or .zip file here or click Add plugin.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie ma jeszcze pluginów. Przeciągnij tu plik .dll lub .zip albo kliknij Dodaj plugin.</translation>
     </message>
     <message>
         <source>Plugins</source>
-        <translation type="unfinished"></translation>
+        <translation>Pluginy</translation>
     </message>
     <message>
         <source>Plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Plugin</translation>
     </message>
     <message>
         <source>Status</source>
-        <translation type="unfinished"></translation>
+        <translation>Stan</translation>
     </message>
     <message>
         <source>The server on this computer is not running, so plugins load the next time it starts.</source>
-        <translation type="unfinished"></translation>
+        <translation>Serwer na tym komputerze nie działa, więc pluginy załadują się przy następnym uruchomieniu.</translation>
     </message>
     <message>
         <source>On</source>
-        <translation type="unfinished"></translation>
+        <translation>Włączony</translation>
     </message>
     <message>
         <source>Off</source>
-        <translation type="unfinished"></translation>
+        <translation>Wyłączony</translation>
     </message>
     <message>
         <source>Not loaded yet</source>
-        <translation type="unfinished"></translation>
+        <translation>Jeszcze nie załadowany</translation>
     </message>
     <message>
         <source>Click Reload to load it</source>
-        <translation type="unfinished"></translation>
+        <translation>Kliknij Przeładuj, żeby go załadować</translation>
     </message>
     <message>
         <source>Failed to load</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się załadować</translation>
     </message>
     <message>
         <source>Library</source>
-        <translation type="unfinished"></translation>
+        <translation>Biblioteka</translation>
     </message>
     <message>
         <source>Has no plugin of its own, other plugins can use it</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie ma własnego pluginu, mogą z niej korzystać inne pluginy</translation>
     </message>
     <message>
         <source>Running</source>
-        <translation type="unfinished"></translation>
+        <translation>Działa</translation>
     </message>
     <message>
         <source>Add plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaj plugin</translation>
     </message>
     <message>
         <source>Plugins (*.dll *.zip)</source>
-        <translation type="unfinished"></translation>
+        <translation>Pluginy (*.dll *.zip)</translation>
     </message>
     <message>
         <source>No plugin could be added from %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się dodać żadnego pluginu z %1.</translation>
     </message>
     <message>
         <source>Could not move %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się przenieść %1.</translation>
     </message>
     <message>
         <source>Remove plugin</source>
-        <translation type="unfinished"></translation>
+        <translation>Usuń plugin</translation>
     </message>
     <message>
         <source>Remove the plugin &quot;%1&quot;? Its saved data is kept.</source>
-        <translation type="unfinished"></translation>
+        <translation>Usunąć plugin &quot;%1&quot;? Jego zapisane dane zostaną.</translation>
     </message>
     <message>
         <source>Show in Explorer</source>
-        <translation type="unfinished">Pokaż w Eksploratorze</translation>
+        <translation>Pokaż w Eksploratorze</translation>
     </message>
     <message>
         <source>Remove...</source>
-        <translation type="unfinished">Usuń...</translation>
+        <translation>Usuń...</translation>
     </message>
 </context>
 <context>
