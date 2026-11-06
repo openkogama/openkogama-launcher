@@ -13,6 +13,7 @@ const QString Scheme = "openkogama";
 constexpr int LinkLimit = 16384;
 constexpr int ConnectTimeoutMs = 500;
 constexpr int WriteTimeoutMs = 1000;
+const QStringList ArchiveHosts = {"openkogama.org", "archive.org"};
 
 QString pipeName()
 {
@@ -43,6 +44,15 @@ QString signInCodeOf(const QString &link)
     return QUrlQuery(url).queryItemValue("code", QUrl::FullyDecoded).trimmed();
 }
 
+bool fromArchive(const QUrl &url)
+{
+    if (url.scheme() != "https") return false;
+    const QString host = url.host();
+    for (const QString &allowed : ArchiveHosts)
+        if (host == allowed || host.endsWith("." + allowed)) return true;
+    return false;
+}
+
 std::optional<ImportRequest> importOf(const QString &link)
 {
     const QUrl url(link);
@@ -59,8 +69,7 @@ std::optional<ImportRequest> importOf(const QString &link)
     for (const auto &[key, value] : query.queryItems(QUrl::FullyDecoded)) {
         if (key != "url") continue;
         const QUrl source(value);
-        if (source.isValid() && (source.scheme() == "https" || source.scheme() == "http"))
-            request.urls.append(source);
+        if (source.isValid() && fromArchive(source)) request.urls.append(source);
     }
     if (request.urls.isEmpty()) return std::nullopt;
 

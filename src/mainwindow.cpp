@@ -778,18 +778,22 @@ void MainWindow::checkForUpdates() {
     Updater::check(this, m_updates, false);
 }
 
-void MainWindow::openImport(const ImportRequest &request)
-{
+void MainWindow::openImport(const ImportRequest &request) {
     const QString path = ui->versionCombo->currentData().toString();
     if (path.isEmpty()) {
-        QMessageBox::information(this, tr("Add to game"), tr("Add a game version before adding content from the website."));
+        QMessageBox::information(this, tr("Import"), tr("Add a game version before adding content from the website."));
         return;
     }
+    const QString question = request.kind == "map" ? tr("Add this map to your worlds?")
+        : request.kind == "avatar" ? tr("Add this avatar?")
+        : tr("Add this model to your inventory?");
+    if (QMessageBox::question(this, tr("Import"), request.name.isEmpty() ? question : question + "\n\n" + request.name) != QMessageBox::Yes)
+        return;
     if (!launchInstance(path)) return;
 
     const QString title = request.name.isEmpty() ? tr("this item") : QStringLiteral("\"%1\"").arg(request.name);
     QPointer<QProgressDialog> progress = new QProgressDialog(tr("Adding %1 to KoGaMa...").arg(title), tr("Cancel"), 0, 100, this);
-    progress->setWindowTitle(tr("Add to game"));
+    progress->setWindowTitle(tr("Import"));
     progress->setWindowModality(Qt::WindowModal);
     progress->setMinimumDuration(0);
     progress->setAutoClose(false);
@@ -811,7 +815,7 @@ void MainWindow::openImport(const ImportRequest &request)
             progress->deleteLater();
         }
         if (!ok) {
-            if (!error.isEmpty()) QMessageBox::warning(this, tr("Add to game"), error);
+            if (!error.isEmpty()) QMessageBox::warning(this, tr("Import"), error);
             return;
         }
         if (!m_worlds) return;

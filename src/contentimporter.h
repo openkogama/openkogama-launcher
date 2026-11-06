@@ -27,6 +27,7 @@ signals:
 private:
     void fetch();
     void downloaded();
+    void tryNext(const QString &error);
     void upload();
     void uploaded();
     void finish(bool ok, const QString &error, int id);

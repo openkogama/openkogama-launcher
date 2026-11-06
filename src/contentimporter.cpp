@@ -143,9 +143,11 @@ void ContentImporter::downloaded()
 
     QByteArray data = reply->readAll();
     if (reply->error() != QNetworkReply::NoError) {
-        m_lastError = reply->errorString();
-        m_urlIndex++;
-        fetch();
+        tryNext(reply->errorString());
+        return;
+    }
+    if (!Links::fromArchive(reply->url())) {
+        tryNext(tr("The download was redirected outside the archive."));
         return;
     }
 
@@ -153,26 +155,20 @@ void ContentImporter::downloaded()
         if (data.size() > m_request.length)
             data = data.mid(qsizetype(m_request.offset), qsizetype(m_request.length));
         if (data.size() != m_request.length) {
-            m_lastError = tr("The server sent an unexpected amount of data.");
-            m_urlIndex++;
-            fetch();
+            tryNext(tr("The server sent an unexpected amount of data."));
             return;
         }
     }
 
     if (data.isEmpty()) {
-        m_lastError = tr("The file is empty.");
-        m_urlIndex++;
-        fetch();
+        tryNext(tr("The file is empty."));
         return;
     }
 
     if (m_request.kind != "map") {
         const QByteArray unpacked = inflateZlib(data);
         if (unpacked.isEmpty()) {
-            m_lastError = tr("The downloaded file could not be unpacked.");
-            m_urlIndex++;
-            fetch();
+            tryNext(tr("The downloaded file could not be unpacked."));
             return;
         }
         data = unpacked;
@@ -181,9 +177,7 @@ void ContentImporter::downloaded()
     if (!m_request.sha256.isEmpty()) {
         const QString actual = QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex());
         if (actual != m_request.sha256) {
-            m_lastError = tr("The downloaded file does not match the archive.");
-            m_urlIndex++;
-            fetch();
+            tryNext(tr("The downloaded file does not match the archive."));
             return;
         }
     }
@@ -192,13 +186,18 @@ void ContentImporter::downloaded()
     if (m_request.kind == "avatar") {
         m_payload = avatarJson(data);
         if (m_payload.isEmpty()) {
-            m_lastError = tr("This avatar file could not be read.");
-            m_urlIndex++;
-            fetch();
+            tryNext(tr("This avatar file could not be read."));
             return;
         }
     }
     upload();
+}
+
+void ContentImporter::tryNext(const QString &error)
+{
+    m_lastError = error;
+    m_urlIndex++;
+    fetch();
 }
 
 void ContentImporter::upload()

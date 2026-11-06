@@ -23,6 +23,7 @@ namespace Links {
 QString find(const QStringList &arguments);
 QString serverOf(const QString &link);
 QString signInCodeOf(const QString &link);
+bool fromArchive(const QUrl &url);
 std::optional<ImportRequest> importOf(const QString &link);
 bool forward(const QString &link);
 void listen(QObject *owner, std::function<void(const QString &)> open);
