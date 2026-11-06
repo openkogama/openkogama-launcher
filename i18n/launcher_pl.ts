@@ -354,6 +354,53 @@
     </message>
 </context>
 <context>
+    <name>ContentImporter</name>
+    <message>
+        <source>this item</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not download %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not download %1. %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The download was redirected outside the archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The server sent an unexpected amount of data.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file is empty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded file could not be unpacked.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded file does not match the archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This avatar file could not be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not add %1 to the game.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not add %1 to the game. %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CreditsDialog</name>
     <message>
         <source>Huge thanks. The main inspiration for this project, and the packet captures that made it possible.</source>
@@ -1047,6 +1094,34 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     <message>
         <source>&amp;Plugins</source>
         <translation>Plu&amp;giny</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Importuj</translation>
+    </message>
+    <message>
+        <source>Add a game version before adding content from the website.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add this map to your worlds?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add this avatar?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add this model to your inventory?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this item</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Adding %1 to KoGaMa...</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
