@@ -53,7 +53,6 @@ double rounded(float value)
     return std::round(static_cast<double>(value) * 10000.0) / 10000.0;
 }
 
-// Model and avatar pack entries are zlib streams; leave anything else untouched.
 QByteArray inflateZlib(const QByteArray &data)
 {
     if (data.size() < 4) return data;
@@ -70,7 +69,7 @@ QByteArray inflateZlib(const QByteArray &data)
 
 QString displayName(const ImportRequest &request)
 {
-    return request.name.isEmpty() ? QStringLiteral("this item") : QStringLiteral("\"%1\"").arg(request.name);
+    return request.name.isEmpty() ? ContentImporter::tr("this item") : QStringLiteral("\"%1\"").arg(request.name);
 }
 
 }
@@ -88,7 +87,6 @@ void ContentImporter::start(const ImportRequest &request)
     m_urlIndex = 0;
     m_cancelled = false;
     m_finished = false;
-    m_retriedScale = false;
     m_lastError.clear();
     fetch();
 }
@@ -235,22 +233,18 @@ void ContentImporter::uploaded()
     if (!reply) return;
     reply->deleteLater();
 
-    const QByteArray body = reply->readAll();
-    if (reply->error() != QNetworkReply::NoError) {
-        finish(false, tr("Could not add %1 to the game. %2").arg(displayName(m_request), reply->errorString()), 0);
+    const QJsonObject result = QJsonDocument::fromJson(reply->readAll()).object();
+    if (m_request.kind == "model" && m_request.scale.isEmpty() && result.value("needsScale").toBool()) {
+        m_request.scale = "0.25";
+        upload();
         return;
     }
 
-    const QJsonObject result = QJsonDocument::fromJson(body).object();
     const int id = result.value("id").toInt();
     if (id <= 0) {
-        if (m_request.kind == "model" && result.value("needsScale").toBool() && !m_retriedScale) {
-            m_retriedScale = true;
-            if (m_request.scale.isEmpty()) m_request.scale = "0.25";
-            upload();
-            return;
-        }
-        finish(false, tr("Could not add %1 to the game.").arg(displayName(m_request)), 0);
+        const bool replied = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).isValid();
+        finish(false, replied ? tr("Could not add %1 to the game.").arg(displayName(m_request))
+                              : tr("Could not add %1 to the game. %2").arg(displayName(m_request), reply->errorString()), 0);
         return;
     }
 

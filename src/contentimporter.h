@@ -42,7 +42,6 @@ private:
     int m_urlIndex = 0;
     bool m_cancelled = false;
     bool m_finished = false;
-    bool m_retriedScale = false;
 };
 
 #endif // CONTENTIMPORTER_H
