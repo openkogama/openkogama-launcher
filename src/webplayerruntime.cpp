@@ -16,16 +16,37 @@
 
 namespace {
 
-const QString RuntimeUrl = "https://cdn.openkogama.org/webplayer/unity-webplayer-4.6.6f2-win.zip";
-const QByteArray RuntimeSha256 = "ae15b89a3cb3bd37401bcba04a94daf6617414ae547e9c1e78d89f2ec7f1a056";
+struct Piece {
+    QString url;
+    QByteArray sha256;
+    QStringList files;
+};
+
+const Piece Runtime = {"https://cdn.openkogama.org/webplayer/unity-webplayer-4.6.6f2-win.zip",
+    "ae15b89a3cb3bd37401bcba04a94daf6617414ae547e9c1e78d89f2ec7f1a056",
+    {"loader/npUnity3D32.dll", "player/Stable3.x.x/webplayer_win.dll", "mono/Stable3.x.x/mono-1-vc.dll"}};
+const Piece Unity5 = {"https://cdn.openkogama.org/webplayer/unity-webplayer-stable5-5.3.8f1-win.zip",
+    "26128d29a20980e2fef2e2ca253796b456e231c20bc351cc6702d838214d5399",
+    {"player/Stable5.x.x/webplayer_win.dll", "mono/Stable5.x.x/mono-1-vc.dll"}};
 
 QString runtimeRoot() {
     return QDir::homePath() + "/AppData/LocalLow/Unity/WebPlayer";
 }
 
-bool installed() {
+bool installed(const Piece &piece) {
     QDir root(runtimeRoot());
-    return root.exists("loader/npUnity3D32.dll") && root.exists("player/Stable3.x.x/webplayer_win.dll") && root.exists("mono/Stable3.x.x/mono-1-vc.dll");
+    for (const QString &file : piece.files)
+        if (!root.exists(file)) return false;
+    return true;
+}
+
+QString engineFamily(const QString &file) {
+    QFile game(file);
+    if (!game.open(QIODevice::ReadOnly)) return {};
+    const QByteArray head = game.read(64);
+    const qsizetype start = head.indexOf('\0') + 5;
+    const qsizetype end = start > 4 ? head.indexOf('\0', start) : -1;
+    return end > start ? QString::fromLatin1(head.mid(start, end - start)) : QString();
 }
 
 void registerRuntime() {
@@ -37,18 +58,7 @@ void registerRuntime() {
     settings.setValue("UnityWebPlayerDevelopment", "no");
 }
 
-}
-
-bool WebPlayerRuntime::isWebPlayerFile(const QString &name) {
-    return name.endsWith(".unityweb", Qt::CaseInsensitive) || name.endsWith(".unity3d", Qt::CaseInsensitive);
-}
-
-bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
-    if (installed()) {
-        registerRuntime();
-        return true;
-    }
-
+bool install(const Piece &piece, QWidget *parent) {
     QProgressDialog progress(QCoreApplication::translate("WebPlayerRuntime", "Downloading Unity Web Player..."), QCoreApplication::translate("WebPlayerRuntime", "Cancel"), 0, 100, parent);
     progress.setWindowTitle("Unity Web Player");
     progress.setWindowModality(Qt::WindowModal);
@@ -56,7 +66,7 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
     progress.setValue(0);
 
     QNetworkAccessManager net;
-    QNetworkReply *reply = net.get(QNetworkRequest(QUrl(RuntimeUrl)));
+    QNetworkReply *reply = net.get(QNetworkRequest(QUrl(piece.url)));
     QObject::connect(reply, &QNetworkReply::downloadProgress, &progress, [&progress](qint64 received, qint64 total) {
         if (total > 0)
             progress.setValue(int(received * 100 / total));
@@ -75,7 +85,7 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
     }
 
     QByteArray data = reply->readAll();
-    if (QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex() != RuntimeSha256) {
+    if (QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex() != piece.sha256) {
         QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "The downloaded file is damaged, try again."));
         return false;
     }
@@ -114,10 +124,22 @@ bool WebPlayerRuntime::ensureInstalled(QWidget *parent) {
     }
     zip.close();
 
-    if (!failed.isEmpty() || !installed()) {
+    if (!failed.isEmpty() || !installed(piece)) {
         QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Could not install to %1\n%2").arg(runtimeRoot(), failed.isEmpty() ? QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing, check your antivirus.") : failed));
         return false;
     }
+    return true;
+}
+
+}
+
+bool WebPlayerRuntime::isWebPlayerFile(const QString &name) {
+    return name.endsWith(".unityweb", Qt::CaseInsensitive) || name.endsWith(".unity3d", Qt::CaseInsensitive);
+}
+
+bool WebPlayerRuntime::ensureInstalled(QWidget *parent, const QString &file) {
+    if (!installed(Runtime) && !install(Runtime, parent)) return false;
+    if (engineFamily(file) == "5.x.x" && !installed(Unity5) && !install(Unity5, parent)) return false;
     registerRuntime();
     return true;
 }

@@ -592,7 +592,7 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
             QMessageBox::warning(this, tr("Launch"), tr("OpenKogama Player is missing from %1").arg(QDir::toNativeSeparators(Paths::player())));
             return false;
         }
-        if (!WebPlayerRuntime::ensureInstalled(this))
+        if (!WebPlayerRuntime::ensureInstalled(this, dir.filePath(exe)))
             return false;
     } else {
         QString data = dir.entryList({"*_Data"}, QDir::Dirs).value(0);
