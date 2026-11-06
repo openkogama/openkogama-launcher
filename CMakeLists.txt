@@ -43,6 +43,7 @@ qt_add_executable(openkogama-launcher
     src/consolewindow.h src/consolewindow.cpp
     src/centereddelegate.h
     src/creditsdialog.h src/creditsdialog.cpp
+    src/contentimporter.h src/contentimporter.cpp
 )
 
 qt_add_resources(openkogama-launcher "resources"

@@ -6,6 +6,7 @@
 #include "installprogressdialog.h"
 #include "launchdialog.h"
 #include "assetinstaller.h"
+#include "contentimporter.h"
 #include "settingsdialog.h"
 #include "worldsdialog.h"
 #include "pluginspage.h"
@@ -238,7 +239,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this, [this]() { loadInstances(); });
     fetchVersions();
     if (ui->versionCombo->currentIndex() >= 0)
-        QTimer::singleShot(0, this, &MainWindow::onLaunchTriggered);
+        QTimer::singleShot(0, this, [this]() {
+            if (m_autoLaunch) onLaunchTriggered();
+        });
 }
 
 void MainWindow::fetchVersions(std::function<void()> done) {
@@ -742,6 +745,10 @@ void MainWindow::offerVersion(const QStringList &clients, const QString &title, 
     then();
 }
 
+void MainWindow::skipStartupLaunch() {
+    m_autoLaunch = false;
+}
+
 void MainWindow::openLink(const QString &link) {
     if (isMinimized()) showNormal();
     raise();
@@ -751,6 +758,10 @@ void MainWindow::openLink(const QString &link) {
         if (reply.ok() && !GameLauncher::resumeJoin())
             QMessageBox::information(this, tr("Account"), tr("Signed in as %1.").arg(reply.body.value("name").toString()));
         else if (!reply.ok()) QMessageBox::warning(this, tr("Account"), tr("Could not sign in. %1").arg(reply.error()));
+        return;
+    }
+    if (const auto request = Links::importOf(link)) {
+        openImport(*request);
         return;
     }
     const QString address = Links::serverOf(link);
@@ -765,6 +776,58 @@ void MainWindow::openLink(const QString &link) {
 
 void MainWindow::checkForUpdates() {
     Updater::check(this, m_updates, false);
+}
+
+void MainWindow::openImport(const ImportRequest &request)
+{
+    const QString path = ui->versionCombo->currentData().toString();
+    if (path.isEmpty()) {
+        QMessageBox::information(this, tr("Add to game"), tr("Add a game version before adding content from the website."));
+        return;
+    }
+    if (!launchInstance(path)) return;
+
+    const QString title = request.name.isEmpty() ? tr("this item") : QStringLiteral("\"%1\"").arg(request.name);
+    QPointer<QProgressDialog> progress = new QProgressDialog(tr("Adding %1 to KoGaMa...").arg(title), tr("Cancel"), 0, 100, this);
+    progress->setWindowTitle(tr("Add to game"));
+    progress->setWindowModality(Qt::WindowModal);
+    progress->setMinimumDuration(0);
+    progress->setAutoClose(false);
+    progress->setAutoReset(false);
+    progress->show();
+
+    const QString kind = request.kind;
+    const QString client = clientVersion(instances->item(ui->versionCombo->currentIndex()));
+    auto *importer = new ContentImporter(client, this);
+    connect(importer, &ContentImporter::progress, this, [progress](qint64 done, qint64 total) {
+        if (!progress || total <= 0) return;
+        progress->setValue(int(qMin<qint64>(100, done * 100 / total)));
+    });
+    connect(progress.data(), &QProgressDialog::canceled, importer, &ContentImporter::cancel);
+    connect(importer, &ContentImporter::finished, this, [this, importer, progress, kind](bool ok, const QString &error, int id) {
+        importer->deleteLater();
+        if (progress) {
+            progress->close();
+            progress->deleteLater();
+        }
+        if (!ok) {
+            if (!error.isEmpty()) QMessageBox::warning(this, tr("Add to game"), error);
+            return;
+        }
+        if (!m_worlds) return;
+        if (kind == "map") {
+            ui->mainTabs->setCurrentWidget(ui->playTab);
+            ui->playStack->setCurrentWidget(ui->worldsPage);
+            m_worlds->showWorlds(id);
+        } else if (kind == "avatar") {
+            ui->mainTabs->setCurrentWidget(ui->avatarsTab);
+            m_worlds->showAvatars(id);
+        } else {
+            ui->mainTabs->setCurrentWidget(ui->inventoryTab);
+            m_worlds->showInventory(id);
+        }
+    });
+    importer->start(request);
 }
 
 void MainWindow::editServerSettings() {

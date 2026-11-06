@@ -25,8 +25,9 @@ public:
     QWidget *worldsPage() const;
     QWidget *avatarsPage() const;
     QWidget *inventoryPage() const;
-    void showAvatars();
-    void showInventory();
+    void showWorlds(int select = -1);
+    void showAvatars(int select = -1);
+    void showInventory(int select = -1);
     void setHostedWorld(int world);
     void reject() override;
 
