@@ -271,67 +271,67 @@
     </message>
     <message>
         <source>could not add the server&apos;s sounds and themes to %1, the game keeps its own</source>
-        <translation type="unfinished"></translation>
+        <translation>nie udało się dodać dźwięków i motywów serwera do %1, gra zostaje przy swoich</translation>
     </message>
     <message>
         <source>added the server&apos;s themes to the theme list in %1</source>
-        <translation type="unfinished"></translation>
+        <translation>dodano motywy serwera do listy motywów w %1</translation>
     </message>
     <message>
         <source>took okmod.dll and the mods out of the game</source>
-        <translation type="unfinished"></translation>
+        <translation>usunięto okmod.dll i mody z gry</translation>
     </message>
     <message numerus="yes">
         <source>the game loads okmod.dll with %n mod(s) from the launcher&apos;s mods folder</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+        <translation>
+            <numerusform>gra wczytuje okmod.dll z %n modem z folderu modów launchera</numerusform>
+            <numerusform>gra wczytuje okmod.dll z %n modami z folderu modów launchera</numerusform>
+            <numerusform>gra wczytuje okmod.dll z %n modami z folderu modów launchera</numerusform>
         </translation>
     </message>
     <message>
         <source>the server can move your avatar at once</source>
-        <translation type="unfinished"></translation>
+        <translation>serwer może od razu przenieść twojego awatara</translation>
     </message>
     <message>
         <source>Server themes</source>
-        <translation type="unfinished"></translation>
+        <translation>Motywy serwera</translation>
     </message>
     <message>
         <source>Adds the server&apos;s own sky themes to the theme menu and gives the game&apos;s themes the pictures the server replaced, by rewriting the theme list in kogama_Data/sharedassets0.assets, or in kogama_Data/data.unity3d on 3.5. The original stays as .original next to it and comes back when the server has none or this is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodaje własne motywy nieba serwera do menu motywów i daje motywom gry obrazki podmienione przez serwer, nadpisując listę motywów w kogama_Data/sharedassets0.assets, a w 3.5 w kogama_Data/data.unity3d. Oryginał zostaje obok jako .original i wraca, gdy serwer nie ma własnych motywów albo ta opcja jest wyłączona.</translation>
     </message>
     <message>
         <source>Server teleport</source>
-        <translation type="unfinished"></translation>
+        <translation>Teleport przez serwer</translation>
     </message>
     <message>
         <source>Lets the server move your avatar at once, without the hidden vehicles and teleporters it uses otherwise: when the server sends your own avatar a teleport, the game puts it there. Adds a check after MVNetworkGame.OnUpdateWorldObjectEvent reads a transform in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions, where the check goes in place of an OnDrawGizmos the game never calls. The original stays as .original next to it and comes back when this is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pozwala serwerowi od razu przenieść twojego awatara, bez ukrytych pojazdów i teleporterów, których używa w innym razie: gdy serwer wyśle twojemu awatarowi teleport, gra go tam ustawia. Dodaje sprawdzenie po tym, jak MVNetworkGame.OnUpdateWorldObjectEvent odczyta transform w kogama_Data/Managed/Assembly-CSharp.dll, a w wersjach IL2CPP w GameAssembly.dll, gdzie sprawdzenie trafia w miejsce OnDrawGizmos, którego gra nigdy nie wywołuje. Oryginał zostaje obok jako .original i wraca, gdy ta opcja jest wyłączona.</translation>
     </message>
     <message>
         <source>Mods</source>
-        <translation type="unfinished"></translation>
+        <translation>Mody</translation>
     </message>
     <message>
         <source>the game loads the scripts mod for this server&apos;s Lua scripts</source>
-        <translation type="unfinished"></translation>
+        <translation>gra wczytuje mod scripts dla skryptów Lua tego serwera</translation>
     </message>
     <message>
         <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into the game, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, or the same hooks to kogama_Data/Managed/Assembly-CSharp.dll on versions before IL2CPP, and puts okmod.dll and the mods built for the game&apos;s 32 or 64 bits next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as .original next to it and comes back when this is off or nothing needs it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Wczytuje do gry mody, które wrzucisz do folderu mods w folderze danych launchera, a gdy serwer ma skrypty Lua dla graczy, także własny mod scripts launchera. Dodaje okmod.dll do importów GameAssembly.dll z zaczepami, których używają mody, a w wersjach sprzed IL2CPP te same zaczepy do kogama_Data/Managed/Assembly-CSharp.dll, i kładzie obok gry okmod.dll oraz mody zbudowane dla 32 albo 64 bitów gry. Twój własny scripts.dll w folderze mods zastępuje ten z launchera. Dopóki folder nie ma modów, a serwer skryptów, gra zostaje bez zmian. Oryginał zostaje obok jako .original i wraca, gdy ta opcja jest wyłączona albo nic go nie potrzebuje.</translation>
     </message>
     <message>
         <source>the camera no longer leaves only the sky after it touches a wall</source>
-        <translation type="unfinished"></translation>
+        <translation>kamera nie pokazuje już samego nieba po dotknięciu ściany</translation>
     </message>
     <message>
         <source>Camera fix</source>
-        <translation type="unfinished"></translation>
+        <translation>Poprawka kamery</translation>
     </message>
     <message>
         <source>Keeps the camera of 1.8 to 1.32.3 from breaking when it touches a wall, mostly on edges and far from the middle of the world, where only the sky stayed on screen until a respawn. Clamps the square root in PlaymodeCamera like the game itself did from 1.32.4, in kogama_Data/Managed/Assembly-CSharp.dll, or in the Assembly-CSharp.dll inside the .unityweb of web player versions. The original stays as .original next to it and comes back when this is off.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie pozwala kamerze w wersjach od 1.8 do 1.32.3 psuć się po dotknięciu ściany, głównie na krawędziach i daleko od środka świata, gdzie do odrodzenia na ekranie zostawało samo niebo. Ogranicza pierwiastek w PlaymodeCamera tak jak sama gra od 1.32.4, w kogama_Data/Managed/Assembly-CSharp.dll albo w Assembly-CSharp.dll wewnątrz .unityweb w wersjach web playera. Oryginał zostaje obok jako .original i wraca, gdy ta opcja jest wyłączona.</translation>
     </message>
 </context>
 <context>
@@ -357,47 +357,47 @@
     <name>ContentImporter</name>
     <message>
         <source>this item</source>
-        <translation type="unfinished"></translation>
+        <translation>ten element</translation>
     </message>
     <message>
         <source>Could not download %1.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się pobrać %1.</translation>
     </message>
     <message>
         <source>Could not download %1. %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się pobrać %1. %2</translation>
     </message>
     <message>
         <source>The download was redirected outside the archive.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobieranie zostało przekierowane poza archiwum.</translation>
     </message>
     <message>
         <source>The server sent an unexpected amount of data.</source>
-        <translation type="unfinished"></translation>
+        <translation>Serwer wysłał nieoczekiwaną ilość danych.</translation>
     </message>
     <message>
         <source>The file is empty.</source>
-        <translation type="unfinished"></translation>
+        <translation>Plik jest pusty.</translation>
     </message>
     <message>
         <source>The downloaded file could not be unpacked.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się rozpakować pobranego pliku.</translation>
     </message>
     <message>
         <source>The downloaded file does not match the archive.</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobrany plik nie zgadza się z archiwum.</translation>
     </message>
     <message>
         <source>This avatar file could not be read.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się odczytać tego pliku awatara.</translation>
     </message>
     <message>
         <source>Could not add %1 to the game.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się dodać %1 do gry.</translation>
     </message>
     <message>
         <source>Could not add %1 to the game. %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się dodać %1 do gry. %2</translation>
     </message>
 </context>
 <context>
@@ -1097,31 +1097,31 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     </message>
     <message>
         <source>Import</source>
-        <translation type="unfinished">Importuj</translation>
+        <translation>Import</translation>
     </message>
     <message>
         <source>Add a game version before adding content from the website.</source>
-        <translation type="unfinished"></translation>
+        <translation>Zanim dodasz coś ze strony, dodaj wersję gry.</translation>
     </message>
     <message>
         <source>Add this map to your worlds?</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodać tę mapę do twoich światów?</translation>
     </message>
     <message>
         <source>Add this avatar?</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodać tego awatara?</translation>
     </message>
     <message>
         <source>Add this model to your inventory?</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodać ten model do ekwipunku?</translation>
     </message>
     <message>
         <source>this item</source>
-        <translation type="unfinished"></translation>
+        <translation>tego elementu</translation>
     </message>
     <message>
         <source>Adding %1 to KoGaMa...</source>
-        <translation type="unfinished"></translation>
+        <translation>Dodawanie %1 do KoGaMy...</translation>
     </message>
 </context>
 <context>
@@ -1649,19 +1649,19 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     </message>
     <message>
         <source>Downloading %1... %2%</source>
-        <translation type="unfinished"></translation>
+        <translation>Pobieranie %1... %2%</translation>
     </message>
     <message>
         <source>Checking for updates...</source>
-        <translation type="unfinished"></translation>
+        <translation>Sprawdzanie aktualizacji...</translation>
     </message>
     <message>
         <source>You have the newest version (%1).</source>
-        <translation type="unfinished"></translation>
+        <translation>Masz najnowszą wersję (%1).</translation>
     </message>
     <message>
         <source>Could not check for updates: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się sprawdzić aktualizacji: %1</translation>
     </message>
 </context>
 <context>
