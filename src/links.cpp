@@ -10,7 +10,7 @@
 
 namespace {
 const QString Scheme = "openkogama";
-constexpr int LinkLimit = 2048;
+constexpr int LinkLimit = 16384;
 constexpr int ConnectTimeoutMs = 500;
 constexpr int WriteTimeoutMs = 1000;
 
@@ -41,6 +41,35 @@ QString signInCodeOf(const QString &link)
     const QUrl url(link);
     if (url.scheme().compare(Scheme, Qt::CaseInsensitive) != 0 || url.host().compare("signed-in", Qt::CaseInsensitive) != 0) return {};
     return QUrlQuery(url).queryItemValue("code", QUrl::FullyDecoded).trimmed();
+}
+
+std::optional<ImportRequest> importOf(const QString &link)
+{
+    const QUrl url(link);
+    if (url.scheme().compare(Scheme, Qt::CaseInsensitive) != 0 || url.host().compare("import", Qt::CaseInsensitive) != 0) return std::nullopt;
+
+    const QUrlQuery query(url);
+    ImportRequest request;
+    request.kind = query.queryItemValue("kind", QUrl::FullyDecoded).trimmed().toLower();
+    if (request.kind != "map" && request.kind != "model" && request.kind != "avatar") return std::nullopt;
+    request.name = query.queryItemValue("name", QUrl::FullyDecoded).trimmed();
+    request.sha256 = query.queryItemValue("sha256", QUrl::FullyDecoded).trimmed().toLower();
+    request.scale = query.queryItemValue("scale", QUrl::FullyDecoded).trimmed();
+
+    for (const auto &[key, value] : query.queryItems(QUrl::FullyDecoded)) {
+        if (key != "url") continue;
+        const QUrl source(value);
+        if (source.isValid() && (source.scheme() == "https" || source.scheme() == "http"))
+            request.urls.append(source);
+    }
+    if (request.urls.isEmpty()) return std::nullopt;
+
+    bool ok = false;
+    const qint64 offset = query.queryItemValue("offset", QUrl::FullyDecoded).toLongLong(&ok);
+    if (ok && offset >= 0) request.offset = offset;
+    const qint64 length = query.queryItemValue("length", QUrl::FullyDecoded).toLongLong(&ok);
+    if (ok && length > 0) request.length = length;
+    return request;
 }
 
 bool forward(const QString &link)

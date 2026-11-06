@@ -314,12 +314,16 @@ QWidget *WorldsDialog::inventoryPage() const {
     return ui->inventoryTab;
 }
 
-void WorldsDialog::showAvatars() {
-    loadAvatars(selectedAvatar());
+void WorldsDialog::showWorlds(int select) {
+    loadWorlds(select < 0 ? selectedWorld() : select);
 }
 
-void WorldsDialog::showInventory() {
-    loadInventory(selectedItem());
+void WorldsDialog::showAvatars(int select) {
+    loadAvatars(select < 0 ? selectedAvatar() : select);
+}
+
+void WorldsDialog::showInventory(int select) {
+    loadInventory(select < 0 ? selectedItem() : select);
 }
 
 bool WorldsDialog::hasRunningGames() const {

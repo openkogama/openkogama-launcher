@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     Languages::install(a);
     Links::registerScheme();
     MainWindow w;
+    if (Links::importOf(link)) w.skipStartupLaunch();
     Links::listen(&w, [&w](const QString &opened) { w.openLink(opened); });
     w.show();
     Updater::check(&w);

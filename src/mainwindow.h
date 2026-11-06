@@ -16,6 +16,7 @@ class ShareBar;
 class QNetworkAccessManager;
 class ServersPage;
 class QProcess;
+struct ImportRequest;
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -29,6 +30,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void openLink(const QString &link);
+    void skipStartupLaunch();
 
 protected:
     void closeEvent(QCloseEvent *event) override;
@@ -55,6 +57,7 @@ private:
     bool prepareInstance(const QString &path, QString *executable);
     void joinServer(const QString &address);
     void joinCode(const QString &address);
+    void openImport(const ImportRequest &request);
     void offerVersion(const QStringList &clients, const QString &title, std::function<void()> then);
     void updateHostVersion();
     void editServerSettings();
@@ -76,6 +79,7 @@ private:
     QString m_activePath;
     bool m_installing = false;
     bool m_localReady = false;
+    bool m_autoLaunch = true;
     QSet<QString> m_checkedVersions;
 };
 
