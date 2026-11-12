@@ -138,6 +138,7 @@ QJsonObject content(const QString &serverUrl, const QString &version) {
     query.addQueryItem("client", version);
     url.setQuery(query);
     QNetworkRequest request(url);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setTransferTimeout(ContentTimeout);
 
     QNetworkAccessManager net;

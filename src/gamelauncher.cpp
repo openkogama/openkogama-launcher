@@ -51,6 +51,7 @@ bool nameClaimed(const QString &url, const QString &name)
     if (name.isEmpty()) return false;
     QNetworkAccessManager net;
     QNetworkRequest request(QUrl(url + "/api/name?name=" + QString::fromLatin1(QUrl::toPercentEncoding(name))));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setTransferTimeout(NameTimeout);
     QNetworkReply *reply = net.get(request);
     QEventLoop wait;

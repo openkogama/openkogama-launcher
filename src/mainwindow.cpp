@@ -728,9 +728,9 @@ void MainWindow::offerVersion(const QStringList &clients, const QString &title, 
         if (wanted.accepts(version.version)
             && (!best || QVersionNumber::fromString(version.version) > QVersionNumber::fromString(best->version)))
             best = version;
-    const QString server = title.isEmpty() ? tr("This server") : title;
+    const QString server = title.isEmpty() ? tr("This server") : title.toHtmlEscaped();
     if (!best) {
-        QMessageBox::information(this, tr("Join"), tr("%1 plays KoGaMa %2. Add it on the Versions tab first.").arg(server, clients.join(", ")));
+        QMessageBox::information(this, tr("Join"), tr("%1 plays KoGaMa %2. Add it on the Versions tab first.").arg(server, clients.join(", ").toHtmlEscaped()));
         return;
     }
     if (QMessageBox::question(this, tr("Join"), tr("%1 plays KoGaMa %2, which you don't have yet. Download it now (%3)?")
@@ -770,7 +770,7 @@ void MainWindow::openLink(const QString &link) {
     const QString title = m_servers->titleOf(address);
     const QString shown = !title.isEmpty() ? title
         : Tunnel::isAddress(address) ? Tunnel::display(Tunnel::code(address)) : QUrl(address).host();
-    if (QMessageBox::question(this, tr("Join"), tr("Join %1?").arg(shown)) != QMessageBox::Yes) return;
+    if (QMessageBox::question(this, tr("Join"), tr("Join %1?").arg(shown.toHtmlEscaped())) != QMessageBox::Yes) return;
     joinServer(address);
 }
 
@@ -974,7 +974,7 @@ void MainWindow::joinCode(const QString &address) {
             trip->path = path;
             trip->exe = exe;
             trip->world = info.value("world").toInt();
-            if (progress) progress->setLabelText(tr("Connecting to %1...").arg(info.value("title").toString()));
+            if (progress) progress->setLabelText(tr("Connecting to %1...").arg(info.value("title").toString().left(40).toHtmlEscaped()));
             launch();
         }
     });

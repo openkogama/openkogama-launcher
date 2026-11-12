@@ -62,6 +62,7 @@ void fetch(const QString &address, QObject *owner, const std::function<void(cons
 {
     auto *net = new QNetworkAccessManager(owner);
     QNetworkRequest request{QUrl(address)};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setTransferTimeout(FetchTimeout);
     QNetworkReply *reply = net->get(request);
     QObject::connect(reply, &QNetworkReply::finished, net, [net, reply, done]() {
@@ -96,6 +97,7 @@ int post(const QString &url, const QString &key, const QByteArray &body, const Q
 {
     QNetworkAccessManager net;
     QNetworkRequest request(QUrl(url + "/api/player?key=" + key));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     if (!encoding.isEmpty()) request.setRawHeader("Content-Encoding", encoding);
     request.setTransferTimeout(SendTimeout);

@@ -23,6 +23,7 @@ static QHash<QString, QString> &addresses() {
 
 static std::optional<QJsonObject> get(const QString &url, int timeout) {
     QNetworkRequest request{QUrl(url)};
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::ManualRedirectPolicy);
     request.setTransferTimeout(timeout);
     QNetworkAccessManager net;
     QNetworkReply *reply = net.get(request);
