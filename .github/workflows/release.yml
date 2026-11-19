@@ -146,7 +146,27 @@ jobs:
           vpk download github --repoUrl $env:REPO_URL --token $env:GH_TOKEN -o releases @pre
           vpk pack --packId OpenKogamaLauncher --packVersion $version --packDir dist --mainExe openkogama-launcher.exe --packTitle "OpenKogama Launcher" --packAuthors OpenKogama --icon openkogama-launcher/resources/openkogama.ico -o releases
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
-          Get-ChildItem releases -Filter *.exe | ForEach-Object { $_.Name; $_.VersionInfo | Format-List ProductName, ProductVersion, FileVersion, CompanyName, OriginalFilename }
+      - uses: actions/upload-artifact@v4
+        id: installer
+        with:
+          name: installer
+          path: releases/OpenKogamaLauncher-win-Setup.exe
+      - uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: 24ed8deb-94ae-4c66-8699-abafa376c659
+          project-slug: openkogama-launcher
+          signing-policy-slug: ${{ inputs.policy }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.installer.outputs.artifact-id }}
+          output-artifact-directory: signed-installer
+          parameters: |
+            version: ${{ toJSON(env.VERSION) }}
+      - name: signed installer
+        shell: pwsh
+        run: |
+          Copy-Item signed-installer/OpenKogamaLauncher-win-Setup.exe releases -Force
+          Get-ChildItem releases -Filter *.exe | ForEach-Object { "{0} {1}" -f $_.Name, (Get-AuthenticodeSignature $_).SignerCertificate.Subject }
       - uses: actions/upload-artifact@v4
         with:
           name: releases
