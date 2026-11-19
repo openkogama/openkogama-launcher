@@ -32,15 +32,7 @@ Only the files built from the OpenKogama repositories by the release workflow on
 
 ## Privacy
 
-The launcher has no telemetry, analytics or crash reporting. It connects to the network only for what you see it do:
-
-- GitHub, for its own updates and for downloading game versions
-- cdn.openkogama.org, for the list of versions, the web player runtime and archived maps
-- list.openkogama.org, for the public server list
-- accounts.openkogama.org, only when you sign in to an account
-- the servers you add or join, which see your IP address and nickname like any game server
-
-Discord presence talks only to the Discord app on your computer and can be turned off in Settings.
+The launcher has no telemetry, analytics or crash reporting. It connects to the network only for what you ask it to do: updating itself, downloading game versions and maps, showing the public server list, signing in to your account and joining servers. The [Privacy Policy](https://openkogama.org/privacy/) says what each of these sends, to whom and for how long it is kept.
 
 ## Credits
 
