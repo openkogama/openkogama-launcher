@@ -33,6 +33,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: openkogama/openkogama-player
+          ref: signing
           path: openkogama-player
       - uses: actions/checkout@v4
         with:
@@ -45,6 +46,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: openkogama/openkogama-mods
+          ref: signing
           path: openkogama-mods
       - uses: jurplel/install-qt-action@v4
         with:
