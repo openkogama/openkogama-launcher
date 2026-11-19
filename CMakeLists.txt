@@ -5,6 +5,11 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core CorePrivate Widgets Network Concur
 
 qt_standard_project_setup()
 
+set(OPENKOGAMA_VERSION "0.0.0" CACHE STRING "product version written into the binaries")
+string(REGEX MATCH "^[0-9]+\\.[0-9]+\\.[0-9]+" OPENKOGAMA_VERSION_NUMBERS "${OPENKOGAMA_VERSION}")
+string(REPLACE "." "," OPENKOGAMA_VERSION_NUMBERS "${OPENKOGAMA_VERSION_NUMBERS}")
+configure_file(resources/version.rc.in ${CMAKE_CURRENT_BINARY_DIR}/version.rc @ONLY)
+
 qt_add_executable(openkogama-launcher
     WIN32 MACOSX_BUNDLE
     src/main.cpp
@@ -12,6 +17,7 @@ qt_add_executable(openkogama-launcher
     src/mainwindow.h
     src/mainwindow.ui
     resources/app.rc
+    ${CMAKE_CURRENT_BINARY_DIR}/version.rc
     src/installdialog.h src/installdialog.cpp src/installdialog.ui
     src/installprogressdialog.h src/installprogressdialog.cpp src/installprogressdialog.ui
     src/launchdialog.h src/launchdialog.cpp src/launchdialog.ui

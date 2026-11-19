@@ -10,6 +10,11 @@ on:
         description: create the github release
         type: boolean
         default: false
+      policy:
+        description: signpath signing policy
+        type: choice
+        options: [test-signing, release-signing]
+        default: test-signing
 
 permissions:
   contents: write
@@ -51,21 +56,25 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      - name: version
+        shell: pwsh
+        run: Add-Content $env:GITHUB_ENV "VERSION=$($env:TAG.TrimStart('v'))"
+
       - name: server
-        run: dotnet publish openkogama-server/openkogama-server.csproj -c Release -r win-x64 --self-contained -o dist/server
+        run: dotnet publish openkogama-server/openkogama-server.csproj -c Release -r win-x64 --self-contained -o dist/server "-p:Product=OpenKogama Launcher" "-p:InformationalVersion=$env:VERSION" -p:IncludeSourceRevisionInInformationalVersion=false
       - name: okmod
         shell: cmd
         run: |
-          cmake -S openkogama-mods/core -B build/okmod -A x64 || exit /b 1
+          cmake -S openkogama-mods/core -B build/okmod -A x64 -DOPENKOGAMA_VERSION=%VERSION% || exit /b 1
           cmake --build build/okmod --config Release --target okmod scripts || exit /b 1
           copy build\okmod\Release\okmod.dll dist\server\ || exit /b 1
           copy build\okmod\Release\scripts.dll dist\server\ || exit /b 1
-          cmake -S openkogama-mods/core -B build/okmod86 -A Win32 || exit /b 1
+          cmake -S openkogama-mods/core -B build/okmod86 -A Win32 -DOPENKOGAMA_VERSION=%VERSION% || exit /b 1
           cmake --build build/okmod86 --config Release --target okmod scripts || exit /b 1
           mkdir dist\server\x86
           copy build\okmod86\Release\okmod.dll dist\server\x86\ || exit /b 1
           copy build\okmod86\Release\scripts.dll dist\server\x86\ || exit /b 1
-          dotnet build openkogama-mods/shim/OkModShim.csproj -c Release -o build/shim || exit /b 1
+          dotnet build openkogama-mods/shim/OkModShim.csproj -c Release -o build/shim "-p:Product=OpenKogama Launcher" -p:InformationalVersion=%VERSION% -p:IncludeSourceRevisionInInformationalVersion=false || exit /b 1
           copy build\shim\OkModShim.dll dist\server\ || exit /b 1
 
       - uses: ilammy/msvc-dev-cmd@v1
@@ -74,7 +83,7 @@ jobs:
       - name: player
         shell: cmd
         run: |
-          cmake -S openkogama-player -B build/player -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl || exit /b 1
+          cmake -S openkogama-player -B build/player -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=cl -DOPENKOGAMA_VERSION=%VERSION% || exit /b 1
           cmake --build build/player || exit /b 1
           mkdir dist\player
           copy build\player\openkogama-player.exe dist\player\ || exit /b 1
@@ -84,9 +93,43 @@ jobs:
         shell: cmd
         run: |
           set PATH=%IQTA_TOOLS%\mingw1310_64\bin;%PATH%
-          cmake -S openkogama-launcher -B build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_BINDIR=. || exit /b 1
+          cmake -S openkogama-launcher -B build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_BINDIR=. -DOPENKOGAMA_VERSION=%VERSION% || exit /b 1
           cmake --build build/launcher || exit /b 1
           cmake --install build/launcher --prefix "%CD%\dist" || exit /b 1
+
+      - name: unsigned
+        shell: pwsh
+        run: |
+          $own = "openkogama-launcher.exe", "player/openkogama-player.exe",
+            "server/openkogama-server.exe", "server/openkogama-server.dll", "server/OpenKogama.Photon.dll", "server/OpenKogama.Api.dll",
+            "server/OpenKogama.Mods.Patches.dll", "server/OkModShim.dll", "server/okmod.dll", "server/scripts.dll",
+            "server/x86/okmod.dll", "server/x86/scripts.dll"
+          foreach ($file in $own) {
+            New-Item -ItemType Directory -Force (Split-Path "unsigned/$file") | Out-Null
+            Copy-Item "dist/$file" "unsigned/$file"
+          }
+          Get-ChildItem dist -Recurse -Include *.exe, *.dll | Where-Object { $_.FullName -notmatch "\\versions\\" } | ForEach-Object {
+            "{0,-70} {1,-10} {2} {3}" -f $_.FullName.Substring((Resolve-Path dist).Path.Length + 1), (Get-AuthenticodeSignature $_).Status, $_.VersionInfo.ProductName, $_.VersionInfo.ProductVersion
+          }
+      - uses: actions/upload-artifact@v4
+        id: unsigned
+        with:
+          name: unsigned
+          path: unsigned
+      - uses: signpath/github-action-submit-signing-request@v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: 24ed8deb-94ae-4c66-8699-abafa376c659
+          project-slug: openkogama-launcher
+          signing-policy-slug: ${{ inputs.policy }}
+          artifact-configuration-slug: binaries
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          output-artifact-directory: signed
+          parameters: |
+            version: ${{ toJSON(env.VERSION) }}
+      - name: signed
+        shell: pwsh
+        run: Copy-Item signed/* dist -Recurse -Force
 
       - name: package
         shell: pwsh
@@ -101,6 +144,7 @@ jobs:
           vpk download github --repoUrl $env:REPO_URL --token $env:GH_TOKEN -o releases @pre
           vpk pack --packId OpenKogamaLauncher --packVersion $version --packDir dist --mainExe openkogama-launcher.exe --packTitle "OpenKogama Launcher" --packAuthors OpenKogama --icon openkogama-launcher/resources/openkogama.ico -o releases
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          Get-ChildItem releases -Filter *.exe | ForEach-Object { $_.Name; $_.VersionInfo | Format-List ProductName, ProductVersion, FileVersion, CompanyName, OriginalFilename }
       - uses: actions/upload-artifact@v4
         with:
           name: releases
