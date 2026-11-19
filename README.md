@@ -21,6 +21,27 @@ Build with `-DBUILD_TESTING=ON` and run `ctest --output-on-failure` to check ser
 
 The launcher follows the system language, or the one picked under Settings, General, and falls back to English. Translations are made on Weblate and live in `i18n`: `launcher.ts` lists every text, `launcher_en.ts` holds the English plural forms, and each `launcher_<language>.ts` is one language, picked up by the build without further changes. After changing texts in the code, run `cmake --build <build folder> --target update_translations` and commit the updated files, so Weblate offers the new texts.
 
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
+
+Only the files built from the OpenKogama repositories by the release workflow on GitHub Actions are signed. Files from other projects that ship with the launcher (Qt, the .NET runtime, Velopack, the original game builds) are not.
+
+- Committers and reviewers: [imuarte](https://github.com/imuarte)
+- Approvers: [imuarte](https://github.com/imuarte)
+
+## Privacy
+
+The launcher has no telemetry, analytics or crash reporting. It connects to the network only for what you see it do:
+
+- GitHub, for its own updates and for downloading game versions
+- cdn.openkogama.org, for the list of versions, the web player runtime and archived maps
+- list.openkogama.org, for the public server list
+- accounts.openkogama.org, only when you sign in to an account
+- the servers you add or join, which see your IP address and nickname like any game server
+
+Discord presence talks only to the Discord app on your computer and can be turned off in Settings.
+
 ## Credits
 
 Made by nightus.
