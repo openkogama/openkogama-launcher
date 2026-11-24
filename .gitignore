@@ -1,2 +1,10 @@
 build/
+build-*/
+dist/
+dist-*/
+AppDir/
+build-tools/
+*.tar.gz
+*.AppImage
+*.token
 CMakeLists.txt.user

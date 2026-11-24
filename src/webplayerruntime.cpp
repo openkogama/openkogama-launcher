@@ -1,4 +1,5 @@
 #include "webplayerruntime.h"
+#include "gameruntime.h"
 #include <QBuffer>
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -11,7 +12,6 @@
 #include <QNetworkReply>
 #include <QProgressDialog>
 #include <QSet>
-#include <QSettings>
 #include <QtCore/private/qzipreader_p.h>
 
 namespace {
@@ -30,7 +30,7 @@ const Piece Unity5 = {"https://cdn.openkogama.org/webplayer/unity-webplayer-stab
     {"player/Stable5.x.x/webplayer_win.dll", "mono/Stable5.x.x/mono-1-vc.dll"}};
 
 QString runtimeRoot() {
-    return QDir::homePath() + "/AppData/LocalLow/Unity/WebPlayer";
+    return GameRuntime::gameHome() + "/AppData/LocalLow/Unity/WebPlayer";
 }
 
 bool installed(const Piece &piece) {
@@ -50,12 +50,18 @@ QString engineFamily(const QString &file) {
 }
 
 void registerRuntime() {
-    QSettings settings("HKEY_CURRENT_USER\\Software\\Unity\\WebPlayer", QSettings::NativeFormat);
-    if (!settings.value("Directory").toString().isEmpty())
+    static bool done = false;
+    if (done) return;
+    const QString key = QStringLiteral("HKCU\\Software\\Unity\\WebPlayer");
+    const QString directory = GameRuntime::windowsPath(runtimeRoot());
+    if (GameRuntime::registryValue(key, "Directory") == directory) {
+        done = true;
         return;
-    settings.setValue("Directory", QDir::toNativeSeparators(runtimeRoot()));
-    settings.setValue("UnityWebPlayerReleaseChannel", "Stable");
-    settings.setValue("UnityWebPlayerDevelopment", "no");
+    }
+    if (!GameRuntime::setRegistryValue(key, "Directory", directory)) return;
+    GameRuntime::setRegistryValue(key, "UnityWebPlayerReleaseChannel", "Stable");
+    GameRuntime::setRegistryValue(key, "UnityWebPlayerDevelopment", "no");
+    done = true;
 }
 
 bool install(const Piece &piece, QWidget *parent) {
@@ -109,7 +115,7 @@ bool install(const Piece &piece, QWidget *parent) {
         bool isDir = entry.isDir || folders.contains(entry.filePath);
         QString folder = isDir ? path : QFileInfo(path).absolutePath();
         if (!QDir().mkpath(folder)) {
-            failed = QCoreApplication::translate("WebPlayerRuntime", "Could not create the folder %1, check the folder permissions or run the launcher as administrator.").arg(folder);
+            failed = QCoreApplication::translate("WebPlayerRuntime", "Could not create the folder %1, check the folder permissions.").arg(folder);
         } else if (!isDir && entry.isFile) {
             QByteArray content = zip.fileData(entry.filePath);
             if (content.size() != entry.size)
@@ -118,14 +124,14 @@ bool install(const Piece &piece, QWidget *parent) {
             if (content.size() != entry.size)
                 failed = QCoreApplication::translate("WebPlayerRuntime", "Could not unpack %1 from the download.").arg(entry.filePath);
             else if (!file.open(QIODevice::WriteOnly) || file.write(content) != content.size())
-                failed = QCoreApplication::translate("WebPlayerRuntime", "Could not write %1 (%2), check your antivirus.").arg(path, file.errorString());
+                failed = QCoreApplication::translate("WebPlayerRuntime", "Could not write %1 (%2).").arg(path, file.errorString());
         }
         if (!failed.isEmpty()) break;
     }
     zip.close();
 
     if (!failed.isEmpty() || !installed(piece)) {
-        QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Could not install to %1\n%2").arg(runtimeRoot(), failed.isEmpty() ? QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing, check your antivirus.") : failed));
+        QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Could not install to %1\n%2").arg(runtimeRoot(), failed.isEmpty() ? QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing.") : failed));
         return false;
     }
     return true;

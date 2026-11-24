@@ -13,6 +13,7 @@
 #include "serverspage.h"
 #include "gamelauncher.h"
 #include "discordpresence.h"
+#include "gameruntime.h"
 #include "links.h"
 #include "settings.h"
 #include "creditsdialog.h"
@@ -588,8 +589,8 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
     QString exe = dir.entryList({"*.unityweb", "*.unity3d"}, QDir::Files).value(0);
 
     if (!exe.isEmpty()) {
-        if (!QFile::exists(Paths::player())) {
-            QMessageBox::warning(this, tr("Launch"), tr("OpenKogama Player is missing from %1").arg(QDir::toNativeSeparators(Paths::player())));
+        if (!GameRuntime::hasPlayer()) {
+            QMessageBox::warning(this, tr("Launch"), tr("OpenKogama Player is missing from %1").arg(QDir::toNativeSeparators(GameRuntime::playerProgram())));
             return false;
         }
         if (!WebPlayerRuntime::ensureInstalled(this, dir.filePath(exe)))

@@ -1,11 +1,10 @@
 #include "assetinstaller.h"
+#include "gameruntime.h"
 #include "paths.h"
 #include <QDir>
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
-
-static constexpr unsigned long CreateNoWindow = 0x08000000;
 
 AssetInstaller::AssetInstaller(QObject *parent)
     : QObject(parent)
@@ -23,20 +22,18 @@ QString AssetInstaller::versionOf(const QString &instancePath) {
 
 void AssetInstaller::start(const QString &version) {
     QDir dir(Paths::server());
-    if (version.isEmpty() || !dir.exists("openkogama-server.exe")) {
+    if (version.isEmpty() || !GameRuntime::hasServer()) {
         emit finished(false);
         return;
     }
 
     QDir().mkpath(Paths::serverData());
     m_process = new QProcess(this);
-    m_process->setProgram(dir.filePath("openkogama-server.exe"));
+    m_process->setProgram(GameRuntime::serverProgram());
     m_process->setArguments({"install", version});
     m_process->setWorkingDirectory(Paths::serverData());
     m_process->setProcessChannelMode(QProcess::MergedChannels);
-    m_process->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args) {
-        args->flags |= CreateNoWindow;
-    });
+    GameRuntime::prepare(m_process);
     connect(m_process, &QProcess::readyRead, this, &AssetInstaller::readOutput);
     connect(m_process, &QProcess::finished, this, [this](int code, QProcess::ExitStatus status) {
         readOutput();

@@ -9,9 +9,53 @@ The launcher reads only `/api/server` (`title` and the optional fixed `/api/serv
 
 ## Install
 
+### Windows
+
 Download `OpenKogamaLauncher-win-Setup.exe` from the latest release. The launcher updates itself from GitHub releases.
 
 Program files live in `%LocalAppData%\OpenKogamaLauncher` and are replaced on every update. Your data stays in `%LocalAppData%\OpenKogama\OpenKogama Launcher`: installed game versions in `instances`, and worlds, avatars, logs and downloaded assets in `server`. It is kept when the launcher updates or is uninstalled.
+
+### Linux
+
+Download the `OpenKogamaLauncher-<version>-x86_64.AppImage` or the portable `.tar.gz` from the latest release.
+
+```bash
+chmod +x OpenKogamaLauncher-*.AppImage
+./OpenKogamaLauncher-*.AppImage
+```
+
+Data is stored in `~/.local/share/OpenKogama/OpenKogama Launcher`:
+- `instances/`: installed KoGaMa clients.
+- `server/`: native server files, local worlds, avatars, and assets.
+- `profile/`: local player settings, models, and account tokens.
+
+On Linux, the launcher runs natively via Qt 6. KoGaMa client builds (which were built for Windows) run through Wine (`wine` / `wine64`), while the local server and launcher run natively. Ensure `wine` is installed on your distribution:
+```bash
+# Ubuntu / Debian
+sudo apt install wine
+# Fedora
+sudo dnf install wine
+# Arch Linux
+sudo pacman -S wine
+```
+
+Browser links using `openkogama://` are automatically registered with your desktop environment via XDG.
+
+### Building on Linux
+
+Install CMake 3.19+, a C++20 compiler, and Qt 6.5+ development libraries (`qt6-base-dev`, `qt6-base-private-dev`, `qt6-tools-dev`, `qt6-l10n-tools`):
+
+```bash
+cmake -S . -B build-linux -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+cmake --build build-linux
+QT_QPA_PLATFORM=offscreen ctest --test-dir build-linux --output-on-failure
+```
+
+Helper scripts are available in `scripts/`:
+- `scripts/build-linux.sh`: builds the launcher and runs test suites.
+- `scripts/build-server.sh`: publishes the native `openkogama-server` for Linux x64 via .NET SDK.
+- `scripts/package-linux.sh`: creates a standalone portable `.tar.gz`.
+- `scripts/package-appimage.sh`: creates an `.AppImage` bundle.
 
 To publish a release, run the release workflow with a tag such as `v1.0.0`. A tag with a dash, like `v1.0.0-rc.2`, becomes a pre-release that only pre-release installs update to.
 

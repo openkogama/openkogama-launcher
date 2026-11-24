@@ -12,7 +12,7 @@ namespace Paths {
 QString data();
 QString instances();
 QString mods();
-QString player();
+QString playerFolder();
 QString server();
 QString serverData();
 

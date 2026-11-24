@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=OpenKogama Launcher
+Comment=Play classic KoGaMa versions, join servers and manage your worlds
+Exec=openkogama-launcher %u
+Icon=openkogama-launcher
+Terminal=false
+Categories=Game;
+MimeType=x-scheme-handler/openkogama;
+StartupWMClass=openkogama-launcher

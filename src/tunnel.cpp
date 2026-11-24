@@ -1,4 +1,5 @@
 #include "tunnel.h"
+#include "gameruntime.h"
 #include "paths.h"
 #include "settings.h"
 #include <QCoreApplication>
@@ -9,7 +10,6 @@
 #include <QRandomGenerator>
 
 namespace {
-constexpr unsigned long CreateNoWindow = 0x08000000;
 constexpr int CodeLength = 6;
 const QString Letters = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 }
@@ -88,13 +88,11 @@ Tunnel *Tunnel::find(const QString &code, QObject *parent)
 Tunnel::Tunnel(const QStringList &arguments, QObject *parent)
     : QObject(parent), m_process(new QProcess(this))
 {
-    m_process->setProgram(QDir(Paths::server()).filePath("openkogama-server.exe"));
+    m_process->setProgram(GameRuntime::serverProgram());
     QStringList all = QStringList{"tunnel"} + arguments + QStringList{"--parent", QString::number(QCoreApplication::applicationPid())};
     if (const QString rendezvous = Settings::rendezvous(); !rendezvous.isEmpty()) all += {"--rendezvous", rendezvous};
     m_process->setArguments(all);
-    m_process->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args) {
-        args->flags |= CreateNoWindow;
-    });
+    GameRuntime::prepare(m_process);
     connect(m_process, &QProcess::readyReadStandardOutput, this, [this]() {
         m_pending += m_process->readAllStandardOutput();
         for (qsizetype end = m_pending.indexOf('\n'); end >= 0; end = m_pending.indexOf('\n')) {
