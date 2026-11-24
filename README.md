@@ -15,7 +15,7 @@ Program files live in `%LocalAppData%\OpenKogamaLauncher` and are replaced on ev
 
 ### Linux
 
-Download `OpenKogamaLauncher.AppImage` from the latest release, make it executable with `chmod +x OpenKogamaLauncher.AppImage` and run it. It updates itself like the Windows version, and on the first start it adds itself to the application menu and opens `openkogama://` links. If it does not start, install FUSE 2 (`libfuse2`, or `libfuse2t64` on Ubuntu 24.04).
+Download `OpenKogamaLauncher.AppImage` from the latest release, make it executable with `chmod +x OpenKogamaLauncher.AppImage` and run it. It updates itself like the Windows version, and on the first start it adds itself to the application menu and opens `openkogama://` links. It needs glibc 2.35 or newer, so Ubuntu 22.04, Linux Mint 21, Debian 12 or anything newer. If it does not start, install FUSE 2 (`libfuse2`, or `libfuse2t64` on Ubuntu 24.04).
 
 The launcher and the local server run natively, but the KoGaMa builds are Windows programs and run through Wine, so install it from your distribution, for example `sudo apt install wine`. Web player versions and the other 32-bit builds need 32-bit Wine as well. The games use your Wine prefix (`WINEPREFIX`, or `~/.wine`), and `OPENKOGAMA_WINE` picks another Wine binary. Your data stays in `~/.local/share/OpenKogama/OpenKogama Launcher`.
 

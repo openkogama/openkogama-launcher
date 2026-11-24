@@ -126,7 +126,7 @@ jobs:
 
   linux:
     needs: windows
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     env:
       TAG: ${{ inputs.tag }}
       REPO_URL: ${{ github.server_url }}/${{ github.repository }}
@@ -172,6 +172,7 @@ jobs:
           cmake --install build/launcher --prefix "$PWD/dist"
           cp -L /usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0 dist/lib/
           if env -u LD_LIBRARY_PATH ldd dist/openkogama-launcher | grep "not found"; then exit 1; fi
+          if objdump -T dist/openkogama-launcher dist/lib/*.so* | grep -E "GLIBC_2\.(3[6-9]|[4-9][0-9])"; then exit 1; fi
 
       - name: package
         env:

@@ -79,18 +79,19 @@ FetchContent_Declare(velopack
 )
 FetchContent_MakeAvailable(velopack)
 
-add_library(velopack SHARED IMPORTED)
 if(WIN32)
     configure_file(${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll ${CMAKE_CURRENT_BINARY_DIR}/velopack_libc.dll COPYONLY)
+    add_library(velopack SHARED IMPORTED)
     set_target_properties(velopack PROPERTIES
         IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/velopack_libc.dll
         IMPORTED_IMPLIB ${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll.lib
     )
 else()
-    configure_file(${velopack_SOURCE_DIR}/lib/velopack_libc_linux_x64_gnu.so ${CMAKE_CURRENT_BINARY_DIR}/libvelopack_libc.so COPYONLY)
+    find_package(Threads REQUIRED)
+    add_library(velopack STATIC IMPORTED)
     set_target_properties(velopack PROPERTIES
-        IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libvelopack_libc.so
-        IMPORTED_NO_SONAME TRUE
+        IMPORTED_LOCATION ${velopack_SOURCE_DIR}/lib-static/velopack_libc_linux_x64_gnu.a
+        INTERFACE_LINK_LIBRARIES "Threads::Threads;${CMAKE_DL_LIBS};m"
     )
 endif()
 set_target_properties(velopack PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${velopack_SOURCE_DIR}/include)
@@ -106,13 +107,10 @@ target_link_libraries(openkogama-launcher
 )
 if(WIN32)
     target_link_libraries(openkogama-launcher PRIVATE crypt32)
-else()
-    set_target_properties(openkogama-launcher PROPERTIES BUILD_RPATH "$ORIGIN")
+    add_custom_command(TARGET openkogama-launcher POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:velopack> $<TARGET_FILE_DIR:openkogama-launcher>
+    )
 endif()
-
-add_custom_command(TARGET openkogama-launcher POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:velopack> $<TARGET_FILE_DIR:openkogama-launcher>
-)
 
 file(GLOB LAUNCHER_TRANSLATIONS CONFIGURE_DEPENDS i18n/launcher_*.ts)
 list(REMOVE_ITEM LAUNCHER_TRANSLATIONS ${CMAKE_CURRENT_SOURCE_DIR}/i18n/launcher_en.ts)
@@ -135,7 +133,9 @@ qt_generate_deploy_app_script(
     NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})
-install(FILES $<TARGET_FILE:velopack> DESTINATION ${CMAKE_INSTALL_BINDIR})
+if(WIN32)
+    install(FILES $<TARGET_FILE:velopack> DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
 
 option(BUILD_TESTING "Build launcher tests" OFF)
 include(CTest)
