@@ -4,6 +4,7 @@
 #include "sharebar.h"
 #include "serverconfigdialog.h"
 #include "paths.h"
+#include "gameruntime.h"
 #include "gamelauncher.h"
 #include "centereddelegate.h"
 #include <QApplication>
@@ -271,8 +272,9 @@ private slots:
         QCOMPARE(Tunnel::display("ABCDEF"), QString("ABC-DEF"));
         const QString server = QApplication::applicationDirPath() + "/server";
         QVERIFY(QDir().mkpath(server));
-        QFile::remove(server + "/openkogama-server.exe");
-        QVERIFY(QFile::copy(QApplication::applicationFilePath(), server + "/openkogama-server.exe"));
+        const QString binary = server + "/" + GameRuntime::serverExecutable();
+        QFile::remove(binary);
+        QVERIFY(QFile::copy(QApplication::applicationFilePath(), binary));
         Settings::setServers({{"Code ABC-DEF", "p2p:abc-def", {}, {}}});
         QCOMPARE(Settings::servers().first().address, QString("p2p:ABCDEF"));
         {
@@ -289,8 +291,9 @@ private slots:
     {
         const QString server = QApplication::applicationDirPath() + "/server";
         QVERIFY(QDir().mkpath(server));
-        QFile::remove(server + "/openkogama-server.exe");
-        QVERIFY(QFile::copy(QApplication::applicationFilePath(), server + "/openkogama-server.exe"));
+        const QString binary = server + "/" + GameRuntime::serverExecutable();
+        QFile::remove(binary);
+        QVERIFY(QFile::copy(QApplication::applicationFilePath(), binary));
         {
             ShareBar bar;
             bar.share(4, "Fake world", "3.5.20");

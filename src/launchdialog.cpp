@@ -1,5 +1,6 @@
 #include "launchdialog.h"
 #include "assetinstaller.h"
+#include "gameruntime.h"
 #include "paths.h"
 #include "theme.h"
 #include "ui_launchdialog.h"
@@ -16,7 +17,6 @@
 #include <QTimer>
 #include <QUdpSocket>
 
-static constexpr unsigned long CreateNoWindow = 0x08000000;
 static constexpr int PingAttempts = 200;
 static constexpr int PingTimeout = 150;
 static constexpr int AssetsEnd = 50;
@@ -143,7 +143,7 @@ void LaunchDialog::reject() {
 
 void LaunchDialog::startServer() {
     QDir dir(Paths::server());
-    if (!dir.exists("openkogama-server.exe")) {
+    if (!GameRuntime::hasServer()) {
         fail(tr("Server not found in %1").arg(dir.path()));
         return;
     }
@@ -155,12 +155,10 @@ void LaunchDialog::startServer() {
     if (m_offline) arguments.append("--offline");
     m_exitCode = 0;
     m_server = new QProcess(parentWidget());
-    m_server->setProgram(dir.filePath("openkogama-server.exe"));
+    m_server->setProgram(GameRuntime::serverProgram());
     m_server->setWorkingDirectory(Paths::serverData());
     m_server->setArguments(arguments);
-    m_server->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args) {
-        args->flags |= CreateNoWindow;
-    });
+    GameRuntime::prepare(m_server);
     connect(m_server, &QProcess::finished, this, [this](int exitCode) { m_exitCode = exitCode; });
     connect(m_server, &QProcess::finished, m_server, &QObject::deleteLater);
     m_server->start();

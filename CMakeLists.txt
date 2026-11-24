@@ -11,7 +11,6 @@ qt_add_executable(openkogama-launcher
     src/mainwindow.cpp
     src/mainwindow.h
     src/mainwindow.ui
-    resources/app.rc
     src/installdialog.h src/installdialog.cpp src/installdialog.ui
     src/installprogressdialog.h src/installprogressdialog.cpp src/installprogressdialog.ui
     src/launchdialog.h src/launchdialog.cpp src/launchdialog.ui
@@ -34,6 +33,7 @@ qt_add_executable(openkogama-launcher
     src/modelpreview.h src/modelpreview.cpp
     src/webplayerruntime.h src/webplayerruntime.cpp
     src/paths.h src/paths.cpp
+    src/gameruntime.h src/gameruntime.cpp
     src/updater.h src/updater.cpp
     src/theme.h src/theme.cpp
     src/settings.h src/settings.cpp
@@ -45,6 +45,10 @@ qt_add_executable(openkogama-launcher
     src/creditsdialog.h src/creditsdialog.cpp
     src/contentimporter.h src/contentimporter.cpp
 )
+
+if(WIN32)
+    target_sources(openkogama-launcher PRIVATE resources/app.rc)
+endif()
 
 qt_add_resources(openkogama-launcher "resources"
     PREFIX "/"
@@ -59,6 +63,7 @@ qt_add_resources(openkogama-launcher "resources"
         resources/logo.png
         resources/openkogama-font.ttf
         resources/launcher.qss
+        resources/launcher-linux.qss
         resources/arrow-down.svg
         resources/check.svg
         resources/plus.svg
@@ -73,14 +78,22 @@ FetchContent_Declare(velopack
     DOWNLOAD_EXTRACT_TIMESTAMP ON
 )
 FetchContent_MakeAvailable(velopack)
-configure_file(${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll ${CMAKE_CURRENT_BINARY_DIR}/velopack_libc.dll COPYONLY)
 
 add_library(velopack SHARED IMPORTED)
-set_target_properties(velopack PROPERTIES
-    IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/velopack_libc.dll
-    IMPORTED_IMPLIB ${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll.lib
-    INTERFACE_INCLUDE_DIRECTORIES ${velopack_SOURCE_DIR}/include
-)
+if(WIN32)
+    configure_file(${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll ${CMAKE_CURRENT_BINARY_DIR}/velopack_libc.dll COPYONLY)
+    set_target_properties(velopack PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/velopack_libc.dll
+        IMPORTED_IMPLIB ${velopack_SOURCE_DIR}/lib/velopack_libc_win_x64_msvc.dll.lib
+    )
+else()
+    configure_file(${velopack_SOURCE_DIR}/lib/velopack_libc_linux_x64_gnu.so ${CMAKE_CURRENT_BINARY_DIR}/libvelopack_libc.so COPYONLY)
+    set_target_properties(velopack PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_CURRENT_BINARY_DIR}/libvelopack_libc.so
+        IMPORTED_NO_SONAME TRUE
+    )
+endif()
+set_target_properties(velopack PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${velopack_SOURCE_DIR}/include)
 
 target_link_libraries(openkogama-launcher
     PRIVATE
@@ -90,8 +103,12 @@ target_link_libraries(openkogama-launcher
         Qt::CorePrivate
         Qt::Concurrent
         velopack
-        crypt32
 )
+if(WIN32)
+    target_link_libraries(openkogama-launcher PRIVATE crypt32)
+else()
+    set_target_properties(openkogama-launcher PROPERTIES BUILD_RPATH "$ORIGIN")
+endif()
 
 add_custom_command(TARGET openkogama-launcher POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:velopack> $<TARGET_FILE_DIR:openkogama-launcher>
@@ -127,11 +144,15 @@ if(BUILD_TESTING)
     qt_add_executable(launcher-tests tests/serverspage_test.cpp src/serverspage.cpp src/serverspage.h src/tilegrid.cpp src/tilegrid.h src/settings.cpp src/settings.h src/tunnel.cpp src/tunnel.h src/sharebar.cpp src/sharebar.h src/serverconfigdialog.cpp src/serverconfigdialog.h
         src/gamelauncher.cpp src/gamelauncher.h src/singleinstance.cpp src/singleinstance.h src/clientpatches.cpp src/clientpatches.h src/serverfeatures.cpp src/serverfeatures.h src/account.cpp src/account.h src/playerprofile.cpp src/playerprofile.h src/discordpresence.cpp src/discordpresence.h src/consolewindow.cpp src/consolewindow.h src/webplayerruntime.cpp src/webplayerruntime.h src/paths.cpp src/paths.h src/theme.cpp src/theme.h
         src/launchdialog.cpp src/launchdialog.h src/launchdialog.ui src/assetinstaller.cpp src/assetinstaller.h
+        src/gameruntime.cpp src/gameruntime.h
         src/languages.cpp src/languages.h)
     target_include_directories(launcher-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_compile_definitions(launcher-tests PRIVATE LAUNCHER_TRANSLATIONS="${CMAKE_CURRENT_BINARY_DIR}")
     add_dependencies(launcher-tests openkogama-launcher_lrelease)
-    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate crypt32)
+    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate)
+    if(WIN32)
+        target_link_libraries(launcher-tests PRIVATE crypt32)
+    endif()
     qt_add_resources(launcher-tests "test_resources" PREFIX "/" BASE resources FILES resources/logo.png)
     add_test(NAME launcher-servers COMMAND launcher-tests -o ${CMAKE_CURRENT_BINARY_DIR}/launcher-tests.txt,txt)
     set_tests_properties(launcher-servers PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")

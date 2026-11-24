@@ -1,10 +1,10 @@
 #include "updater.h"
+#include "gameruntime.h"
 #include "launchdialog.h"
 #include <QAction>
 #include <QApplication>
 #include <QDeadlineTimer>
 #include <QEventLoop>
-#include <QFileInfo>
 #include <QFutureWatcher>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
@@ -24,7 +24,7 @@ constexpr int KillMs = 3000;
 bool isLocalServer(const QProcess *process)
 {
     const QString first = process->arguments().value(0);
-    return QFileInfo(process->program()).fileName() == "openkogama-server.exe" && first != "tunnel" && first != "install";
+    return GameRuntime::isServerProgram(process->program()) && first != "tunnel" && first != "install";
 }
 
 void stopChildren(QWidget *window)

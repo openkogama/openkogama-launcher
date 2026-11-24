@@ -101,11 +101,26 @@ void receive()
     }
 }
 
+QStringList pipePaths()
+{
+    QStringList folders = {QString()};
+#ifndef Q_OS_WIN
+    QString runtime = qEnvironmentVariable("XDG_RUNTIME_DIR");
+    if (runtime.isEmpty()) runtime = qEnvironmentVariable("TMPDIR", "/tmp");
+    folders = {runtime + "/", runtime + "/app/com.discordapp.Discord/", runtime + "/snap.discord/"};
+#endif
+    QStringList paths;
+    for (const QString &folder : folders)
+        for (int index = 0; index < PipeCount; ++index)
+            paths << folder + QStringLiteral("discord-ipc-%1").arg(index);
+    return paths;
+}
+
 void openPipe()
 {
     auto *pipe = new QLocalSocket(qApp);
-    for (int index = 0; index < PipeCount; ++index) {
-        pipe->connectToServer(QString("discord-ipc-%1").arg(index));
+    for (const QString &path : pipePaths()) {
+        pipe->connectToServer(path);
         if (pipe->waitForConnected(ConnectTimeoutMs)) break;
         pipe->abort();
     }

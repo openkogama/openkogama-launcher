@@ -439,6 +439,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Porting the launcher to Linux.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Credits</source>
         <translation type="unfinished"></translation>
     </message>
@@ -527,6 +531,16 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     </message>
     <message>
         <source>could not sign in here, playing as a guest: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wine is missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
+
+Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1676,11 +1690,23 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Could not create the folder %1, check the folder permissions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not unpack %1 from the download.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not write %1 (%2), check your antivirus.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files were removed after installing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -443,6 +443,10 @@
         <translation>Перевод лаунчера на русский.</translation>
     </message>
     <message>
+        <source>Porting the launcher to Linux.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Credits</source>
         <translation>Авторы</translation>
     </message>
@@ -528,6 +532,16 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message>
         <source>Server</source>
         <translation>Сервер</translation>
+    </message>
+    <message>
+        <source>Wine is missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
+
+Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not start %1</source>
@@ -1691,12 +1705,24 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation>Не удалось создать папку %1, проверьте права доступа к папке или запустите лаунчер от имени администратора.</translation>
     </message>
     <message>
+        <source>Could not create the folder %1, check the folder permissions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not unpack %1 from the download.</source>
         <translation>Не удалось распаковать %1 из загруженного файла.</translation>
     </message>
     <message>
         <source>Could not write %1 (%2), check your antivirus.</source>
         <translation>Не удалось прочитать %1 (%2), проверьте свой антивирус.</translation>
+    </message>
+    <message>
+        <source>Could not write %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files were removed after installing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not install to %1

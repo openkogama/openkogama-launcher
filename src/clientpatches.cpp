@@ -1,4 +1,5 @@
 #include "clientpatches.h"
+#include "gameruntime.h"
 #include "paths.h"
 #include "serverfeatures.h"
 #include "settings.h"
@@ -22,7 +23,6 @@
 #include <QUrlQuery>
 #include <QtEndian>
 
-static constexpr unsigned long CreateNoWindow = 0x08000000;
 static constexpr int ContentTimeout = 3000;
 static constexpr int PatchTimeout = 60000;
 static constexpr int NothingToChange = 3;
@@ -61,7 +61,7 @@ QString unityCache(const QString &instancePath) {
         if (!info.open(QIODevice::ReadOnly)) continue;
         const QStringList lines = QString::fromUtf8(info.readAll()).split('\n');
         if (lines.size() < 2 || lines[0].trimmed().isEmpty() || lines[1].trimmed().isEmpty()) continue;
-        return QDir::homePath() + "/AppData/LocalLow/Unity/" + lines[0].trimmed() + "_" + lines[1].trimmed();
+        return GameRuntime::gameHome() + "/AppData/LocalLow/Unity/" + lines[0].trimmed() + "_" + lines[1].trimmed();
     }
     return {};
 }
@@ -153,13 +153,11 @@ QJsonObject content(const QString &serverUrl, const QString &version) {
 
 int serverTool(const QStringList &arguments, const QByteArray &input = {}, QByteArray *output = nullptr) {
     QProcess process;
-    process.setProgram(QDir(Paths::server()).filePath("openkogama-server.exe"));
+    process.setProgram(GameRuntime::serverProgram());
     process.setArguments(arguments);
     process.setWorkingDirectory(Paths::serverData());
     process.setProcessChannelMode(QProcess::MergedChannels);
-    process.setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args) {
-        args->flags |= CreateNoWindow;
-    });
+    GameRuntime::prepare(&process);
     process.start();
     process.write(input);
     process.closeWriteChannel();

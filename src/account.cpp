@@ -1,18 +1,24 @@
 #include "account.h"
+#include "paths.h"
 #include "settings.h"
 #include <QCoreApplication>
 #include <QCryptographicHash>
 #include <QCursor>
+#include <QDir>
 #include <QEventLoop>
+#include <QFile>
 #include <QGuiApplication>
 #include <QJsonDocument>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QRandomGenerator>
+#include <QSaveFile>
 #include <QUrlQuery>
+#ifdef Q_OS_WIN
 #include <windows.h>
 #include <dpapi.h>
+#endif
 
 namespace {
 
@@ -21,6 +27,7 @@ constexpr int Unauthorized = 401;
 constexpr int VerifierBytes = 32;
 const auto Base64Url = QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals;
 
+#ifdef Q_OS_WIN
 QByteArray protect(const QByteArray &plain)
 {
     DATA_BLOB in{DWORD(plain.size()), reinterpret_cast<BYTE *>(const_cast<char *>(plain.data()))};
@@ -42,9 +49,43 @@ QByteArray unprotect(const QByteArray &sealed)
     return plain;
 }
 
+QByteArray loadToken()
+{
+    return unprotect(Settings::accountToken());
+}
+
+void storeAccount(const QString &name, const QByteArray &session)
+{
+    Settings::setAccount(name, protect(session));
+}
+#else
+QString tokenPath()
+{
+    return Paths::data() + "/account.token";
+}
+
+QByteArray loadToken()
+{
+    QFile file(tokenPath());
+    if (!file.open(QIODevice::ReadOnly)) return {};
+    return file.readAll();
+}
+
+void storeAccount(const QString &name, const QByteArray &session)
+{
+    Settings::setAccount(name, {});
+    QDir().mkpath(Paths::data());
+    QSaveFile file(tokenPath());
+    if (!file.open(QIODevice::WriteOnly)) return;
+    file.write(session);
+    file.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+    file.commit();
+}
+#endif
+
 QString token()
 {
-    return QString::fromUtf8(unprotect(Settings::accountToken()));
+    return QString::fromUtf8(loadToken());
 }
 
 Account::Reply post(const QString &path, const QJsonObject &body)
@@ -66,6 +107,9 @@ Account::Reply post(const QString &path, const QJsonObject &body)
 void forget()
 {
     Settings::forgetAccount();
+#ifndef Q_OS_WIN
+    QFile::remove(tokenPath());
+#endif
     emit Account::events()->changed();
 }
 
@@ -112,7 +156,7 @@ Reply finishSignIn(const QString &code)
     const QString session = reply.body.value("token").toString();
     if (!reply.ok() || session.isEmpty()) return reply;
     Settings::setAccountVerifier({});
-    Settings::setAccount(reply.body.value("name").toString(), protect(session.toUtf8()));
+    storeAccount(reply.body.value("name").toString(), session.toUtf8());
     emit events()->changed();
     return reply;
 }

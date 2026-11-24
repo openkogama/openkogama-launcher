@@ -1,6 +1,7 @@
 #include "gamelauncher.h"
 #include "account.h"
 #include "clientpatches.h"
+#include "gameruntime.h"
 #include "serverfeatures.h"
 #include "launchdialog.h"
 #include "languages.h"
@@ -246,6 +247,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     QDir logs(QDir(path).filePath("logs"));
     logs.mkpath(".");
     QString log = logs.filePath("client-" + QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss-zzz") + ".log");
+    const QString gameLog = GameRuntime::windowsPath(log);
 
     std::function<QStringList(const QString &)> arguments;
     if (WebPlayerRuntime::isWebPlayerFile(exe)) {
@@ -253,7 +255,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         QJsonObject info;
         if (meta.open(QIODevice::ReadOnly)) info = QJsonDocument::fromJson(meta.readAll()).object();
         QString version = info.value("version").toString();
-        QString file = QDir::toNativeSeparators(QDir(path).filePath(exe));
+        QString file = GameRuntime::windowsPath(QDir(path).filePath(exe));
         notes += ClientPatches::applyWeb(QDir(path).filePath(exe));
         client->setProgram(Paths::player());
         if (info.value("unityVersion").toString().startsWith("3.4")) {
@@ -266,11 +268,11 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
             const QString username = viaCode && !nickname.isEmpty() ? QString::fromLatin1(QUrl::toPercentEncoding(nickname)) : "1";
             QString query = "?Username=" + username + "&Password=&PlanetName=" + QString::number(world) + "&EditMode=" + (mode == "play" ? "false" : "true");
             client->setArguments({file + query, "--serve-as", url + "/kogama2012/WebPlayer.unity3d",
-                "--title", title, "--log", QDir::toNativeSeparators(log)});
+                "--title", title, "--log", gameLog});
         } else {
-            arguments = [file, version, title, log](const QString &ready) {
+            arguments = [file, version, title, gameLog](const QString &ready) {
                 return QStringList{file, "--version", version,
-                    "--reply", "sendPlayerParams=" + ready + "&client=" + version, "--title", title, "--log", QDir::toNativeSeparators(log)};
+                    "--reply", "sendPlayerParams=" + ready + "&client=" + version, "--title", title, "--log", gameLog};
             };
         }
     } else {
@@ -291,8 +293,8 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
             session += "&patches=" + active.join(',');
         if (!themes.isEmpty())
             session += "&themes=" + themes;
-        arguments = [log](const QString &ready) {
-            return QStringList{"kogamaPackage:" + QString::fromLatin1(ready.toUtf8().toBase64()), "-logFile", QDir::toNativeSeparators(log)};
+        arguments = [gameLog](const QString &ready) {
+            return QStringList{"kogamaPackage:" + QString::fromLatin1(ready.toUtf8().toBase64()), "-logFile", gameLog};
         };
     }
     client->setWorkingDirectory(path);
@@ -305,7 +307,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     for (const QString &note : notes)
         console->note(note);
     if (WebPlayerRuntime::isWebPlayerFile(exe))
-        console->followNewest("Unity", QDir::tempPath() + "/UnityWebPlayer/log");
+        console->followNewest("Unity", GameRuntime::gameTemp() + "/UnityWebPlayer/log");
     if (local)
         console->followNewest(QCoreApplication::translate("GameLauncher", "Server"), Paths::serverData() + "/logs", true);
     QObject::connect(console, &ConsoleWindow::crashed, console, [console]() {
@@ -341,6 +343,16 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     }
     if (arguments)
         client->setArguments(arguments(session));
+    if (GameRuntime::needsWine(client->program()) && !GameRuntime::wineAvailable()) {
+        client->deleteLater();
+        console->deleteLater();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameLauncher", "Wine is missing"),
+            QCoreApplication::translate("GameLauncher",
+                "This KoGaMa version is a Windows build, so it needs Wine to run on this system.\n\n"
+                "Install Wine with your package manager, for example \"sudo apt install wine\", and try again."));
+        return nullptr;
+    }
+    GameRuntime::prepare(client);
     client->start();
 
     if (!client->waitForStarted()) {

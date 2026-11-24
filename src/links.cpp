@@ -2,9 +2,12 @@
 #include "settings.h"
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QLocalServer>
 #include <QLocalSocket>
+#include <QProcess>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QUrl>
 #include <QUrlQuery>
 
@@ -17,8 +20,21 @@ const QStringList ArchiveHosts = {"openkogama.org", "archive.org"};
 
 QString pipeName()
 {
+#ifdef Q_OS_WIN
     return "openkogama-launcher-" + qEnvironmentVariable("USERNAME", "user");
+#else
+    return "openkogama-launcher-" + qEnvironmentVariable("USER", "user");
+#endif
 }
+
+#ifndef Q_OS_WIN
+QString desktopQuoted(const QString &path)
+{
+    QString quoted = path;
+    quoted.replace('\\', "\\\\\\\\").replace('"', "\\\\\"").replace('`', "\\\\`").replace('$', "\\\\$").replace('%', "%%");
+    return "\"" + quoted + "\"";
+}
+#endif
 }
 
 namespace Links {
@@ -126,6 +142,32 @@ void registerScheme()
     classes.setValue("Default", "URL:OpenKogama");
     classes.setValue("URL Protocol", "");
     classes.setValue("shell/open/command/Default", command);
+#else
+    const QString appImage = qEnvironmentVariable("APPIMAGE");
+    const QString applications = QStandardPaths::writableLocation(QStandardPaths::ApplicationsLocation);
+    if (appImage.isEmpty() || applications.isEmpty() || !QDir().mkpath(applications)) return;
+    const QString icons = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor/192x192/apps";
+    if (!QFile::exists(icons + "/openkogama-launcher.png") && QDir().mkpath(icons))
+        QFile::copy(":/logo.png", icons + "/openkogama-launcher.png");
+    const QString entry = QStringLiteral(
+        "[Desktop Entry]\n"
+        "Type=Application\n"
+        "Name=OpenKogama Launcher\n"
+        "Comment=Play classic KoGaMa versions, join servers and manage your worlds\n"
+        "Exec=%1 %u\n"
+        "Icon=openkogama-launcher\n"
+        "Terminal=false\n"
+        "Categories=Game;\n"
+        "MimeType=x-scheme-handler/%2;\n"
+        "StartupWMClass=openkogama-launcher\n").arg(desktopQuoted(appImage), Scheme);
+    QFile desktop(applications + "/openkogama-launcher.desktop");
+    if (desktop.open(QIODevice::ReadOnly) && QString::fromUtf8(desktop.readAll()) == entry) return;
+    desktop.close();
+    if (!desktop.open(QIODevice::WriteOnly | QIODevice::Truncate)) return;
+    desktop.write(entry.toUtf8());
+    desktop.close();
+    QProcess::execute("xdg-mime", {"default", "openkogama-launcher.desktop", "x-scheme-handler/" + Scheme});
+    QProcess::execute("update-desktop-database", {applications});
 #endif
 }
 

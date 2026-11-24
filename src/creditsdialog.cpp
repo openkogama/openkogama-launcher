@@ -25,6 +25,7 @@ const Credit Thanks[] = {
     {"Limeen", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website and the launcher into French.")},
     {"lordscorpioni", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the website and the launcher into Spanish.")},
     {"podleshik", QT_TRANSLATE_NOOP("CreditsDialog", "Translating the launcher into Russian.")},
+    {"reddevil", QT_TRANSLATE_NOOP("CreditsDialog", "Porting the launcher to Linux.")},
 };
 
 QFont brandFont(int pointSize)

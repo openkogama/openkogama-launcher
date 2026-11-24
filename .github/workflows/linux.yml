@@ -1,0 +1,29 @@
+name: linux
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.10.2
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          cache: true
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: build
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+          cmake --build build
+      - name: test
+        run: ctest --test-dir build --output-on-failure
