@@ -530,6 +530,16 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation>Сервер</translation>
     </message>
     <message>
+        <source>Wine is missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
+
+Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not start %1</source>
         <translation>Не получилось запустить %1</translation>
     </message>
@@ -1663,6 +1673,10 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <source>Could not check for updates: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>OpenKogama Launcher %1 is available. Open the download page?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>WebPlayerRuntime</name>
@@ -1687,26 +1701,26 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
         <translation>Установка Unity Web Player...</translation>
     </message>
     <message>
-        <source>Could not create the folder %1, check the folder permissions or run the launcher as administrator.</source>
-        <translation>Не удалось создать папку %1, проверьте права доступа к папке или запустите лаунчер от имени администратора.</translation>
+        <source>Could not create the folder %1, check the folder permissions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files were removed after installing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not unpack %1 from the download.</source>
         <translation>Не удалось распаковать %1 из загруженного файла.</translation>
     </message>
     <message>
-        <source>Could not write %1 (%2), check your antivirus.</source>
-        <translation>Не удалось прочитать %1 (%2), проверьте свой антивирус.</translation>
-    </message>
-    <message>
         <source>Could not install to %1
 %2</source>
         <translation>Не удалось установить %1
 %2</translation>
-    </message>
-    <message>
-        <source>Files were removed after installing, check your antivirus.</source>
-        <translation>Файлы были удалены после установки, проверьте свой анивирус.</translation>
     </message>
 </context>
 <context>
@@ -1918,6 +1932,14 @@ If it is yours, sign in. Otherwise pick another nickname.</source>
     <message>
         <source>No avatars match your search.</source>
         <translation>Не нашли не одного аватара.</translation>
+    </message>
+    <message>
+        <source>This avatar is already in use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (Active)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not load your worlds. Press F5 to try again.</source>

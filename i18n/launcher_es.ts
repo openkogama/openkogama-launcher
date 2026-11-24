@@ -526,6 +526,16 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Servidor</translation>
     </message>
     <message>
+        <source>Wine is missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
+
+Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not start %1</source>
         <translation>No se ha podido iniciar %1</translation>
     </message>
@@ -1653,6 +1663,10 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <source>Could not check for updates: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>OpenKogama Launcher %1 is available. Open the download page?</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>WebPlayerRuntime</name>
@@ -1677,26 +1691,26 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Instalando Unity Web Player...</translation>
     </message>
     <message>
-        <source>Could not create the folder %1, check the folder permissions or run the launcher as administrator.</source>
-        <translation>No se ha podido crear la carpeta %1. Comprueba los permisos de la carpeta o ejecuta el lanzador como administrador.</translation>
+        <source>Could not create the folder %1, check the folder permissions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write %1 (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files were removed after installing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not unpack %1 from the download.</source>
         <translation>No se ha podido extraer %1 del archivo descargado.</translation>
     </message>
     <message>
-        <source>Could not write %1 (%2), check your antivirus.</source>
-        <translation>No se ha podido escribir %1 (%2). Comprueba tu antivirus.</translation>
-    </message>
-    <message>
         <source>Could not install to %1
 %2</source>
         <translation>No se ha podido instalar en %1
 %2</translation>
-    </message>
-    <message>
-        <source>Files were removed after installing, check your antivirus.</source>
-        <translation>Se han eliminado archivos después de la instalación. Comprueba tu antivirus.</translation>
     </message>
 </context>
 <context>
@@ -1906,6 +1920,14 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
     <message>
         <source>No avatars match your search.</source>
         <translation>Ningún avatar coincide con tu búsqueda.</translation>
+    </message>
+    <message>
+        <source>This avatar is already in use</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (Active)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not load your worlds. Press F5 to try again.</source>
