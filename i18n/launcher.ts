@@ -435,6 +435,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Porting the launcher to Linux.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Credits</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1648,10 +1652,6 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <source>Could not check for updates: %1</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>OpenKogama Launcher %1 is available. Open the download page?</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>WebPlayerRuntime</name>
@@ -1676,7 +1676,19 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Could not create the folder %1, check the folder permissions or run the launcher as administrator.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not create the folder %1, check the folder permissions.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not unpack %1 from the download.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write %1 (%2), check your antivirus.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1688,12 +1700,12 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not unpack %1 from the download.</source>
+        <source>Could not install to %1
+%2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Could not install to %1
-%2</source>
+        <source>Files were removed after installing, check your antivirus.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1901,14 +1913,6 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     </message>
     <message>
         <source>No avatars match your search.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This avatar is already in use</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 (Active)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

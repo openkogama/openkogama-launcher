@@ -52,7 +52,7 @@ QString engineFamily(const QString &file) {
 void registerRuntime() {
     static bool done = false;
     if (done) return;
-    const QString key = QStringLiteral("HKCU\\Software\\Unity\\WebPlayer");
+    const QString key = QStringLiteral("HKEY_CURRENT_USER\\Software\\Unity\\WebPlayer");
     const QString directory = GameRuntime::windowsPath(runtimeRoot());
     if (GameRuntime::registryValue(key, "Directory") == directory) {
         done = true;
@@ -115,7 +115,11 @@ bool install(const Piece &piece, QWidget *parent) {
         bool isDir = entry.isDir || folders.contains(entry.filePath);
         QString folder = isDir ? path : QFileInfo(path).absolutePath();
         if (!QDir().mkpath(folder)) {
+#ifdef Q_OS_WIN
+            failed = QCoreApplication::translate("WebPlayerRuntime", "Could not create the folder %1, check the folder permissions or run the launcher as administrator.").arg(folder);
+#else
             failed = QCoreApplication::translate("WebPlayerRuntime", "Could not create the folder %1, check the folder permissions.").arg(folder);
+#endif
         } else if (!isDir && entry.isFile) {
             QByteArray content = zip.fileData(entry.filePath);
             if (content.size() != entry.size)
@@ -124,14 +128,23 @@ bool install(const Piece &piece, QWidget *parent) {
             if (content.size() != entry.size)
                 failed = QCoreApplication::translate("WebPlayerRuntime", "Could not unpack %1 from the download.").arg(entry.filePath);
             else if (!file.open(QIODevice::WriteOnly) || file.write(content) != content.size())
+#ifdef Q_OS_WIN
+                failed = QCoreApplication::translate("WebPlayerRuntime", "Could not write %1 (%2), check your antivirus.").arg(path, file.errorString());
+#else
                 failed = QCoreApplication::translate("WebPlayerRuntime", "Could not write %1 (%2).").arg(path, file.errorString());
+#endif
         }
         if (!failed.isEmpty()) break;
     }
     zip.close();
 
     if (!failed.isEmpty() || !installed(piece)) {
-        QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Could not install to %1\n%2").arg(runtimeRoot(), failed.isEmpty() ? QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing.") : failed));
+#ifdef Q_OS_WIN
+        const QString removed = QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing, check your antivirus.");
+#else
+        const QString removed = QCoreApplication::translate("WebPlayerRuntime", "Files were removed after installing.");
+#endif
+        QMessageBox::warning(parent, "Unity Web Player", QCoreApplication::translate("WebPlayerRuntime", "Could not install to %1\n%2").arg(runtimeRoot(), failed.isEmpty() ? removed : failed));
         return false;
     }
     return true;

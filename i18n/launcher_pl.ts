@@ -443,6 +443,10 @@
         <translation>Przetłumaczenie launchera na rosyjski.</translation>
     </message>
     <message>
+        <source>Porting the launcher to Linux.</source>
+        <translation>Przeniesienie launchera na Linuxa.</translation>
+    </message>
+    <message>
         <source>Credits</source>
         <translation>Twórcy</translation>
     </message>
@@ -531,13 +535,15 @@ Jeśli to twoje konto, zaloguj się. W przeciwnym razie wybierz inny nick.</tran
     </message>
     <message>
         <source>Wine is missing</source>
-        <translation type="unfinished"></translation>
+        <translation>Brak Wine</translation>
     </message>
     <message>
         <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
 
 Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Ta wersja KoGaMy jest zbudowana na Windowsa, więc na tym systemie potrzebuje Wine.
+
+Zainstaluj Wine menedżerem pakietów, na przykład &quot;sudo apt install wine&quot;, i spróbuj ponownie.</translation>
     </message>
     <message>
         <source>Could not start %1</source>
@@ -1673,10 +1679,6 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <source>Could not check for updates: %1</source>
         <translation>Nie udało się sprawdzić aktualizacji: %1</translation>
     </message>
-    <message>
-        <source>OpenKogama Launcher %1 is available. Open the download page?</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>WebPlayerRuntime</name>
@@ -1701,26 +1703,38 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation>Instalowanie Unity Web Player...</translation>
     </message>
     <message>
+        <source>Could not create the folder %1, check the folder permissions or run the launcher as administrator.</source>
+        <translation>Nie udało się utworzyć folderu %1, sprawdź uprawnienia folderu albo uruchom launcher jako administrator.</translation>
+    </message>
+    <message>
         <source>Could not create the folder %1, check the folder permissions.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not write %1 (%2).</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Files were removed after installing.</source>
-        <translation type="unfinished"></translation>
+        <translation>Nie udało się utworzyć folderu %1, sprawdź uprawnienia folderu.</translation>
     </message>
     <message>
         <source>Could not unpack %1 from the download.</source>
         <translation>Nie udało się rozpakować %1 z pobranego pliku.</translation>
     </message>
     <message>
+        <source>Could not write %1 (%2), check your antivirus.</source>
+        <translation>Nie udało się zapisać %1 (%2), sprawdź antywirusa.</translation>
+    </message>
+    <message>
+        <source>Could not write %1 (%2).</source>
+        <translation>Nie udało się zapisać %1 (%2).</translation>
+    </message>
+    <message>
+        <source>Files were removed after installing.</source>
+        <translation>Pliki zniknęły po instalacji.</translation>
+    </message>
+    <message>
         <source>Could not install to %1
 %2</source>
         <translation>Nie udało się zainstalować w %1
 %2</translation>
+    </message>
+    <message>
+        <source>Files were removed after installing, check your antivirus.</source>
+        <translation>Pliki zniknęły po instalacji, sprawdź antywirusa.</translation>
     </message>
 </context>
 <context>
@@ -1932,14 +1946,6 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     <message>
         <source>No avatars match your search.</source>
         <translation>Żaden awatar nie pasuje do wyszukiwania.</translation>
-    </message>
-    <message>
-        <source>This avatar is already in use</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 (Active)</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not load your worlds. Press F5 to try again.</source>

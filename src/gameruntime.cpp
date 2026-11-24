@@ -1,6 +1,5 @@
 #include "gameruntime.h"
 #include "paths.h"
-
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -13,36 +12,56 @@
 namespace {
 
 const QString ServerName = "openkogama-server";
-const QString PlayerName = "openkogama-player";
 
-bool startsLikeWindowsExecutable(const QString &path)
+#ifdef Q_OS_WIN
+constexpr unsigned long CreateNoWindow = 0x08000000;
+#else
+constexpr int RegistryReadMs = 20000;
+constexpr int RegistryWriteMs = 30000;
+
+QString wineBinary()
 {
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly))
-        return path.endsWith(".exe", Qt::CaseInsensitive);
-    return file.read(2) == "MZ";
+    static const QString chosen = []() {
+        const QString configured = qEnvironmentVariable("OPENKOGAMA_WINE").trimmed();
+        if (!configured.isEmpty()) return configured;
+        for (const QString &name : {QStringLiteral("wine"), QStringLiteral("wine64")}) {
+            const QString found = QStandardPaths::findExecutable(name);
+            if (!found.isEmpty()) return found;
+        }
+        return QStringLiteral("wine");
+    }();
+    return chosen;
 }
 
-QString userInPrefix()
+QString winePrefix()
 {
-    return qEnvironmentVariable("USER", QFileInfo(QDir::homePath()).fileName());
+    const QString configured = qEnvironmentVariable("WINEPREFIX").trimmed();
+    if (!configured.isEmpty()) return QDir::cleanPath(configured);
+    return QDir::homePath() + "/.wine";
 }
 
-QString existingName(const QDir &dir, const QString &name)
+QProcessEnvironment wineEnvironment(QProcessEnvironment env)
 {
-    if (dir.exists(name)) return name;
-    if (dir.exists(name + ".exe")) return name + ".exe";
-    return name;
+    if (env.isEmpty()) env = QProcessEnvironment::systemEnvironment();
+    env.insert("WINEPREFIX", winePrefix());
+    if (!env.contains("WINEDEBUG")) env.insert("WINEDEBUG", "-all");
+    return env;
 }
+
+int runWine(const QStringList &arguments, int timeout, QByteArray *output = nullptr)
+{
+    QProcess process;
+    process.setProcessEnvironment(wineEnvironment({}));
+    process.start(wineBinary(), arguments);
+    if (!process.waitForFinished(timeout) || process.exitStatus() != QProcess::NormalExit) return -1;
+    if (output) *output = process.readAllStandardOutput();
+    return process.exitCode();
+}
+#endif
 
 }
 
 namespace GameRuntime {
-
-bool isWindowsExecutable(const QString &path)
-{
-    return startsLikeWindowsExecutable(path);
-}
 
 bool needsWine(const QString &program)
 {
@@ -50,22 +69,10 @@ bool needsWine(const QString &program)
     Q_UNUSED(program);
     return false;
 #else
-    return startsLikeWindowsExecutable(program);
+    QFile file(program);
+    if (!file.open(QIODevice::ReadOnly)) return program.endsWith(".exe", Qt::CaseInsensitive);
+    return file.read(2) == "MZ";
 #endif
-}
-
-QString wineBinary()
-{
-    static const QString chosen = []() {
-        const QString configured = qEnvironmentVariable("OPENKOGAMA_WINE").trimmed();
-        if (!configured.isEmpty()) return configured;
-        for (const char *name : {"wine", "wine64"}) {
-            const QString found = QStandardPaths::findExecutable(QString::fromLatin1(name));
-            if (!found.isEmpty()) return found;
-        }
-        return QStringLiteral("wine");
-    }();
-    return chosen;
 }
 
 bool wineAvailable()
@@ -79,13 +86,6 @@ bool wineAvailable()
 #endif
 }
 
-QString winePrefix()
-{
-    const QString configured = qEnvironmentVariable("WINEPREFIX").trimmed();
-    if (!configured.isEmpty()) return QDir::cleanPath(configured);
-    return QDir::homePath() + "/.wine";
-}
-
 QString gameHome()
 {
 #ifdef Q_OS_WIN
@@ -93,7 +93,8 @@ QString gameHome()
 #else
     const QString configured = qEnvironmentVariable("OPENKOGAMA_GAME_HOME").trimmed();
     if (!configured.isEmpty()) return QDir::cleanPath(configured);
-    return QDir::cleanPath(winePrefix() + "/drive_c/users/" + userInPrefix());
+    const QString user = qEnvironmentVariable("USER", QFileInfo(QDir::homePath()).fileName());
+    return QDir::cleanPath(winePrefix() + "/drive_c/users/" + user);
 #endif
 }
 
@@ -112,13 +113,11 @@ QString windowsPath(const QString &path)
     return QDir::toNativeSeparators(path);
 #else
     const QString clean = QDir::cleanPath(path);
-    if (!clean.startsWith('/'))
-        return QString(clean).replace('/', '\\');
+    if (!clean.startsWith('/')) return QString(clean).replace('/', '\\');
     const QString drive = QDir::cleanPath(winePrefix() + "/drive_c");
     if (clean == drive || clean.startsWith(drive + "/")) {
-        QString rest = clean.mid(drive.size());
-        if (rest.isEmpty()) rest = "/";
-        return "C:" + QString(rest).replace('/', '\\');
+        const QString rest = clean.mid(drive.size());
+        return "C:" + (rest.isEmpty() ? QStringLiteral("\\") : QString(rest).replace('/', '\\'));
     }
     return "Z:" + QString(clean).replace('/', '\\');
 #endif
@@ -126,12 +125,11 @@ QString windowsPath(const QString &path)
 
 QString serverExecutable()
 {
-    return existingName(QDir(Paths::server()), ServerName);
-}
-
-QString playerExecutable()
-{
-    return existingName(QDir(Paths::playerFolder()), PlayerName);
+#ifdef Q_OS_WIN
+    return ServerName + ".exe";
+#else
+    return ServerName;
+#endif
 }
 
 QString serverProgram()
@@ -139,60 +137,41 @@ QString serverProgram()
     return QDir(Paths::server()).filePath(serverExecutable());
 }
 
-QString playerProgram()
-{
-    return QDir(Paths::playerFolder()).filePath(playerExecutable());
-}
-
 bool hasServer()
 {
     return QFileInfo(serverProgram()).isFile();
 }
 
-bool hasPlayer()
-{
-    return QFileInfo(playerProgram()).isFile();
-}
-
 bool isServerProgram(const QString &program)
 {
-    const QString name = QFileInfo(program).fileName();
-    return name == ServerName || name == ServerName + ".exe";
+    return QFileInfo(program).fileName() == serverExecutable();
 }
 
 void prepare(QProcess *process)
 {
 #ifdef Q_OS_WIN
     process->setCreateProcessArgumentsModifier([](QProcess::CreateProcessArguments *args) {
-        args->flags |= 0x08000000; // CREATE_NO_WINDOW
+        args->flags |= CreateNoWindow;
     });
 #else
     const QString program = process->program();
     if (!needsWine(program)) return;
-    QStringList arguments = process->arguments();
-    arguments.prepend(program);
+    process->setArguments(QStringList{program} + process->arguments());
     process->setProgram(wineBinary());
-    process->setArguments(arguments);
-    QProcessEnvironment env = process->processEnvironment();
-    if (env.isEmpty()) env = QProcessEnvironment::systemEnvironment();
-    env.insert("WINEPREFIX", winePrefix());
-    process->setProcessEnvironment(env);
+    process->setProcessEnvironment(wineEnvironment(process->processEnvironment()));
 #endif
 }
 
 QString registryValue(const QString &key, const QString &name)
 {
 #ifdef Q_OS_WIN
-    QSettings settings(key, QSettings::NativeFormat);
-    return settings.value(name).toString();
+    return QSettings(key, QSettings::NativeFormat).value(name).toString();
 #else
     if (!wineAvailable()) return {};
-    QProcess process;
-    process.start(wineBinary(), {"reg", "query", key, "/v", name});
-    if (!process.waitForFinished(20000) || process.exitCode() != 0) return {};
+    QByteArray output;
+    if (runWine({"reg", "query", key, "/v", name}, RegistryReadMs, &output) != 0) return {};
     static const QRegularExpression spaces("\\s{2,}");
-    const QStringList lines = QString::fromLocal8Bit(process.readAllStandardOutput()).split('\n');
-    for (const QString &line : lines) {
+    for (const QString &line : QString::fromLocal8Bit(output).split('\n')) {
         const QStringList parts = line.trimmed().split(spaces);
         if (parts.size() >= 3 && parts.first() == name) return parts.mid(2).join("  ");
     }
@@ -205,13 +184,11 @@ bool setRegistryValue(const QString &key, const QString &name, const QString &va
 #ifdef Q_OS_WIN
     QSettings settings(key, QSettings::NativeFormat);
     settings.setValue(name, value);
+    settings.sync();
     return settings.status() == QSettings::NoError;
 #else
     if (!wineAvailable()) return false;
-    QProcess process;
-    process.start(wineBinary(), {"reg", "add", key, "/v", name, "/t", "REG_SZ", "/d", value, "/f"});
-    return process.waitForFinished(30000) && process.exitStatus() == QProcess::NormalExit
-        && process.exitCode() == 0;
+    return runWine({"reg", "add", key, "/v", name, "/t", "REG_SZ", "/d", value, "/f"}, RegistryWriteMs) == 0;
 #endif
 }
 

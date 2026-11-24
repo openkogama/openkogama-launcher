@@ -247,7 +247,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     QDir logs(QDir(path).filePath("logs"));
     logs.mkpath(".");
     QString log = logs.filePath("client-" + QDateTime::currentDateTime().toString("yyyyMMdd-HHmmss-zzz") + ".log");
-    const QString gameLog = QDir(path).relativeFilePath(log);
+    const QString gameLog = GameRuntime::windowsPath(log);
 
     std::function<QStringList(const QString &)> arguments;
     if (WebPlayerRuntime::isWebPlayerFile(exe)) {
@@ -257,7 +257,7 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
         QString version = info.value("version").toString();
         QString file = GameRuntime::windowsPath(QDir(path).filePath(exe));
         notes += ClientPatches::applyWeb(QDir(path).filePath(exe));
-        client->setProgram(GameRuntime::playerProgram());
+        client->setProgram(Paths::player());
         if (info.value("unityVersion").toString().startsWith("3.4")) {
             if (mode == "avatar") {
                 client->deleteLater();

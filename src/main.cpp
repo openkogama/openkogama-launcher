@@ -16,6 +16,9 @@ int main(int argc, char *argv[])
     a.setStyle(Theme::style());
     a.setOrganizationName("OpenKogama");
     a.setApplicationName("OpenKogama Launcher");
+#ifndef Q_OS_WIN
+    a.setDesktopFileName("openkogama-launcher");
+#endif
     Theme::apply(a);
     Languages::install(a);
     Links::registerScheme();

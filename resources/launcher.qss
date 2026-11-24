@@ -1,11 +1,3 @@
-QMainWindow, QDialog {
-    background: @window@;
-    color: @text@;
-}
-QWidget#welcomePage, QWidget#noVersionsPage, QWidget#worldsPage {
-    background: @window@;
-}
-
 QPushButton {
     background: @button@;
     color: @text@;

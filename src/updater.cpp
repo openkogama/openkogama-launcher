@@ -1,39 +1,22 @@
 #include "updater.h"
+#include "gameruntime.h"
 #include "launchdialog.h"
 #include <QAction>
 #include <QApplication>
-#include <QDesktopServices>
+#include <QDeadlineTimer>
 #include <QEventLoop>
-#include <QJsonDocument>
-#include <QJsonObject>
+#include <QFutureWatcher>
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QNetworkRequest>
 #include <QPointer>
 #include <QProcess>
-#include <QUrl>
-#include <QVersionNumber>
-
-#ifndef OPENKOGAMA_REPO
-#define OPENKOGAMA_REPO "openkogama/openkogama-launcher"
-#endif
-
-#ifndef LAUNCHER_VERSION
-#define LAUNCHER_VERSION "dev"
-#endif
-
-#ifdef Q_OS_WIN
-
-#include <QDeadlineTimer>
-#include <QFileInfo>
-#include <QFutureWatcher>
 #include <QtConcurrent>
 #include <Velopack.hpp>
 
 namespace {
 
-const std::string Repository = "https://github.com/" OPENKOGAMA_REPO;
+const std::string Repository = "https://github.com/openkogama/openkogama-launcher";
 constexpr int ShutdownMs = 2000;
 constexpr int SaveMs = 4000;
 constexpr int KillMs = 3000;
@@ -41,7 +24,7 @@ constexpr int KillMs = 3000;
 bool isLocalServer(const QProcess *process)
 {
     const QString first = process->arguments().value(0);
-    return QFileInfo(process->program()).fileName() == "openkogama-server.exe" && first != "tunnel" && first != "install";
+    return GameRuntime::isServerProgram(process->program()) && first != "tunnel" && first != "install";
 }
 
 void stopChildren(QWidget *window)
@@ -173,86 +156,3 @@ void Updater::check(QWidget *window, QAction *action, bool asked) {
     });
     watcher->setFuture(QtConcurrent::run(download, guard));
 }
-
-#else // Q_OS_WIN
-
-// The Windows releases are installed and updated by Velopack, which has no Linux
-// client. Linux builds instead ask GitHub for the newest release and send the
-// player to its download page.
-
-namespace {
-
-constexpr int Timeout = 10000;
-
-QString cleanVersion(QString version)
-{
-    version = version.trimmed();
-    if (version.startsWith('v', Qt::CaseInsensitive)) version.remove(0, 1);
-    return version;
-}
-
-bool newer(const QString &candidate)
-{
-    const QString latest = cleanVersion(candidate);
-    const QString current = cleanVersion(Updater::version());
-    if (latest.isEmpty() || current.isEmpty() || current == "dev" || current.startsWith("0.0.0")) return false;
-    const QVersionNumber latestNumber = QVersionNumber::fromString(latest);
-    const QVersionNumber currentNumber = QVersionNumber::fromString(current);
-    if (latestNumber.isNull() || currentNumber.isNull()) return latest != current;
-    return QVersionNumber::compare(latestNumber, currentNumber) > 0;
-}
-
-}
-
-void Updater::startup() {}
-
-QString Updater::version() {
-    return QStringLiteral(LAUNCHER_VERSION);
-}
-
-void Updater::check(QWidget *window, QAction *action, bool asked) {
-    static bool busy = false;
-    if (busy) return;
-    busy = true;
-    const QString idle = action->text();
-    QPointer<QAction> guard(action);
-    action->setEnabled(false);
-    action->setText(QCoreApplication::translate("Updater", "Checking for updates..."));
-
-    auto *net = new QNetworkAccessManager(window);
-    QNetworkRequest request(QUrl(QStringLiteral("https://api.github.com/repos/" OPENKOGAMA_REPO "/releases/latest")));
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("OpenKogamaLauncher"));
-    request.setRawHeader("Accept", "application/vnd.github+json");
-    request.setTransferTimeout(Timeout);
-    QNetworkReply *reply = net->get(request);
-    QObject::connect(reply, &QNetworkReply::finished, window, [net, reply, window, guard, idle, asked]() {
-        busy = false;
-        reply->deleteLater();
-        net->deleteLater();
-        if (guard) {
-            guard->setText(idle);
-            guard->setEnabled(true);
-        }
-        const QString title = QCoreApplication::translate("Updater", "Update");
-        if (reply->error() != QNetworkReply::NoError) {
-            if (asked)
-                QMessageBox::warning(window, title, QCoreApplication::translate("Updater", "Could not check for updates: %1").arg(reply->errorString()));
-            return;
-        }
-        const QJsonObject release = QJsonDocument::fromJson(reply->readAll()).object();
-        const QString tag = release.value("tag_name").toString();
-        const QString page = release.value("html_url").toString();
-        if (!newer(tag)) {
-            if (asked)
-                QMessageBox::information(window, title, QCoreApplication::translate("Updater", "You have the newest version (%1).").arg(version()));
-            return;
-        }
-        if (QMessageBox::question(window, title,
-                QCoreApplication::translate("Updater", "OpenKogama Launcher %1 is available. Open the download page?").arg(tag))
-            != QMessageBox::Yes)
-            return;
-        QDesktopServices::openUrl(QUrl(page));
-    });
-}
-
-#endif // Q_OS_WIN

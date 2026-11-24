@@ -1,44 +1,18 @@
 name: linux
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: release tag
-        required: true
-      publish:
-        description: create the github release
-        type: boolean
-        default: false
   push:
-    tags:
-      - "v*"
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: openkogama-launcher
-      - uses: actions/checkout@v4
-        with:
-          repository: openkogama/openkogama-server
-          path: openkogama-server
-      - uses: actions/checkout@v4
-        with:
-          repository: openkogama/openkogama-photon
-          path: openkogama-photon
-      - uses: actions/checkout@v4
-        with:
-          repository: openkogama/openkogama-mods
-          path: openkogama-mods
       - uses: jurplel/install-qt-action@v4
         with:
           version: 6.10.2
@@ -46,55 +20,10 @@ jobs:
           target: desktop
           arch: linux_gcc_64
           cache: true
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-      - name: dependencies
-        run: sudo apt-get update && sudo apt-get install -y ninja-build libfuse2t64 file
-
-      - name: server
-        run: openkogama-launcher/scripts/build-server.sh openkogama-launcher/build-linux/server
-
-      - name: launcher
-        env:
-          VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '0.0.0-dev' }}
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build
+      - name: build
         run: |
-          version="${VERSION#v}"
-          cmake -S openkogama-launcher -B openkogama-launcher/build-linux -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON \
-            -DOPENKOGAMA_VERSION="$version" -DCMAKE_INSTALL_BINDIR=.
-          cmake --build openkogama-launcher/build-linux --parallel "$(nproc)"
-          QT_QPA_PLATFORM=offscreen ctest --test-dir openkogama-launcher/build-linux --output-on-failure
-
-      - name: package
-        env:
-          VERSION: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '0.0.0-dev' }}
-        run: |
-          version="${VERSION#v}"
-          BUILD_DIR="$PWD/openkogama-launcher/build-linux" VERSION="$version" \
-            openkogama-launcher/scripts/package-linux.sh
-          BUILD_DIR="$PWD/openkogama-launcher/build-linux" VERSION="$version" \
-            openkogama-launcher/scripts/package-appimage.sh
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: linux
-          path: |
-            openkogama-launcher/OpenKogamaLauncher-*-x86_64.AppImage
-            openkogama-launcher/OpenKogamaLauncher-linux-x86_64-*.tar.gz
-
-  release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/') || inputs.publish
-    runs-on: ubuntu-24.04
-    env:
-      GH_TOKEN: ${{ github.token }}
-      TAG: ${{ inputs.tag || github.ref_name }}
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: linux
-      - name: release
-        run: |
-          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "$TAG" --generate-notes
-          gh release upload "$TAG" OpenKogamaLauncher-* --clobber
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+          cmake --build build
+      - name: test
+        run: ctest --test-dir build --output-on-failure

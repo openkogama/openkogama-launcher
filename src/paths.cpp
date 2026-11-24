@@ -24,8 +24,8 @@ QString Paths::mods() {
     return data() + "/mods";
 }
 
-QString Paths::playerFolder() {
-    return bundled("player");
+QString Paths::player() {
+    return bundled("player") + "/openkogama-player.exe";
 }
 
 QString Paths::server() {

@@ -13,7 +13,6 @@
 #include "serverspage.h"
 #include "gamelauncher.h"
 #include "discordpresence.h"
-#include "gameruntime.h"
 #include "links.h"
 #include "settings.h"
 #include "creditsdialog.h"
@@ -226,15 +225,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->versionSearchLineEdit, &QLineEdit::textChanged, this, [this]() { filterInstances(); });
     connect(ui->versionCombo, &QComboBox::currentIndexChanged, this, [this]() { onVersionChanged(); });
     connect(ui->mainTabs, &QTabWidget::currentChanged, this, [this]() {
-        if (!m_worlds && (ui->mainTabs->currentWidget() == ui->avatarsTab || ui->mainTabs->currentWidget() == ui->inventoryTab)) {
-            const QString path = ui->versionCombo->currentData().toString();
-            if (!path.isEmpty() && launchInstance(path)) {
-                // instance launched and tabs initialized
-            } else {
-                ui->mainTabs->setCurrentWidget(ui->playTab);
-                return;
-            }
-        }
         if (m_worlds && ui->mainTabs->currentWidget() == ui->avatarsTab)
             m_worlds->showAvatars();
         if (m_worlds && ui->mainTabs->currentWidget() == ui->inventoryTab)
@@ -379,8 +369,6 @@ void MainWindow::updatePlayPage() {
     ui->welcomeDescription->setText(installed ? tr("Open your worlds to play, build or create something new.") : tr("Add a game version, then choose a world to play or build."));
     ui->openWorldsButton->setVisible(installed);
     ui->firstVersionButton->setVisible(!installed);
-    ui->mainTabs->setTabEnabled(ui->mainTabs->indexOf(ui->avatarsTab), installed);
-    ui->mainTabs->setTabEnabled(ui->mainTabs->indexOf(ui->inventoryTab), installed);
     m_servers->setCanJoin(true);
 }
 
@@ -600,8 +588,8 @@ bool MainWindow::prepareInstance(const QString &path, QString *executable) {
     QString exe = dir.entryList({"*.unityweb", "*.unity3d"}, QDir::Files).value(0);
 
     if (!exe.isEmpty()) {
-        if (!GameRuntime::hasPlayer()) {
-            QMessageBox::warning(this, tr("Launch"), tr("OpenKogama Player is missing from %1").arg(QDir::toNativeSeparators(GameRuntime::playerProgram())));
+        if (!QFile::exists(Paths::player())) {
+            QMessageBox::warning(this, tr("Launch"), tr("OpenKogama Player is missing from %1").arg(QDir::toNativeSeparators(Paths::player())));
             return false;
         }
         if (!WebPlayerRuntime::ensureInstalled(this, dir.filePath(exe)))

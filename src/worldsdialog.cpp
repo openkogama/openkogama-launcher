@@ -400,16 +400,9 @@ void WorldsDialog::updateAvatarActions() {
     QListWidgetItem *item = ui->avatarsList->currentItem();
     const bool active = item && item->data(ActiveRole).toBool();
     ui->useAvatarButton->setEnabled(item && !active);
-    ui->useAvatarButton->setToolTip(active ? tr("This avatar is already in use") : QString());
     ui->editAvatarButton->setEnabled(m_hasAvatarEditor);
     ui->moreAvatarButton->setEnabled(item != nullptr);
-    if (!item) {
-        ui->selectedAvatarLabel->setText(tr("No avatar selected"));
-    } else if (active) {
-        ui->selectedAvatarLabel->setText(tr("%1 (Active)").arg(item->text()));
-    } else {
-        ui->selectedAvatarLabel->setText(item->text());
-    }
+    ui->selectedAvatarLabel->setText(item ? item->text() : tr("No avatar selected"));
 }
 
 void WorldsDialog::keyPressEvent(QKeyEvent *event) {

@@ -105,6 +105,15 @@ jobs:
         with:
           name: releases
           path: releases
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wine
+          path: |
+            dist/player
+            dist/server/okmod.dll
+            dist/server/scripts.dll
+            dist/server/OkModShim.dll
+            dist/server/x86
       - name: release
         if: inputs.publish
         shell: pwsh
@@ -113,4 +122,79 @@ jobs:
         run: |
           $pre = @()
           if ($env:TAG -match "-") { $pre = @("--pre") }
-          vpk upload github --repoUrl $env:REPO_URL --token $env:GH_TOKEN -o releases --publish --releaseName $env:TAG --tag $env:TAG --targetCommitish $env:GITHUB_SHA @pre
+          vpk upload github --channel win --repoUrl $env:REPO_URL --token $env:GH_TOKEN -o releases --publish --releaseName $env:TAG --tag $env:TAG --targetCommitish $env:GITHUB_SHA @pre
+
+  linux:
+    needs: windows
+    runs-on: ubuntu-24.04
+    env:
+      TAG: ${{ inputs.tag }}
+      REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: openkogama-launcher
+      - uses: actions/checkout@v4
+        with:
+          repository: openkogama/openkogama-server
+          path: openkogama-server
+      - uses: actions/checkout@v4
+        with:
+          repository: openkogama/openkogama-photon
+          path: openkogama-photon
+      - uses: actions/checkout@v4
+        with:
+          repository: openkogama/openkogama-mods
+          path: openkogama-mods
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.10.2
+          host: linux
+          target: desktop
+          arch: linux_gcc_64
+          cache: true
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: sudo apt-get update && sudo apt-get install -y ninja-build libxcb-cursor0
+
+      - name: server
+        run: dotnet publish openkogama-server/openkogama-server.csproj -c Release -r linux-x64 --self-contained -o dist/server
+      - uses: actions/download-artifact@v4
+        with:
+          name: wine
+          path: dist
+
+      - name: launcher
+        run: |
+          cmake -S openkogama-launcher -B build/launcher -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_BINDIR=.
+          cmake --build build/launcher
+          cmake --install build/launcher --prefix "$PWD/dist"
+          cp -L /usr/lib/x86_64-linux-gnu/libxcb-cursor.so.0 dist/lib/
+          if env -u LD_LIBRARY_PATH ldd dist/openkogama-launcher | grep "not found"; then exit 1; fi
+
+      - name: package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp openkogama-launcher/LICENSE dist/LICENSE.txt
+          dotnet tool install -g vpk --version 1.2.161
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+          export PATH="$HOME/.dotnet/tools:$PATH"
+          version="${TAG#v}"
+          pre=()
+          if [[ "$version" == *-* ]]; then pre=(--pre); fi
+          vpk download github --channel linux --repoUrl "$REPO_URL" --token "$GH_TOKEN" -o releases "${pre[@]}"
+          vpk pack --channel linux --packId OpenKogamaLauncher --packVersion "$version" --packDir dist --mainExe openkogama-launcher --packTitle "OpenKogama Launcher" --packAuthors OpenKogama --icon openkogama-launcher/resources/logo.png --categories Game -o releases
+      - uses: actions/upload-artifact@v4
+        with:
+          name: releases-linux
+          path: releases
+      - name: release
+        if: inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pre=()
+          if [[ "$TAG" == *-* ]]; then pre=(--pre); fi
+          vpk upload github --channel linux --repoUrl "$REPO_URL" --token "$GH_TOKEN" -o releases --merge --publish --releaseName "$TAG" --tag "$TAG" --targetCommitish "$GITHUB_SHA" "${pre[@]}"

@@ -1,7 +1,6 @@
 #include "theme.h"
 #include "settings.h"
 #include <QApplication>
-#include <QDir>
 #include <QFile>
 #include <QHash>
 #include <QIcon>
@@ -9,8 +8,10 @@
 #include <QPalette>
 #include <QPixmap>
 #include <QProxyStyle>
+#include <QStandardPaths>
 #include <QStyleFactory>
 #include <QStyleHints>
+#include <optional>
 
 namespace {
 
@@ -71,45 +72,46 @@ const QHash<QString, QString> LightColors = {
     {"arrow", ":/arrow-down-light.svg"},
 };
 
+QString resourceText(const QString &path) {
+    QFile file(path);
+    return file.open(QIODevice::ReadOnly) ? QString::fromUtf8(file.readAll()) : QString();
+}
+
 QString styleSheet() {
-    QFile file(":/launcher.qss");
-    if (!file.open(QIODevice::ReadOnly))
-        return {};
-    QString style = QString::fromUtf8(file.readAll());
+    QString style = resourceText(":/launcher.qss");
+#ifndef Q_OS_WIN
+    style += resourceText(":/launcher-linux.qss");
+#endif
     const QHash<QString, QString> &colors = Theme::dark() ? DarkColors : LightColors;
     for (auto it = colors.begin(); it != colors.end(); ++it)
         style.replace("@" + it.key() + "@", it.value());
     return style;
 }
 
-bool isSystemDark() {
-    const auto scheme = QGuiApplication::styleHints()->colorScheme();
-    if (scheme == Qt::ColorScheme::Dark) return true;
-    if (scheme == Qt::ColorScheme::Light) return false;
+#ifndef Q_OS_WIN
+std::optional<bool> desktopDark;
 
-#if defined(Q_OS_UNIX) && !defined(Q_OS_DARWIN)
-    const QString gtkEnv = qEnvironmentVariable("GTK_THEME");
-    if (!gtkEnv.isEmpty() && gtkEnv.contains("dark", Qt::CaseInsensitive))
+bool desktopPrefersDark() {
+    if (qEnvironmentVariable("GTK_THEME").contains("dark", Qt::CaseInsensitive))
         return true;
-
-    for (const char *path : {"~/.config/gtk-3.0/settings.ini", "~/.config/gtk-4.0/settings.ini"}) {
-        QString fullPath = QString::fromLatin1(path);
-        if (fullPath.startsWith('~')) fullPath.replace(0, 1, QDir::homePath());
-        QFile file(fullPath);
-        if (file.open(QIODevice::ReadOnly)) {
-            const QString content = QString::fromUtf8(file.readAll());
-            if (content.contains("gtk-application-prefer-dark-theme=1", Qt::CaseInsensitive))
+    const QString config = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
+    for (const QString &gtk : {QStringLiteral("gtk-4.0"), QStringLiteral("gtk-3.0")}) {
+        QFile file(config + "/" + gtk + "/settings.ini");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            continue;
+        for (const QString &line : QString::fromUtf8(file.readAll()).split('\n')) {
+            const QString key = line.section('=', 0, 0).trimmed();
+            const QString value = line.section('=', 1).trimmed();
+            if (key == "gtk-application-prefer-dark-theme" && (value == "1" || value.compare("true", Qt::CaseInsensitive) == 0))
                 return true;
-            if (content.contains("gtk-theme-name=") && content.contains("dark", Qt::CaseInsensitive))
+            if (key == "gtk-theme-name" && value.contains("dark", Qt::CaseInsensitive))
                 return true;
         }
     }
-#endif
-
     return false;
 }
 
-QPalette createDarkPalette() {
+QPalette darkPalette() {
     QPalette palette;
     palette.setColor(QPalette::Window, QColor("#222222"));
     palette.setColor(QPalette::WindowText, QColor("#ffffff"));
@@ -125,7 +127,6 @@ QPalette createDarkPalette() {
     palette.setColor(QPalette::Highlight, QColor("#3a7a80"));
     palette.setColor(QPalette::HighlightedText, QColor("#ffffff"));
     palette.setColor(QPalette::PlaceholderText, QColor("#9d9d9d"));
-
     palette.setColor(QPalette::Disabled, QPalette::WindowText, QColor("#6e6e6e"));
     palette.setColor(QPalette::Disabled, QPalette::Text, QColor("#6e6e6e"));
     palette.setColor(QPalette::Disabled, QPalette::ButtonText, QColor("#6e6e6e"));
@@ -135,30 +136,34 @@ QPalette createDarkPalette() {
     return palette;
 }
 
-QPalette createLightPalette() {
+QPalette lightPalette() {
     QStyle *fusion = QStyleFactory::create("Fusion");
-    QPalette palette = fusion ? fusion->standardPalette() : QPalette();
+    const QPalette palette = fusion ? fusion->standardPalette() : QPalette();
     delete fusion;
     return palette;
+}
+#endif
+
+void refresh() {
+#ifndef Q_OS_WIN
+    desktopDark.reset();
+    qApp->setPalette(Theme::dark() ? darkPalette() : lightPalette());
+#endif
+    qApp->setStyleSheet(styleSheet());
 }
 
 }
 
 void Theme::apply(QApplication &app) {
-    QObject::connect(app.styleHints(), &QStyleHints::colorSchemeChanged, &app, []() {
-        Theme::use(Settings::theme());
-    });
+    QObject::connect(app.styleHints(), &QStyleHints::colorSchemeChanged, &app, refresh);
     use(Settings::theme());
 }
 
 void Theme::use(const QString &theme) {
     chosenTheme = theme;
-    const bool darkTheme = Theme::dark();
-    QGuiApplication::styleHints()->setColorScheme(darkTheme ? Qt::ColorScheme::Dark : Qt::ColorScheme::Light);
-    if (qApp) {
-        qApp->setPalette(darkTheme ? createDarkPalette() : createLightPalette());
-        qApp->setStyleSheet(styleSheet());
-    }
+    QGuiApplication::styleHints()->setColorScheme(theme == "dark" ? Qt::ColorScheme::Dark
+        : theme == "light" ? Qt::ColorScheme::Light : Qt::ColorScheme::Unknown);
+    refresh();
 }
 
 QStyle *Theme::style() {
@@ -178,5 +183,12 @@ QIcon Theme::icon(const QString &path) {
 bool Theme::dark() {
     if (chosenTheme == "dark") return true;
     if (chosenTheme == "light") return false;
-    return isSystemDark();
+    const Qt::ColorScheme scheme = QGuiApplication::styleHints()->colorScheme();
+#ifndef Q_OS_WIN
+    if (scheme == Qt::ColorScheme::Unknown) {
+        if (!desktopDark) desktopDark = desktopPrefersDark();
+        return *desktopDark;
+    }
+#endif
+    return scheme == Qt::ColorScheme::Dark;
 }
