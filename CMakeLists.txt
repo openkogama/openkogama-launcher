@@ -4,7 +4,8 @@ project(openkogama-launcher VERSION 0.0.0 LANGUAGES CXX)
 set(OPENKOGAMA_VERSION "${PROJECT_VERSION}" CACHE STRING "Launcher version shown in the menu and used for update checks")
 set(OPENKOGAMA_REPO "openkogama/openkogama-launcher" CACHE STRING "GitHub repository (owner/name) used for update checks")
 
-find_package(Qt6 6.5 REQUIRED COMPONENTS Core CorePrivate Widgets Network Concurrent LinguistTools)
+find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network Concurrent LinguistTools)
+find_package(Qt6 OPTIONAL_COMPONENTS CorePrivate QUIET)
 
 qt_standard_project_setup()
 
@@ -83,9 +84,19 @@ target_link_libraries(openkogama-launcher
         Qt::Core
         Qt::Widgets
         Qt::Network
-        Qt::CorePrivate
         Qt::Concurrent
 )
+
+if(TARGET Qt6::CorePrivate)
+    target_link_libraries(openkogama-launcher PRIVATE Qt6::CorePrivate)
+elseif(TARGET Qt::CorePrivate)
+    target_link_libraries(openkogama-launcher PRIVATE Qt::CorePrivate)
+else()
+    target_include_directories(openkogama-launcher PRIVATE
+        "${Qt6Core_INCLUDE_DIRS}/${Qt6Core_VERSION}/QtCore"
+        "${Qt6Core_INCLUDE_DIRS}/${Qt6Core_VERSION}"
+    )
+endif()
 
 # Velopack installs and updates the Windows build. Linux builds check GitHub for
 # new releases instead, so the library is only needed there.
@@ -159,7 +170,17 @@ if(BUILD_TESTING)
     target_include_directories(launcher-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_compile_definitions(launcher-tests PRIVATE LAUNCHER_TRANSLATIONS="${CMAKE_CURRENT_BINARY_DIR}")
     add_dependencies(launcher-tests openkogama-launcher_lrelease)
-    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test Qt::CorePrivate)
+    target_link_libraries(launcher-tests PRIVATE Qt::Widgets Qt::Network Qt::Test)
+    if(TARGET Qt6::CorePrivate)
+        target_link_libraries(launcher-tests PRIVATE Qt6::CorePrivate)
+    elseif(TARGET Qt::CorePrivate)
+        target_link_libraries(launcher-tests PRIVATE Qt::CorePrivate)
+    else()
+        target_include_directories(launcher-tests PRIVATE
+            "${Qt6Core_INCLUDE_DIRS}/${Qt6Core_VERSION}/QtCore"
+            "${Qt6Core_INCLUDE_DIRS}/${Qt6Core_VERSION}"
+        )
+    endif()
     if(WIN32)
         target_link_libraries(launcher-tests PRIVATE crypt32)
     endif()
