@@ -53,5 +53,10 @@ exec "$HERE/openkogama-launcher" "$@"
 EOF
 chmod +x "$dist/openkogama-launcher.sh"
 
+if [ -f "$root/scripts/uninstall.sh" ]; then
+    cp -a "$root/scripts/uninstall.sh" "$dist/uninstall.sh"
+    chmod +x "$dist/uninstall.sh"
+fi
+
 tar -czf "$archive" -C "$dist" .
 echo "Packed $archive"

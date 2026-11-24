@@ -18,7 +18,30 @@ The Worlds and Avatars tabs manage your local game data. Add community servers i
 - **Discord Rich Presence**: Native Unix domain socket IPC integration with Linux Discord clients.
 - **Secure Account Storage**: Stores authentication tokens in your user data directory with strict file permissions (`0600`).
 
-## Install
+## Quick Install (One-Liner)
+
+Install OpenKogama Launcher with a single command (no root/sudo required):
+
+```bash
+curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher/main/scripts/install.sh | bash
+```
+
+This installs the launcher into `~/.local/share/openkogama-launcher`, links the `openkogama-launcher` command into `~/.local/bin`, creates the desktop application shortcut and icons, and registers the `openkogama://` browser link handler.
+
+### Uninstall
+
+To uninstall at any time:
+
+```bash
+openkogama-launcher-uninstall
+```
+or via curl:
+```bash
+curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher/main/scripts/uninstall.sh | bash
+```
+*(Add `--purge` to also delete local worlds and avatars in `~/.local/share/OpenKogama`)*
+
+## Manual Install
 
 Download `OpenKogamaLauncher-<version>-x86_64.AppImage` or the portable `.tar.gz` from the [Releases](https://github.com/M3R710/openkogama-launcher/releases) page.
 
