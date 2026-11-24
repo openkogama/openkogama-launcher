@@ -5,7 +5,7 @@
 #   curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher/main/scripts/install.sh | bash
 set -euo pipefail
 
-REPO="M3R710/openkogama-launcher"
+REPO="M3R710/openkogama-launcher-linux"
 INSTALL_DIR="$HOME/.local/share/openkogama-launcher"
 BIN_DIR="$HOME/.local/bin"
 DESKTOP_DIR="$HOME/.local/share/applications"

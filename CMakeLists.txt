@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.19)
 project(openkogama-launcher VERSION 0.0.0 LANGUAGES CXX)
 
 set(OPENKOGAMA_VERSION "${PROJECT_VERSION}" CACHE STRING "Launcher version shown in the menu and used for update checks")
-set(OPENKOGAMA_REPO "openkogama/openkogama-launcher" CACHE STRING "GitHub repository (owner/name) used for update checks")
+set(OPENKOGAMA_REPO "M3R710/openkogama-launcher-linux" CACHE STRING "GitHub repository (owner/name) used for update checks")
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets Network Concurrent LinguistTools)
 find_package(Qt6 OPTIONAL_COMPONENTS CorePrivate QUIET)

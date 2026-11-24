@@ -2,7 +2,7 @@
 # Uninstalls OpenKogama Launcher from the user's home directory.
 #
 # Usage:
-#   curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher/main/scripts/uninstall.sh | bash
+#   curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher-linux/main/scripts/uninstall.sh | bash
 #
 # Flags:
 #   --purge   Also delete game data (worlds, avatars, and downloaded versions).

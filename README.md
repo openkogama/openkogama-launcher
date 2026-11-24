@@ -23,7 +23,7 @@ The Worlds and Avatars tabs manage your local game data. Add community servers i
 Install OpenKogama Launcher with a single command (no root/sudo required):
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher-linux/main/scripts/install.sh | bash
 ```
 
 This installs the launcher into `~/.local/share/openkogama-launcher`, links the `openkogama-launcher` command into `~/.local/bin`, creates the desktop application shortcut and icons, and registers the `openkogama://` browser link handler.
@@ -37,13 +37,13 @@ openkogama-launcher-uninstall
 ```
 or via curl:
 ```bash
-curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher/main/scripts/uninstall.sh | bash
+curl -sSL https://raw.githubusercontent.com/M3R710/openkogama-launcher-linux/main/scripts/uninstall.sh | bash
 ```
 *(Add `--purge` to also delete local worlds and avatars in `~/.local/share/OpenKogama`)*
 
 ## Manual Install
 
-Download `OpenKogamaLauncher-<version>-x86_64.AppImage` or the portable `.tar.gz` from the [Releases](https://github.com/M3R710/openkogama-launcher/releases) page.
+Download `OpenKogamaLauncher-<version>-x86_64.AppImage` or the portable `.tar.gz` from the [Releases](https://github.com/M3R710/openkogama-launcher-linux/releases) page.
 
 ### AppImage
 
@@ -110,4 +110,4 @@ The launcher follows your system language, or the one chosen under Settings -> G
 ## Credits
 
 Based on the original [OpenKogama Launcher](https://github.com/openkogama/openkogama-launcher) made by nightus and the OpenKogama community.
-Linux fork and native port maintained by [M3R710](https://github.com/M3R710).
+Linux fork and native port maintained by [M3R710](https://github.com/M3R710/openkogama-launcher-linux).
