@@ -141,7 +141,10 @@ void registerScheme()
     if (applications.isEmpty()) return;
     const QString file = applications + "/openkogama-launcher.desktop";
     const QString appImage = qEnvironmentVariable("APPIMAGE");
-    const QString command = appImage.isEmpty() ? QCoreApplication::applicationFilePath() : appImage;
+    const QString wrapper = QDir(QCoreApplication::applicationDirPath()).filePath("openkogama-launcher.sh");
+    const QString command = !appImage.isEmpty() ? appImage
+        : QFile::exists(wrapper) ? wrapper
+        : QCoreApplication::applicationFilePath();
     const QString entry = QStringLiteral(
         "[Desktop Entry]\n"
         "Type=Application\n"
@@ -153,6 +156,13 @@ void registerScheme()
         "Categories=Game;\n"
         "MimeType=x-scheme-handler/openkogama;\n"
         "StartupWMClass=openkogama-launcher\n").arg(quoted(command));
+
+    const QString iconDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/icons/hicolor/192x192/apps";
+    const QString iconFile = iconDir + "/openkogama-launcher.png";
+    if (!QFile::exists(iconFile) && QDir().mkpath(iconDir)) {
+        QFile::copy(":/logo.png", iconFile);
+    }
+
     QFile existing(file);
     if (existing.open(QIODevice::ReadOnly) && QString::fromUtf8(existing.readAll()) == entry) return;
     if (!QDir().mkpath(applications)) return;
