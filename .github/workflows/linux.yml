@@ -50,7 +50,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - name: dependencies
-        run: sudo apt-get update && sudo apt-get install -y ninja-build libfuse2t64
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libfuse2t64 file
 
       - name: server
         run: openkogama-launcher/scripts/build-server.sh openkogama-launcher/build-linux/server

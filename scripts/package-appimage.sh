@@ -31,13 +31,14 @@ cmake --build "$build" --parallel "$(nproc)"
 rm -rf "$appdir"
 cmake --install "$build" --prefix "$appdir/usr"
 
-for folder in server player; do
-    source="${OPENKOGAMA_${folder^^}_DIR:-$build/$folder}"
-    if [ -d "$source" ]; then
-        rm -rf "$appdir/usr/bin/$folder"
-        cp -a "$source" "$appdir/usr/bin/$folder"
-    fi
-done
+if [ -d "${OPENKOGAMA_SERVER_DIR:-$build/server}" ]; then
+    rm -rf "$appdir/usr/bin/server"
+    cp -a "${OPENKOGAMA_SERVER_DIR:-$build/server}" "$appdir/usr/bin/server"
+fi
+if [ -d "${OPENKOGAMA_PLAYER_DIR:-$build/player}" ]; then
+    rm -rf "$appdir/usr/bin/player"
+    cp -a "${OPENKOGAMA_PLAYER_DIR:-$build/player}" "$appdir/usr/bin/player"
+fi
 
 export APPIMAGE_EXTRACT_AND_RUN=1
 export QMAKE="${QMAKE:-$(command -v qmake6 || command -v qmake)}"
