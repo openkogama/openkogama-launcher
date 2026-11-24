@@ -39,5 +39,19 @@ else
 fi
 
 archive="$root/OpenKogamaLauncher-linux-x86_64-$version.tar.gz"
+
+cat > "$dist/openkogama-launcher.sh" <<'EOF'
+#!/usr/bin/env bash
+HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+if [ -d "$HERE/lib" ]; then
+    export LD_LIBRARY_PATH="$HERE/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+fi
+if [ -d "$HERE/plugins" ]; then
+    export QT_PLUGIN_PATH="$HERE/plugins"
+fi
+exec "$HERE/openkogama-launcher" "$@"
+EOF
+chmod +x "$dist/openkogama-launcher.sh"
+
 tar -czf "$archive" -C "$dist" .
 echo "Packed $archive"
