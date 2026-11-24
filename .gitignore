@@ -4,6 +4,7 @@ dist/
 dist-*/
 AppDir/
 build-tools/
+bundles/
 *.tar.gz
 *.AppImage
 *.token
