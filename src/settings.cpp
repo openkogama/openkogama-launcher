@@ -238,22 +238,22 @@ void setClientPatch(const QString &id, bool enabled)
 
 QString language()
 {
-    return store().value("general/language").toString();
+    return store().value("General/language").toString();
 }
 
 void setLanguage(const QString &code)
 {
-    store().setValue("general/language", code);
+    store().setValue("General/language", code);
 }
 
 QString theme()
 {
-    return store().value("general/theme").toString();
+    return store().value("General/theme").toString();
 }
 
 void setTheme(const QString &theme)
 {
-    store().setValue("general/theme", theme);
+    store().setValue("General/theme", theme);
 }
 
 }
