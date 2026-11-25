@@ -10,11 +10,15 @@
 #include <functional>
 #include <QPointer>
 #include <QSet>
+#include <QUrl>
 
 class WorldsDialog;
 class ShareBar;
+class DownloadManager;
+class DownloadsPopup;
 class QAction;
 class QNetworkAccessManager;
+class QPushButton;
 class ServersPage;
 class QProcess;
 struct ImportRequest;
@@ -59,7 +63,8 @@ private:
     bool prepareInstance(const QString &path, QString *executable);
     void joinServer(const QString &address);
     void joinCode(const QString &address);
-    void openImport(const ImportRequest &request);
+    void openImport(const ImportRequest &request, bool confirm = true, const QUrl &thumbnailUrl = {});
+    void updateDownloadsButton();
     void offerVersion(const QStringList &clients, const QString &title, std::function<void()> then);
     void updateHostVersion();
     void editServerSettings();
@@ -74,6 +79,9 @@ private:
 
     QPointer<WorldsDialog> m_worlds;
     ShareBar *m_share;
+    DownloadManager *m_downloads = nullptr;
+    DownloadsPopup *m_downloadsPopup = nullptr;
+    QPushButton *m_downloadsButton = nullptr;
     QAction *m_updates = nullptr;
     QNetworkAccessManager *m_net = nullptr;
     ServersPage *m_servers;

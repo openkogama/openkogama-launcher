@@ -1,5 +1,6 @@
 #include "worldsdialog.h"
 #include "ui_worldsdialog.h"
+#include "archivebrowser.h"
 #include "launchdialog.h"
 #include "gamelauncher.h"
 #include "playerprofile.h"
@@ -11,13 +12,18 @@
 #include "serverconfigdialog.h"
 #include "settings.h"
 #include "theme.h"
+#include <QDir>
 #include <QEvent>
+#include <QFile>
 #include <QFutureWatcher>
 #include <QLocale>
+#include <QRegularExpression>
 #include <QtConcurrent/QtConcurrentRun>
 #include <optional>
 #include <QKeyEvent>
 #include <QStyle>
+#include <QStackedWidget>
+#include <QTabBar>
 #include <QPixmap>
 #include <QPainter>
 #include <QTimer>
@@ -30,8 +36,65 @@ static constexpr int ImageRole = Qt::UserRole + 2;
 static constexpr int ActiveRole = Qt::UserRole + 3;
 static constexpr int PlatformerRole = Qt::UserRole + 4;
 static constexpr int PluginsTimeout = 120000;
+static constexpr int MaxConcurrentModels = 4;
 static const QUrl MapsArchive("https://cdn.openkogama.org/maps/v1/");
 static const QString GameModelName("CubeModel");
+
+static void syncList(QListWidget *list, const QList<int> &ids, const QIcon &placeholder, const QString &defaultTip = {}) {
+    QHash<int, QListWidgetItem *> existing;
+    existing.reserve(list->count());
+    while (list->count() > 0) {
+        QListWidgetItem *item = list->takeItem(0);
+        const int id = item->data(Qt::UserRole).toInt();
+        if (existing.contains(id)) delete item;
+        else existing.insert(id, item);
+    }
+    for (int id : ids) {
+        QListWidgetItem *item = existing.take(id);
+        if (!item) {
+            item = new QListWidgetItem(placeholder, QString());
+            item->setFlags(item->flags() | Qt::ItemIsEditable);
+            item->setData(Qt::UserRole, id);
+            if (!defaultTip.isEmpty()) item->setToolTip(defaultTip);
+        }
+        list->addItem(item);
+    }
+    qDeleteAll(existing);
+}
+
+static QListWidgetItem *findItemById(QListWidget *list, int id) {
+    if (!list) return nullptr;
+    for (int i = 0; i < list->count(); ++i) {
+        QListWidgetItem *item = list->item(i);
+        if (item->data(Qt::UserRole).toInt() == id) return item;
+    }
+    return nullptr;
+}
+
+static QList<QListWidgetItem *> visibleSelected(QListWidget *list) {
+    QList<QListWidgetItem *> result;
+    if (!list) return result;
+    for (QListWidgetItem *item : list->selectedItems())
+        if (!item->isHidden()) result.append(item);
+    if (result.isEmpty()) {
+        if (QListWidgetItem *current = list->currentItem(); current && !current->isHidden())
+            result.append(current);
+    }
+    return result;
+}
+
+static QString safeFileName(QString name) {
+    name.replace(QRegularExpression(R"([\\/:*?"<>|])"), "_");
+    name = name.trimmed();
+    return name.isEmpty() ? QStringLiteral("item") : name;
+}
+
+static QString uniqueFilePath(const QString &dir, const QString &base, const QString &ext) {
+    QString path = QDir(dir).filePath(base + ext);
+    for (int n = 2; QFile::exists(path); ++n)
+        path = QDir(dir).filePath(base + " (" + QString::number(n) + ")" + ext);
+    return path;
+}
 
 #include <QBuffer>
 #include <QCryptographicHash>
@@ -159,9 +222,11 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     , m_exe(exe)
     , m_server(server)
     , m_net(new QNetworkAccessManager(this))
+    , m_mediaNet(new QNetworkAccessManager(this))
 {
     ui->setupUi(this);
     m_net->setTransferTimeout(8000);
+    m_mediaNet->setTransferTimeout(8000);
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::WindowSystemMenuHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint);
     setWindowIcon(Theme::icon(":/launch.png"));
     setWindowTitle(m_title);
@@ -179,14 +244,16 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->importButton, &QPushButton::clicked, this, &WorldsDialog::importWorld);
     auto *worldMenu = new QMenu(this);
     worldMenu->addAction(tr("Export..."), this, &WorldsDialog::exportWorld);
-    worldMenu->addAction(tr("Rename"), this, &WorldsDialog::renameWorld);
+    QAction *renameWorldAction = worldMenu->addAction(tr("Rename"), this, &WorldsDialog::renameWorld);
     QAction *platformer = worldMenu->addAction(tr("Switch to 2D"), this, [this]() {
         if (QListWidgetItem *item = ui->worldsList->currentItem()) setPlatformer(!item->data(PlatformerRole).toBool());
     });
-    connect(worldMenu, &QMenu::aboutToShow, this, [this, platformer]() {
-        QListWidgetItem *item = ui->worldsList->currentItem();
-        platformer->setEnabled(item != nullptr);
-        platformer->setText(item && item->data(PlatformerRole).toBool() ? tr("Switch to 3D") : tr("Switch to 2D"));
+    connect(worldMenu, &QMenu::aboutToShow, this, [this, renameWorldAction, platformer]() {
+        const QList<QListWidgetItem *> sel = visibleSelected(ui->worldsList);
+        const bool single = sel.size() == 1;
+        renameWorldAction->setEnabled(single);
+        platformer->setEnabled(single);
+        platformer->setText(single && sel.first()->data(PlatformerRole).toBool() ? tr("Switch to 3D") : tr("Switch to 2D"));
     });
     worldMenu->addSeparator();
     worldMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteWorld);
@@ -199,23 +266,85 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     deleteShortcut->setContext(Qt::WidgetShortcut);
     connect(deleteShortcut, &QShortcut::activated, this, &WorldsDialog::deleteWorld);
     connect(ui->worldsList, &QListWidget::customContextMenuRequested, this, &WorldsDialog::showWorldMenu);
-    auto *refreshWorlds = new QShortcut(QKeySequence::Refresh, ui->worldsTab);
+    auto wrapWithArchive = [this](QWidget *tab, const QString &barName, const QString &localLabel, const QString &localTip,
+                                  const QString &archiveTip, ArchiveBrowser::Kind kind,
+                                  QTabBar **outBar, QStackedWidget **outStack, ArchiveBrowser **outBrowser) -> QWidget * {
+        auto *outer = qobject_cast<QVBoxLayout *>(tab->layout());
+        auto *local = new QWidget(tab);
+        auto *inner = new QVBoxLayout(local);
+        inner->setContentsMargins(0, 0, 0, 0);
+        inner->setSpacing(8);
+        while (QLayoutItem *child = outer->takeAt(0)) {
+            if (QWidget *w = child->widget()) {
+                inner->addWidget(w, w == ui->worldsList || w == ui->avatarsList || w == ui->inventoryList ? 1 : 0);
+                delete child;
+            } else if (QLayout *sub = child->layout()) {
+                inner->addLayout(sub);
+            } else {
+                inner->addItem(child);
+            }
+        }
+        auto *bar = new QTabBar(tab);
+        bar->setObjectName(barName);
+        bar->setDrawBase(false);
+        bar->setExpanding(false);
+        bar->addTab(localLabel);
+        bar->addTab(tr("Archive"));
+        bar->setTabToolTip(0, localTip);
+        bar->setTabToolTip(1, archiveTip);
+
+        auto *stack = new QStackedWidget(tab);
+        auto *browser = new ArchiveBrowser(kind, stack);
+        stack->addWidget(local);
+        stack->addWidget(browser);
+
+        outer->addWidget(bar);
+        outer->addWidget(stack, 1);
+
+        connect(bar, &QTabBar::currentChanged, this, [stack, browser](int index) {
+            stack->setCurrentIndex(index);
+            if (index == 1) browser->ensureLoaded();
+        });
+        connect(browser, &ArchiveBrowser::importRequested, this, &WorldsDialog::importRequested);
+
+        *outBar = bar;
+        *outStack = stack;
+        *outBrowser = browser;
+        return local;
+    };
+
+    QWidget *localWorlds = wrapWithArchive(ui->worldsTab, "worldsViewTabs", tr("My worlds"),
+        tr("Worlds saved on your computer"), tr("Browse and download archived KoGaMa maps"),
+        ArchiveBrowser::Maps, &m_worldsView, &m_worldsStack, &m_mapsArchive);
+    QWidget *localAvatars = wrapWithArchive(ui->avatarsTab, "avatarsViewTabs", tr("My avatars"),
+        tr("Avatars saved on your computer"), tr("Browse and download archived KoGaMa avatars"),
+        ArchiveBrowser::Avatars, &m_avatarsView, &m_avatarsStack, &m_avatarsArchive);
+    QWidget *localInventory = wrapWithArchive(ui->inventoryTab, "inventoryViewTabs", tr("My inventory"),
+        tr("Models saved on your computer"), tr("Browse and download archived KoGaMa models"),
+        ArchiveBrowser::Models, &m_inventoryView, &m_inventoryStack, &m_modelsArchive);
+
+    auto *refreshWorlds = new QShortcut(QKeySequence::Refresh, localWorlds);
     refreshWorlds->setContext(Qt::WidgetWithChildrenShortcut);
-    connect(refreshWorlds, &QShortcut::activated, this, [this]() { loadWorlds(selectedWorld()); });
-    auto *refreshAvatars = new QShortcut(QKeySequence::Refresh, ui->avatarsTab);
+    connect(refreshWorlds, &QShortcut::activated, this, [this]() { loadWorlds(selectedWorld(), true); });
+    auto *refreshAvatars = new QShortcut(QKeySequence::Refresh, localAvatars);
     refreshAvatars->setContext(Qt::WidgetWithChildrenShortcut);
-    connect(refreshAvatars, &QShortcut::activated, this, [this]() { loadAvatars(selectedAvatar()); });
+    connect(refreshAvatars, &QShortcut::activated, this, [this]() { loadAvatars(selectedAvatar(), true); });
     connect(ui->worldSearchLineEdit, &QLineEdit::textChanged, this, [this]() { filterWorlds(); });
     connect(ui->avatarSearchLineEdit, &QLineEdit::textChanged, this, [this]() { filterAvatars(); });
     connect(ui->worldsList, &QListWidget::currentItemChanged, this, [this]() { updateWorldActions(); });
+    connect(ui->worldsList, &QListWidget::itemSelectionChanged, this, [this]() { updateWorldActions(); });
     connect(ui->avatarsList, &QListWidget::currentItemChanged, this, [this]() { updateAvatarActions(); });
+    connect(ui->avatarsList, &QListWidget::itemSelectionChanged, this, [this]() { updateAvatarActions(); });
     connect(ui->worldsList, &QListWidget::itemActivated, this, [this]() { launch(ui->playButton->isEnabled() ? "play" : "edit", selectedWorld()); });
 
     connect(ui->useAvatarButton, &QPushButton::clicked, this, &WorldsDialog::useAvatar);
     connect(ui->importAvatarButton, &QPushButton::clicked, this, &WorldsDialog::importAvatar);
     auto *avatarMenu = new QMenu(this);
     avatarMenu->addAction(tr("Export..."), this, &WorldsDialog::exportAvatar);
-    avatarMenu->addAction(tr("Rename"), this, &WorldsDialog::renameAvatar);
+    QAction *renameAvatarAction = avatarMenu->addAction(tr("Rename"), this, &WorldsDialog::renameAvatar);
+    connect(avatarMenu, &QMenu::aboutToShow, this, [this, renameAvatarAction]() {
+        renameAvatarAction->setEnabled(visibleSelected(ui->avatarsList).size() == 1);
+    });
     avatarMenu->addSeparator();
     avatarMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteAvatar);
     ui->moreAvatarButton->setMenu(avatarMenu);
@@ -232,10 +361,16 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->importModelButton, &QPushButton::clicked, this, &WorldsDialog::importModel);
     connect(ui->inventorySearchLineEdit, &QLineEdit::textChanged, this, [this]() { filterInventory(); });
     connect(ui->inventoryList, &QListWidget::currentItemChanged, this, [this]() { updateInventoryActions(); });
+    connect(ui->inventoryList, &QListWidget::itemSelectionChanged, this, [this]() { updateInventoryActions(); });
     auto *itemMenu = new QMenu(this);
     itemMenu->addAction(tr("Export..."), this, &WorldsDialog::exportItem);
-    itemMenu->addAction(tr("Rename"), this, &WorldsDialog::renameItem);
-    itemMenu->addAction(tr("Scale..."), this, &WorldsDialog::scaleItem);
+    QAction *renameItemAction = itemMenu->addAction(tr("Rename"), this, &WorldsDialog::renameItem);
+    QAction *scaleItemAction = itemMenu->addAction(tr("Scale..."), this, &WorldsDialog::scaleItem);
+    connect(itemMenu, &QMenu::aboutToShow, this, [this, renameItemAction, scaleItemAction]() {
+        const bool single = visibleSelected(ui->inventoryList).size() == 1;
+        renameItemAction->setEnabled(single);
+        scaleItemAction->setEnabled(single);
+    });
     itemMenu->addSeparator();
     itemMenu->addAction(tr("Delete..."), this, &WorldsDialog::deleteItem);
     ui->moreItemButton->setMenu(itemMenu);
@@ -246,14 +381,17 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     auto *deleteItemShortcut = new QShortcut(QKeySequence::Delete, ui->inventoryList);
     deleteItemShortcut->setContext(Qt::WidgetShortcut);
     connect(deleteItemShortcut, &QShortcut::activated, this, &WorldsDialog::deleteItem);
-    auto *refreshInventory = new QShortcut(QKeySequence::Refresh, ui->inventoryTab);
+    auto *refreshInventory = new QShortcut(QKeySequence::Refresh, localInventory);
     refreshInventory->setContext(Qt::WidgetWithChildrenShortcut);
-    connect(refreshInventory, &QShortcut::activated, this, [this]() { loadInventory(selectedItem()); });
+    connect(refreshInventory, &QShortcut::activated, this, [this]() { loadInventory(selectedItem(), true); });
     connect(ui->inventoryList, &QListWidget::customContextMenuRequested, this, &WorldsDialog::showItemMenu);
 
     TileGrid::setup(ui->worldsList, this);
     TileGrid::setup(ui->avatarsList, this);
     TileGrid::setup(ui->inventoryList, this);
+    ui->worldsList->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->avatarsList->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->inventoryList->setSelectionMode(QAbstractItemView::ExtendedSelection);
     static_cast<CenteredDelegate *>(ui->avatarsList->itemDelegate())->setBadgeRole(ActiveRole);
 
     setInstance(path, exe);
@@ -272,9 +410,15 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
             ui->worldsList->clear();
             ui->avatarsList->clear();
             ui->inventoryList->clear();
-            loadWorlds(world);
-            loadAvatars(avatar);
-            loadInventory(item);
+            m_pendingModels.clear();
+            m_queuedModels.clear();
+            m_inventoryGeneration++;
+            m_pendingAvatars.clear();
+            m_queuedAvatars.clear();
+            m_avatarGeneration++;
+            loadWorlds(world, true);
+            loadAvatars(avatar, true);
+            loadInventory(item, true);
         });
     });
 
@@ -316,15 +460,28 @@ QWidget *WorldsDialog::inventoryPage() const {
 }
 
 void WorldsDialog::showWorlds(int select) {
-    loadWorlds(select < 0 ? selectedWorld() : select);
+    if (select > 0 && m_worldsView) m_worldsView->setCurrentIndex(0);
+    loadWorlds(select < 0 ? selectedWorld() : select, select < 0);
 }
 
 void WorldsDialog::showAvatars(int select) {
-    loadAvatars(select < 0 ? selectedAvatar() : select);
+    if (select > 0 && m_avatarsView) m_avatarsView->setCurrentIndex(0);
+    loadAvatars(select < 0 ? selectedAvatar() : select, false);
 }
 
 void WorldsDialog::showInventory(int select) {
-    loadInventory(select < 0 ? selectedItem() : select);
+    if (select > 0 && m_inventoryView) m_inventoryView->setCurrentIndex(0);
+    loadInventory(select < 0 ? selectedItem() : select, false);
+}
+
+void WorldsDialog::refreshAfterImport(const QString &kind, int select) {
+    if (kind == "map") loadWorlds(select, false);
+    else if (kind == "avatar") loadAvatars(select, false);
+    else loadInventory(select, false);
+}
+
+void WorldsDialog::setArchiveThumbnail(int world, const QUrl &url) {
+    if (world > 0 && url.isValid()) downloadArchiveThumbnail(world, url);
 }
 
 bool WorldsDialog::hasRunningGames() const {
@@ -334,16 +491,18 @@ bool WorldsDialog::hasRunningGames() const {
 }
 
 void WorldsDialog::updateWorldActions() {
-    QListWidgetItem *item = ui->worldsList->currentItem();
-    bool selected = item && !item->isHidden();
-    const QString guests = hostedMode(selectedWorld());
-    ui->playButton->setEnabled(selected && guests != "edit");
-    ui->hostButton->setEnabled(selected);
-    ui->buildButton->setEnabled(selected && guests != "play");
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->worldsList);
+    const int count = int(sel.size());
+    const bool single = count == 1;
+    const QString guests = single ? hostedMode(sel.first()->data(Qt::UserRole).toInt()) : QString();
+    ui->playButton->setEnabled(single && guests != "edit");
+    ui->hostButton->setEnabled(single);
+    ui->buildButton->setEnabled(single && guests != "play");
     ui->playButton->setToolTip(guests == "edit" ? tr("Your guests join in build (Server settings)") : QString());
     ui->buildButton->setToolTip(guests == "play" ? tr("Your guests join in play (Server settings)") : QString());
-    ui->moreWorldButton->setEnabled(selected);
-    ui->selectedWorldLabel->setText(selected ? item->text() : tr("No world selected"));
+    ui->moreWorldButton->setEnabled(count > 0);
+    ui->selectedWorldLabel->setText(count == 0 ? tr("No world selected")
+        : single ? sel.first()->text() : tr("%n selected", nullptr, count));
 }
 
 void WorldsDialog::filterWorlds() {
@@ -354,6 +513,7 @@ void WorldsDialog::filterWorlds() {
         auto *item = ui->worldsList->item(i);
         bool matches = item->text().contains(search, Qt::CaseInsensitive);
         item->setHidden(!matches);
+        if (!matches && item->isSelected()) item->setSelected(false);
         if (matches) {
             ++visible;
             if (!first) first = item;
@@ -379,6 +539,7 @@ void WorldsDialog::filterAvatars() {
         auto *item = ui->avatarsList->item(i);
         bool matches = item->text().contains(search, Qt::CaseInsensitive);
         item->setHidden(!matches);
+        if (!matches && item->isSelected()) item->setSelected(false);
         if (matches) {
             ++visible;
             if (!first) first = item;
@@ -397,12 +558,16 @@ void WorldsDialog::filterAvatars() {
 }
 
 void WorldsDialog::updateAvatarActions() {
-    QListWidgetItem *item = ui->avatarsList->currentItem();
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->avatarsList);
+    const int count = int(sel.size());
+    const bool single = count == 1;
+    QListWidgetItem *item = single ? sel.first() : nullptr;
     const bool active = item && item->data(ActiveRole).toBool();
-    ui->useAvatarButton->setEnabled(item && !active);
-    ui->editAvatarButton->setEnabled(m_hasAvatarEditor);
-    ui->moreAvatarButton->setEnabled(item != nullptr);
-    ui->selectedAvatarLabel->setText(item ? item->text() : tr("No avatar selected"));
+    ui->useAvatarButton->setEnabled(single && !active);
+    ui->editAvatarButton->setEnabled(m_hasAvatarEditor && count <= 1);
+    ui->moreAvatarButton->setEnabled(count > 0);
+    ui->selectedAvatarLabel->setText(count == 0 ? tr("No avatar selected")
+        : single ? item->text() : tr("%n selected", nullptr, count));
 }
 
 void WorldsDialog::keyPressEvent(QKeyEvent *event) {
@@ -418,13 +583,13 @@ void WorldsDialog::reject() {
     QDialog::reject();
 }
 
-void WorldsDialog::loadWorlds(int select) {
+void WorldsDialog::loadWorlds(int select, bool refreshPictures) {
     if (ui->worldsList->count() == 0) {
         ui->worldStatusLabel->setText(tr("Loading your worlds..."));
         ui->worldStatusLabel->show();
     }
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/worlds")));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, select, url = LocalServerUrl]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, select, refreshPictures, url = LocalServerUrl]() {
         reply->deleteLater();
         if (url != LocalServerUrl) return;
         if (reply->error() != QNetworkReply::NoError) {
@@ -442,13 +607,8 @@ void WorldsDialog::loadWorlds(int select) {
         for (int i = 0; i < ui->worldsList->count(); ++i)
             shown.append(ui->worldsList->item(i)->data(Qt::UserRole).toInt());
         if (ids != shown) {
-            ui->worldsList->clear();
             const QIcon empty = TileGrid::icon(TileGrid::placeholder(TileGrid::WideImage, palette().color(QPalette::Button)));
-            for (int id : std::as_const(ids)) {
-                auto *item = new QListWidgetItem(empty, QString(), ui->worldsList);
-                item->setFlags(item->flags() | Qt::ItemIsEditable);
-                item->setData(Qt::UserRole, id);
-            }
+            syncList(ui->worldsList, ids, empty);
         }
 
         auto date = [](const QJsonValue &value) {
@@ -470,7 +630,8 @@ void WorldsDialog::loadWorlds(int select) {
             item->setData(PlatformerRole, world["platformer"].toBool());
             if (ids[i] == select)
                 ui->worldsList->setCurrentItem(item);
-            loadThumbnail(item, ids[i]);
+            if (refreshPictures || item->data(ImageRole).toByteArray().isEmpty())
+                loadThumbnail(item, ids[i]);
         }
         if (!ui->worldsList->currentItem() && ui->worldsList->count() > 0)
             ui->worldsList->setCurrentRow(0);
@@ -491,13 +652,13 @@ void WorldsDialog::checkRevision() {
         bool first = m_revision < 0;
         m_revision = revision;
         if (!first && !ui->worldsList->viewport()->findChild<QLineEdit *>())
-            loadWorlds(selectedWorld());
+            loadWorlds(selectedWorld(), true);
     });
 }
 
 void WorldsDialog::loadThumbnail(QListWidgetItem *item, int world) {
     QPointer<QListWidget> list = ui->worldsList;
-    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/images/0/" + QString::number(world) + ".png?v=" + QString::number(m_revision))));
+    QNetworkReply *reply = m_mediaNet->get(QNetworkRequest(QUrl(LocalServerUrl + "/images/0/" + QString::number(world) + ".png?v=" + QString::number(m_revision))));
     connect(reply, &QNetworkReply::finished, this, [reply, list, item, world]() {
         reply->deleteLater();
         QByteArray data = reply->readAll();
@@ -595,8 +756,9 @@ void WorldsDialog::importWorld() {
     if (!paths.isEmpty()) importWorlds(paths, {});
 }
 
-void WorldsDialog::importWorlds(QStringList paths, QStringList failed) {
+void WorldsDialog::importWorlds(QStringList paths, QStringList failed, int lastId) {
     if (paths.isEmpty()) {
+        if (lastId > 0) loadWorlds(lastId);
         if (!failed.isEmpty())
             QMessageBox::warning(this, tr("Import"), tr("These map(s) could not be imported: %1", nullptr, failed.size()).arg(failed.join(", ")));
         return;
@@ -604,7 +766,7 @@ void WorldsDialog::importWorlds(QStringList paths, QStringList failed) {
     const QString path = paths.takeFirst();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        importWorlds(paths, failed << QFileInfo(path).fileName());
+        importWorlds(paths, failed << QFileInfo(path).fileName(), lastId);
         return;
     }
 
@@ -621,13 +783,15 @@ void WorldsDialog::importWorlds(QStringList paths, QStringList failed) {
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
     const QByteArray data = file.readAll();
     QNetworkReply *reply = m_net->post(request, data);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, data, path, paths, failed]() mutable {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, data, path, paths, failed, lastId]() mutable {
         reply->deleteLater();
         int id = QJsonDocument::fromJson(reply->readAll()).object()["id"].toInt();
         if (id == 0) failed << QFileInfo(path).fileName();
-        else findArchiveThumbnail(id, data);
-        loadWorlds(id);
-        importWorlds(paths, failed);
+        else {
+            lastId = id;
+            findArchiveThumbnail(id, data);
+        }
+        importWorlds(paths, failed, lastId);
     });
 }
 
@@ -652,7 +816,7 @@ void WorldsDialog::findArchiveThumbnail(int world, const QByteArray &file) {
 }
 
 void WorldsDialog::downloadArchiveThumbnail(int world, const QUrl &url) {
-    QNetworkReply *reply = m_net->get(QNetworkRequest(url));
+    QNetworkReply *reply = m_mediaNet->get(QNetworkRequest(url));
     connect(reply, &QNetworkReply::finished, this, [this, reply, world]() {
         reply->deleteLater();
         QImage image;
@@ -662,17 +826,34 @@ void WorldsDialog::downloadArchiveThumbnail(int world, const QUrl &url) {
             || !buffer.open(QIODevice::WriteOnly) || !image.save(&buffer, "PNG")) return;
         QNetworkRequest request(QUrl(LocalServerUrl + "/api/worlds/thumbnail?id=" + QString::number(world)));
         request.setHeader(QNetworkRequest::ContentTypeHeader, "image/png");
-        QNetworkReply *upload = m_net->post(request, png);
-        connect(upload, &QNetworkReply::finished, upload, &QObject::deleteLater);
+        QNetworkReply *upload = m_mediaNet->post(request, png);
+        connect(upload, &QNetworkReply::finished, this, [this, upload, world]() {
+            upload->deleteLater();
+            if (upload->error() != QNetworkReply::NoError) return;
+            if (QListWidgetItem *item = findItemById(ui->worldsList, world)) {
+                item->setData(ImageRole, QByteArray());
+                loadThumbnail(item, world);
+            }
+        });
     });
 }
 
 void WorldsDialog::exportWorld() {
-    QListWidgetItem *item = ui->worldsList->currentItem();
-    if (!item) return;
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->worldsList);
+    if (sel.isEmpty()) return;
 
-    QString name = item->data(NameRole).toString();
-    name.replace(QRegularExpression(R"([\\/:*?"<>|])"), "_");
+    if (sel.size() > 1) {
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export worlds"));
+        if (dir.isEmpty()) return;
+        QList<QPair<int, QString>> batch;
+        for (QListWidgetItem *item : sel)
+            batch.append({item->data(Qt::UserRole).toInt(), safeFileName(item->data(NameRole).toString())});
+        exportBatch("/api/worlds/export", batch, dir, ".kgmap");
+        return;
+    }
+
+    QListWidgetItem *item = sel.first();
+    const QString name = safeFileName(item->data(NameRole).toString());
     QString path = QFileDialog::getSaveFileName(this, tr("Export world"), name + ".kgmap", tr("KoGaMa maps (*.kgmap)"));
     if (path.isEmpty()) return;
 
@@ -727,28 +908,22 @@ void WorldsDialog::onWorldRenamed(QListWidgetItem *item) {
 }
 
 void WorldsDialog::deleteWorld() {
-    QListWidgetItem *item = ui->worldsList->currentItem();
-    if (!item) return;
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->worldsList);
+    if (sel.isEmpty()) return;
 
-    auto answer = QMessageBox::question(this, tr("Delete world"),
-        tr("Delete \"%1\"? This can't be undone.").arg(item->text()),
+    const QString question = sel.size() == 1
+        ? tr("Delete \"%1\"? This can't be undone.").arg(sel.first()->text())
+        : tr("Delete %n world(s)? This can't be undone.", nullptr, int(sel.size()));
+    auto answer = QMessageBox::question(this, tr("Delete world"), question,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
-    QUrl url(LocalServerUrl + "/api/worlds/delete");
-    QUrlQuery query;
-    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
-    url.setQuery(query);
-
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-    QNetworkReply *reply = m_net->post(request, QByteArray());
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, tr("Delete world"), tr("This world is open in the game. Close it first."));
-        loadWorlds();
-    });
+    QList<int> ids;
+    for (QListWidgetItem *item : sel)
+        ids.append(item->data(Qt::UserRole).toInt());
+    deleteBatch("/api/worlds/delete", ids, tr("Delete world"),
+        tr("Some worlds could not be deleted because they are open in the game. Close them first."),
+        [this]() { loadWorlds(); });
 }
 
 void WorldsDialog::setPlatformer(bool on) {
@@ -773,21 +948,37 @@ void WorldsDialog::setPlatformer(bool on) {
 void WorldsDialog::showWorldMenu(const QPoint &pos) {
     QListWidgetItem *item = ui->worldsList->itemAt(pos);
     if (!item) return;
-    ui->worldsList->setCurrentItem(item);
+    if (!item->isSelected()) {
+        ui->worldsList->clearSelection();
+        ui->worldsList->setCurrentItem(item);
+        item->setSelected(true);
+    }
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->worldsList);
+    const bool single = sel.size() == 1;
 
     QMenu menu(this);
-    QAction *play = menu.addAction(tr("Play"));
-    QAction *build = menu.addAction(tr("Build"));
-    play->setEnabled(ui->playButton->isEnabled());
-    build->setEnabled(ui->buildButton->isEnabled());
-    menu.addSeparator();
-    QAction *exported = menu.addAction(tr("Export..."));
-    QAction *rename = menu.addAction(tr("Rename"));
-    const bool platformerWorld = item->data(PlatformerRole).toBool();
-    QAction *platformer = menu.addAction(platformerWorld ? tr("Switch to 3D") : tr("Switch to 2D"));
-    QAction *remove = menu.addAction(tr("Delete"));
+    QAction *play = nullptr;
+    QAction *build = nullptr;
+    QAction *rename = nullptr;
+    QAction *platformer = nullptr;
+    bool platformerWorld = false;
+    if (single) {
+        play = menu.addAction(tr("Play"));
+        build = menu.addAction(tr("Build"));
+        play->setEnabled(ui->playButton->isEnabled());
+        build->setEnabled(ui->buildButton->isEnabled());
+        menu.addSeparator();
+    }
+    QAction *exported = menu.addAction(single ? tr("Export...") : tr("Export %n world(s)...", nullptr, int(sel.size())));
+    if (single) {
+        rename = menu.addAction(tr("Rename"));
+        platformerWorld = item->data(PlatformerRole).toBool();
+        platformer = menu.addAction(platformerWorld ? tr("Switch to 3D") : tr("Switch to 2D"));
+    }
+    QAction *remove = menu.addAction(single ? tr("Delete") : tr("Delete %n world(s)", nullptr, int(sel.size())));
 
     QAction *chosen = menu.exec(ui->worldsList->viewport()->mapToGlobal(pos));
+    if (!chosen) return;
     if (chosen == play) launch("play", selectedWorld());
     else if (chosen == build) launch("edit", selectedWorld());
     else if (chosen == exported) exportWorld();
@@ -796,13 +987,13 @@ void WorldsDialog::showWorldMenu(const QPoint &pos) {
     else if (chosen == remove) deleteWorld();
 }
 
-void WorldsDialog::loadAvatars(int select) {
+void WorldsDialog::loadAvatars(int select, bool refreshPictures) {
     if (ui->avatarsList->count() == 0) {
         ui->avatarStatusLabel->setText(tr("Loading your avatars..."));
         ui->avatarStatusLabel->show();
     }
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/avatars")));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, select, url = LocalServerUrl]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, select, refreshPictures, url = LocalServerUrl]() {
         reply->deleteLater();
         if (url != LocalServerUrl) return;
         if (reply->error() != QNetworkReply::NoError) {
@@ -820,15 +1011,14 @@ void WorldsDialog::loadAvatars(int select) {
         for (int i = 0; i < ui->avatarsList->count(); ++i)
             shown.append(ui->avatarsList->item(i)->data(Qt::UserRole).toInt());
         QSignalBlocker blocker(ui->avatarsList);
+        if (refreshPictures) {
+            m_pendingAvatars.clear();
+            m_queuedAvatars.clear();
+            m_avatarGeneration++;
+        }
         if (ids != shown) {
-            ui->avatarsList->clear();
             const QIcon empty = TileGrid::icon(TileGrid::placeholder(TileGrid::SquareImage, palette().color(QPalette::Button)));
-            for (int id : std::as_const(ids)) {
-                auto *item = new QListWidgetItem(empty, QString(), ui->avatarsList);
-                item->setFlags(item->flags() | Qt::ItemIsEditable);
-                item->setData(Qt::UserRole, id);
-                item->setToolTip(tr("No picture yet, take one with the camera in the avatar editor"));
-            }
+            syncList(ui->avatarsList, ids, empty, tr("No picture yet, take one with the camera in the avatar editor"));
         }
 
         for (int i = 0; i < avatars.size(); ++i) {
@@ -846,7 +1036,8 @@ void WorldsDialog::loadAvatars(int select) {
                 font.setBold(active);
                 item->setFont(font);
             }
-            loadAvatarPicture(item, ids[i], version);
+            if (refreshPictures || active || item->data(ImageRole).toByteArray().isEmpty())
+                loadAvatarPicture(item, ids[i], version);
             if (ids[i] == select || (select == 0 && active))
                 ui->avatarsList->setCurrentItem(item);
         }
@@ -858,19 +1049,87 @@ void WorldsDialog::loadAvatars(int select) {
 
 void WorldsDialog::loadAvatarPicture(QListWidgetItem *item, int avatar, const QString &version) {
     QPointer<QListWidget> list = ui->avatarsList;
-    QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/images/1/" + QString::number(avatar) + ".png?v=" + version)));
-    connect(reply, &QNetworkReply::finished, this, [reply, list, item, avatar]() {
+    QNetworkReply *reply = m_mediaNet->get(QNetworkRequest(QUrl(LocalServerUrl + "/images/1/" + QString::number(avatar) + ".png?v=" + version)));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, list, item, avatar]() {
         reply->deleteLater();
         QByteArray data = reply->readAll();
         QPixmap image;
-        if (reply->error() != QNetworkReply::NoError || !list) return;
+        if (!list) return;
+        if (reply->error() != QNetworkReply::NoError || !image.loadFromData(data)) {
+            if (QListWidgetItem *found = findItemById(list, avatar); found && found->data(ImageRole).toByteArray().isEmpty())
+                enqueueAvatarPreview(avatar);
+            return;
+        }
         for (int i = 0; i < list->count(); ++i) {
             if (list->item(i) != item || item->data(Qt::UserRole).toInt() != avatar || item->data(ImageRole).toByteArray() == data) continue;
-            if (!image.loadFromData(data)) return;
             item->setData(ImageRole, data);
             item->setIcon(TileGrid::icon(TileGrid::cover(image, TileGrid::SquareImage)));
             item->setToolTip(QString());
         }
+    });
+}
+
+void WorldsDialog::enqueueAvatarPreview(int avatar) {
+    if (m_queuedAvatars.contains(avatar)) return;
+    m_queuedAvatars.insert(avatar);
+    m_pendingAvatars.enqueue(avatar);
+    fetchNextAvatarPreview();
+}
+
+void WorldsDialog::fetchNextAvatarPreview() {
+    while (m_activeAvatars < MaxConcurrentModels && !m_pendingAvatars.isEmpty()) {
+        const int avatar = m_pendingAvatars.dequeue();
+        if (!findItemById(ui->avatarsList, avatar)) {
+            m_queuedAvatars.remove(avatar);
+            continue;
+        }
+        renderAvatarPreview(avatar);
+    }
+}
+
+void WorldsDialog::renderAvatarPreview(int avatar) {
+    m_activeAvatars++;
+    const int gen = m_avatarGeneration;
+    QUrl url(LocalServerUrl + "/api/avatars/export");
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(avatar));
+    url.setQuery(query);
+
+    QNetworkReply *reply = m_mediaNet->get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, avatar, gen]() {
+        reply->deleteLater();
+        auto done = [this, avatar, gen]() {
+            if (gen == m_avatarGeneration)
+                m_queuedAvatars.remove(avatar);
+            m_activeAvatars = qMax(0, m_activeAvatars - 1);
+            fetchNextAvatarPreview();
+        };
+        const QByteArray data = reply->readAll();
+        QListWidgetItem *item = findItemById(ui->avatarsList, avatar);
+        if (gen != m_avatarGeneration || reply->error() != QNetworkReply::NoError || !item || data.isEmpty()) {
+            done();
+            return;
+        }
+        if (item->data(ImageRole).toByteArray() == data) {
+            done();
+            return;
+        }
+        item->setData(ImageRole, data);
+
+        auto *watcher = new QFutureWatcher<QImage>(this);
+        connect(watcher, &QFutureWatcher<QImage>::finished, this, [this, watcher, avatar, gen, data, done]() {
+            watcher->deleteLater();
+            const QImage image = watcher->result();
+            QListWidgetItem *target = findItemById(ui->avatarsList, avatar);
+            if (gen == m_avatarGeneration && !image.isNull() && target && target->data(ImageRole).toByteArray() == data) {
+                QPixmap tile = TileGrid::backdrop(TileGrid::SquareImage, palette().color(QPalette::Button));
+                QPainter(&tile).drawImage(0, 0, image);
+                target->setIcon(TileGrid::icon(tile));
+                target->setToolTip(QString());
+            }
+            done();
+        });
+        watcher->setFuture(QtConcurrent::run([data]() { return ModelPreview::renderAvatar(data, TileGrid::SquareImage); }));
     });
 }
 
@@ -913,8 +1172,9 @@ void WorldsDialog::importAvatar() {
     if (!paths.isEmpty()) importAvatars(paths, {});
 }
 
-void WorldsDialog::importAvatars(QStringList paths, QStringList failed) {
+void WorldsDialog::importAvatars(QStringList paths, QStringList failed, int lastId) {
     if (paths.isEmpty()) {
+        if (lastId > 0) loadAvatars(lastId);
         if (!failed.isEmpty())
             QMessageBox::warning(this, tr("Import"), tr("These file(s) are not avatar(s): %1", nullptr, failed.size()).arg(failed.join(", ")));
         return;
@@ -922,27 +1182,39 @@ void WorldsDialog::importAvatars(QStringList paths, QStringList failed) {
     const QString path = paths.takeFirst();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        importAvatars(paths, failed << QFileInfo(path).fileName());
+        importAvatars(paths, failed << QFileInfo(path).fileName(), lastId);
         return;
     }
 
     QNetworkRequest request(QUrl(LocalServerUrl + "/api/avatars/import"));
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     QNetworkReply *reply = m_net->post(request, file.readAll());
-    connect(reply, &QNetworkReply::finished, this, [this, reply, path, paths, failed]() mutable {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, path, paths, failed, lastId]() mutable {
         reply->deleteLater();
         int id = QJsonDocument::fromJson(reply->readAll()).object()["id"].toInt();
         if (id == 0) failed << QFileInfo(path).fileName();
-        loadAvatars(id);
-        importAvatars(paths, failed);
+        else lastId = id;
+        importAvatars(paths, failed, lastId);
     });
 }
 
 void WorldsDialog::exportAvatar() {
-    int avatar = selectedAvatar();
-    if (avatar == 0) return;
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->avatarsList);
+    if (sel.isEmpty()) return;
 
-    QString path = QFileDialog::getSaveFileName(this, tr("Export avatar"), ui->avatarsList->currentItem()->text() + ".kgavatar", tr("KoGaMa avatars (*.kgavatar)"));
+    if (sel.size() > 1) {
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export avatars"));
+        if (dir.isEmpty()) return;
+        QList<QPair<int, QString>> batch;
+        for (QListWidgetItem *item : sel)
+            batch.append({item->data(Qt::UserRole).toInt(), safeFileName(item->text())});
+        exportBatch("/api/avatars/export", batch, dir, ".kgavatar");
+        return;
+    }
+
+    QListWidgetItem *item = sel.first();
+    int avatar = item->data(Qt::UserRole).toInt();
+    QString path = QFileDialog::getSaveFileName(this, tr("Export avatar"), safeFileName(item->text()) + ".kgavatar", tr("KoGaMa avatars (*.kgavatar)"));
     if (path.isEmpty()) return;
 
     QUrl url(LocalServerUrl + "/api/avatars/export");
@@ -996,48 +1268,59 @@ void WorldsDialog::onAvatarRenamed(QListWidgetItem *item) {
 }
 
 void WorldsDialog::deleteAvatar() {
-    QListWidgetItem *item = ui->avatarsList->currentItem();
-    if (!item) return;
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->avatarsList);
+    if (sel.isEmpty()) return;
 
-    if (item->data(ActiveRole).toBool()) {
+    QList<int> ids;
+    bool skippedActive = false;
+    for (QListWidgetItem *item : sel) {
+        if (item->data(ActiveRole).toBool()) skippedActive = true;
+        else ids.append(item->data(Qt::UserRole).toInt());
+    }
+    if (ids.isEmpty()) {
         QMessageBox::information(this, tr("Delete avatar"), tr("You are using this avatar. Use another one first, then delete this one."));
         return;
     }
-    auto answer = QMessageBox::question(this, tr("Delete avatar"),
-        tr("Delete \"%1\"? This can't be undone.").arg(item->text()),
+
+    QString question = ids.size() == 1 && sel.size() == 1
+        ? tr("Delete \"%1\"? This can't be undone.").arg(sel.first()->text())
+        : tr("Delete %n avatar(s)? This can't be undone.", nullptr, int(ids.size()));
+    if (skippedActive)
+        question += "\n\n" + tr("Your currently active avatar will be kept.");
+    auto answer = QMessageBox::question(this, tr("Delete avatar"), question,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
-    QUrl url(LocalServerUrl + "/api/avatars/delete");
-    QUrlQuery query;
-    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
-    url.setQuery(query);
-
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-    QNetworkReply *reply = m_net->post(request, QByteArray());
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, tr("Delete avatar"), tr("Could not delete this avatar"));
-        loadAvatars();
-    });
+    deleteBatch("/api/avatars/delete", ids, tr("Delete avatar"), tr("Could not delete some avatars."),
+        [this]() { loadAvatars(); });
 }
 
 void WorldsDialog::showAvatarMenu(const QPoint &pos) {
     QListWidgetItem *item = ui->avatarsList->itemAt(pos);
     if (!item) return;
-    ui->avatarsList->setCurrentItem(item);
+    if (!item->isSelected()) {
+        ui->avatarsList->clearSelection();
+        ui->avatarsList->setCurrentItem(item);
+        item->setSelected(true);
+    }
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->avatarsList);
+    const bool single = sel.size() == 1;
 
     QMenu menu(this);
-    QAction *use = menu.addAction(tr("Use"));
-    use->setEnabled(ui->useAvatarButton->isEnabled());
-    menu.addSeparator();
-    QAction *exported = menu.addAction(tr("Export..."));
-    QAction *rename = menu.addAction(tr("Rename"));
-    QAction *remove = menu.addAction(tr("Delete"));
+    QAction *use = nullptr;
+    QAction *rename = nullptr;
+    if (single) {
+        use = menu.addAction(tr("Use"));
+        use->setEnabled(ui->useAvatarButton->isEnabled());
+        menu.addSeparator();
+    }
+    QAction *exported = menu.addAction(single ? tr("Export...") : tr("Export %n avatar(s)...", nullptr, int(sel.size())));
+    if (single)
+        rename = menu.addAction(tr("Rename"));
+    QAction *remove = menu.addAction(single ? tr("Delete") : tr("Delete %n avatar(s)", nullptr, int(sel.size())));
 
     QAction *chosen = menu.exec(ui->avatarsList->viewport()->mapToGlobal(pos));
+    if (!chosen) return;
     if (chosen == use) useAvatar();
     else if (chosen == rename) renameAvatar();
     else if (chosen == exported) exportAvatar();
@@ -1049,13 +1332,13 @@ int WorldsDialog::selectedAvatar() const {
     return item ? item->data(Qt::UserRole).toInt() : 0;
 }
 
-void WorldsDialog::loadInventory(int select) {
+void WorldsDialog::loadInventory(int select, bool refreshPictures) {
     if (ui->inventoryList->count() == 0) {
         ui->inventoryStatusLabel->setText(tr("Loading your inventory..."));
         ui->inventoryStatusLabel->show();
     }
     QNetworkReply *reply = m_net->get(QNetworkRequest(QUrl(LocalServerUrl + "/api/inventory")));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, select, url = LocalServerUrl]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, select, refreshPictures, url = LocalServerUrl]() {
         reply->deleteLater();
         if (url != LocalServerUrl) return;
         if (reply->error() != QNetworkReply::NoError) {
@@ -1072,14 +1355,14 @@ void WorldsDialog::loadInventory(int select) {
         for (int i = 0; i < ui->inventoryList->count(); ++i)
             shown.append(ui->inventoryList->item(i)->data(Qt::UserRole).toInt());
         QSignalBlocker blocker(ui->inventoryList);
+        if (refreshPictures) {
+            m_pendingModels.clear();
+            m_queuedModels.clear();
+            m_inventoryGeneration++;
+        }
         if (ids != shown) {
-            ui->inventoryList->clear();
             const QIcon empty = TileGrid::icon(TileGrid::placeholder(TileGrid::SquareImage, palette().color(QPalette::Button)));
-            for (int id : std::as_const(ids)) {
-                auto *item = new QListWidgetItem(empty, QString(), ui->inventoryList);
-                item->setFlags(item->flags() | Qt::ItemIsEditable);
-                item->setData(Qt::UserRole, id);
-            }
+            syncList(ui->inventoryList, ids, empty);
         }
 
         for (int i = 0; i < items.size(); ++i) {
@@ -1090,45 +1373,76 @@ void WorldsDialog::loadInventory(int select) {
                 item->setText(text);
                 item->setData(NameRole, text);
             }
-            loadItemPicture(item, ids[i]);
+            if (refreshPictures || item->data(ImageRole).toByteArray().isEmpty())
+                enqueueItemPicture(ids[i]);
             if (ids[i] == select)
                 ui->inventoryList->setCurrentItem(item);
         }
         if (!ui->inventoryList->currentItem() && ui->inventoryList->count() > 0)
             ui->inventoryList->setCurrentRow(0);
         filterInventory();
+        fetchNextItemPicture();
     });
 }
 
-void WorldsDialog::loadItemPicture(QListWidgetItem *item, int itemId) {
-    QPointer<QListWidget> list = ui->inventoryList;
-    const auto listed = [list, item, itemId]() {
-        if (!list) return false;
-        for (int i = 0; i < list->count(); ++i)
-            if (list->item(i) == item) return item->data(Qt::UserRole).toInt() == itemId;
-        return false;
-    };
+void WorldsDialog::enqueueItemPicture(int itemId) {
+    if (m_queuedModels.contains(itemId)) return;
+    m_queuedModels.insert(itemId);
+    m_pendingModels.enqueue(itemId);
+}
 
+void WorldsDialog::fetchNextItemPicture() {
+    while (m_activeModels < MaxConcurrentModels && !m_pendingModels.isEmpty()) {
+        const int itemId = m_pendingModels.dequeue();
+        if (!findItemById(ui->inventoryList, itemId)) {
+            m_queuedModels.remove(itemId);
+            continue;
+        }
+        loadItemPicture(itemId);
+    }
+}
+
+void WorldsDialog::loadItemPicture(int itemId) {
+    m_activeModels++;
+    const int gen = m_inventoryGeneration;
     QUrl url(LocalServerUrl + "/api/inventory/model");
     QUrlQuery query;
     query.addQueryItem("id", QString::number(itemId));
     url.setQuery(query);
-    QNetworkReply *reply = m_net->get(QNetworkRequest(url));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, item, listed]() {
+    QNetworkReply *reply = m_mediaNet->get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, itemId, gen]() {
         reply->deleteLater();
+        auto done = [this, itemId, gen]() {
+            if (gen == m_inventoryGeneration)
+                m_queuedModels.remove(itemId);
+            m_activeModels = qMax(0, m_activeModels - 1);
+            fetchNextItemPicture();
+        };
         const QByteArray data = reply->readAll();
-        if (reply->error() != QNetworkReply::NoError || !listed() || item->data(ImageRole).toByteArray() == data) return;
+        QListWidgetItem *item = findItemById(ui->inventoryList, itemId);
+        if (gen != m_inventoryGeneration || reply->error() != QNetworkReply::NoError || !item || data.isEmpty()) {
+            done();
+            return;
+        }
+        if (item->data(ImageRole).toByteArray() == data) {
+            done();
+            return;
+        }
         item->setData(ImageRole, data);
-        updateInventoryActions();
+        if (item == ui->inventoryList->currentItem())
+            updateInventoryActions();
 
         auto *watcher = new QFutureWatcher<QImage>(this);
-        connect(watcher, &QFutureWatcher<QImage>::finished, this, [this, watcher, item, listed, data]() {
+        connect(watcher, &QFutureWatcher<QImage>::finished, this, [this, watcher, itemId, gen, data, done]() {
             watcher->deleteLater();
             const QImage image = watcher->result();
-            if (image.isNull() || !listed() || item->data(ImageRole).toByteArray() != data) return;
-            QPixmap tile = TileGrid::backdrop(TileGrid::SquareImage, palette().color(QPalette::Button));
-            QPainter(&tile).drawImage(0, 0, image);
-            item->setIcon(TileGrid::icon(tile));
+            QListWidgetItem *target = findItemById(ui->inventoryList, itemId);
+            if (gen == m_inventoryGeneration && !image.isNull() && target && target->data(ImageRole).toByteArray() == data) {
+                QPixmap tile = TileGrid::backdrop(TileGrid::SquareImage, palette().color(QPalette::Button));
+                QPainter(&tile).drawImage(0, 0, image);
+                target->setIcon(TileGrid::icon(tile));
+            }
+            done();
         });
         watcher->setFuture(QtConcurrent::run([data]() { return ModelPreview::render(data, TileGrid::SquareImage); }));
     });
@@ -1142,6 +1456,7 @@ void WorldsDialog::filterInventory() {
         auto *item = ui->inventoryList->item(i);
         bool matches = item->text().contains(search, Qt::CaseInsensitive);
         item->setHidden(!matches);
+        if (!matches && item->isSelected()) item->setSelected(false);
         if (matches) {
             ++visible;
             if (!first) first = item;
@@ -1160,12 +1475,16 @@ void WorldsDialog::filterInventory() {
 }
 
 void WorldsDialog::updateInventoryActions() {
-    QListWidgetItem *item = ui->inventoryList->currentItem();
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->inventoryList);
+    const int count = int(sel.size());
+    const bool single = count == 1;
+    QListWidgetItem *item = single ? sel.first() : nullptr;
     const QByteArray model = item ? item->data(ImageRole).toByteArray() : QByteArray();
-    const int cubes = ModelPreview::cubeCount(model);
-    ui->moreItemButton->setEnabled(item != nullptr);
-    ui->selectedItemLabel->setText(item ? item->text() : tr("No item selected"));
-    ui->selectedItemDetail->setText(cubes > 0
+    const int cubes = single ? ModelPreview::cubeCount(model) : 0;
+    ui->moreItemButton->setEnabled(count > 0);
+    ui->selectedItemLabel->setText(count == 0 ? tr("No item selected")
+        : single ? item->text() : tr("%n selected", nullptr, count));
+    ui->selectedItemDetail->setText(single && cubes > 0
         ? tr("%1 cube(s), scale %2", nullptr, cubes).arg(QLocale(QLocale::English).toString(cubes), QString::number(ModelPreview::scale(model)))
         : QString());
 }
@@ -1175,12 +1494,13 @@ void WorldsDialog::importModel() {
     if (!paths.isEmpty()) importModels(paths, QString(), {}, {});
 }
 
-void WorldsDialog::importModels(QStringList paths, const QString &scale, QStringList failed, QStringList unscaled) {
+void WorldsDialog::importModels(QStringList paths, const QString &scale, QStringList failed, QStringList unscaled, int lastId) {
     if (paths.isEmpty()) {
+        if (lastId > 0) loadInventory(lastId);
         if (!unscaled.isEmpty()) {
             const QString title = unscaled.size() == 1 ? tr("Import %1").arg(QFileInfo(unscaled.first()).completeBaseName()) : tr("Import %n model(s)", nullptr, unscaled.size());
             if (const auto chosen = askScale(this, title, tr("Import"), "0.25")) {
-                importModels(unscaled, *chosen, failed, {});
+                importModels(unscaled, *chosen, failed, {}, lastId);
                 return;
             }
         }
@@ -1191,7 +1511,7 @@ void WorldsDialog::importModels(QStringList paths, const QString &scale, QString
     const QString path = paths.takeFirst();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
-        importModels(paths, scale, failed << QFileInfo(path).fileName(), unscaled);
+        importModels(paths, scale, failed << QFileInfo(path).fileName(), unscaled, lastId);
         return;
     }
 
@@ -1203,14 +1523,14 @@ void WorldsDialog::importModels(QStringList paths, const QString &scale, QString
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/octet-stream");
     QNetworkReply *reply = m_net->post(request, file.readAll());
-    connect(reply, &QNetworkReply::finished, this, [this, reply, path, paths, scale, failed, unscaled]() mutable {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, path, paths, scale, failed, unscaled, lastId]() mutable {
         reply->deleteLater();
         const QJsonObject result = QJsonDocument::fromJson(reply->readAll()).object();
         const int id = result["id"].toInt();
         if (result["needsScale"].toBool()) unscaled << path;
         else if (id == 0) failed << QFileInfo(path).fileName();
-        loadInventory(id);
-        importModels(paths, scale, failed, unscaled);
+        else lastId = id;
+        importModels(paths, scale, failed, unscaled, lastId);
     });
 }
 
@@ -1239,15 +1559,29 @@ void WorldsDialog::scaleItem() {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError)
             QMessageBox::warning(this, tr("Scale"), tr("Could not change the scale of this model"));
+        else if (QListWidgetItem *scaled = findItemById(ui->inventoryList, id))
+            scaled->setData(ImageRole, QByteArray());
         loadInventory(id);
     });
 }
 
 void WorldsDialog::exportItem() {
-    int itemId = selectedItem();
-    if (itemId == 0) return;
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->inventoryList);
+    if (sel.isEmpty()) return;
 
-    QString path = QFileDialog::getSaveFileName(this, tr("Export model"), ui->inventoryList->currentItem()->text() + ".kgmodel", tr("KoGaMa models (*.kgmodel)"));
+    if (sel.size() > 1) {
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export models"));
+        if (dir.isEmpty()) return;
+        QList<QPair<int, QString>> batch;
+        for (QListWidgetItem *item : sel)
+            batch.append({item->data(Qt::UserRole).toInt(), safeFileName(item->text())});
+        exportBatch("/api/inventory/model", batch, dir, ".kgmodel");
+        return;
+    }
+
+    QListWidgetItem *item = sel.first();
+    int itemId = item->data(Qt::UserRole).toInt();
+    QString path = QFileDialog::getSaveFileName(this, tr("Export model"), safeFileName(item->text()) + ".kgmodel", tr("KoGaMa models (*.kgmodel)"));
     if (path.isEmpty()) return;
 
     QUrl url(LocalServerUrl + "/api/inventory/model");
@@ -1301,42 +1635,91 @@ void WorldsDialog::onItemRenamed(QListWidgetItem *item) {
 }
 
 void WorldsDialog::deleteItem() {
-    QListWidgetItem *item = ui->inventoryList->currentItem();
-    if (!item) return;
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->inventoryList);
+    if (sel.isEmpty()) return;
 
-    auto answer = QMessageBox::question(this, tr("Delete item"),
-        tr("Delete \"%1\" from your inventory? This can't be undone.").arg(item->text()),
+    const QString question = sel.size() == 1
+        ? tr("Delete \"%1\" from your inventory? This can't be undone.").arg(sel.first()->text())
+        : tr("Delete %n item(s) from your inventory? This can't be undone.", nullptr, int(sel.size()));
+    auto answer = QMessageBox::question(this, tr("Delete item"), question,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
-    QUrl url(LocalServerUrl + "/api/inventory/delete");
+    QList<int> ids;
+    for (QListWidgetItem *item : sel)
+        ids.append(item->data(Qt::UserRole).toInt());
+    deleteBatch("/api/inventory/delete", ids, tr("Delete item"), tr("Could not delete some items."),
+        [this]() { loadInventory(); });
+}
+
+void WorldsDialog::deleteBatch(const QString &endpoint, QList<int> ids, const QString &errorTitle, const QString &errorMessage, std::function<void()> onDone, int failed) {
+    if (ids.isEmpty()) {
+        if (failed > 0)
+            QMessageBox::warning(this, errorTitle, errorMessage);
+        if (onDone) onDone();
+        return;
+    }
+    const int id = ids.takeFirst();
+    QUrl url(LocalServerUrl + endpoint);
     QUrlQuery query;
-    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
+    query.addQueryItem("id", QString::number(id));
     url.setQuery(query);
 
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
     QNetworkReply *reply = m_net->post(request, QByteArray());
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, endpoint, ids, errorTitle, errorMessage, onDone, failed]() mutable {
         reply->deleteLater();
-        if (reply->error() != QNetworkReply::NoError)
-            QMessageBox::warning(this, tr("Delete item"), tr("Could not delete this item"));
-        loadInventory();
+        if (reply->error() != QNetworkReply::NoError) failed++;
+        deleteBatch(endpoint, ids, errorTitle, errorMessage, onDone, failed);
+    });
+}
+
+void WorldsDialog::exportBatch(const QString &endpoint, QList<QPair<int, QString>> items, const QString &dir, const QString &ext, int failed) {
+    if (items.isEmpty()) {
+        if (failed > 0)
+            QMessageBox::warning(this, tr("Export"), tr("Could not export %n item(s).", nullptr, failed));
+        return;
+    }
+    const auto [id, baseName] = items.takeFirst();
+    QUrl url(LocalServerUrl + endpoint);
+    QUrlQuery query;
+    query.addQueryItem("id", QString::number(id));
+    url.setQuery(query);
+
+    QNetworkReply *reply = m_net->get(QNetworkRequest(url));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, endpoint, items, dir, ext, baseName, failed]() mutable {
+        reply->deleteLater();
+        QFile file(uniqueFilePath(dir, baseName, ext));
+        if (reply->error() != QNetworkReply::NoError || !file.open(QIODevice::WriteOnly) || file.write(reply->readAll()) < 0)
+            failed++;
+        exportBatch(endpoint, items, dir, ext, failed);
     });
 }
 
 void WorldsDialog::showItemMenu(const QPoint &pos) {
     QListWidgetItem *item = ui->inventoryList->itemAt(pos);
     if (!item) return;
-    ui->inventoryList->setCurrentItem(item);
+    if (!item->isSelected()) {
+        ui->inventoryList->clearSelection();
+        ui->inventoryList->setCurrentItem(item);
+        item->setSelected(true);
+    }
+    const QList<QListWidgetItem *> sel = visibleSelected(ui->inventoryList);
+    const bool single = sel.size() == 1;
 
     QMenu menu(this);
-    QAction *exported = menu.addAction(tr("Export..."));
-    QAction *rename = menu.addAction(tr("Rename"));
-    QAction *scale = menu.addAction(tr("Scale..."));
-    QAction *remove = menu.addAction(tr("Delete"));
+    QAction *exported = menu.addAction(single ? tr("Export...") : tr("Export %n item(s)...", nullptr, int(sel.size())));
+    QAction *rename = nullptr;
+    QAction *scale = nullptr;
+    if (single) {
+        rename = menu.addAction(tr("Rename"));
+        scale = menu.addAction(tr("Scale..."));
+    }
+    QAction *remove = menu.addAction(single ? tr("Delete") : tr("Delete %n item(s)", nullptr, int(sel.size())));
 
     QAction *chosen = menu.exec(ui->inventoryList->viewport()->mapToGlobal(pos));
+    if (!chosen) return;
     if (chosen == exported) exportItem();
     else if (chosen == rename) renameItem();
     else if (chosen == scale) scaleItem();

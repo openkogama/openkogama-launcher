@@ -44,6 +44,8 @@ qt_add_executable(openkogama-launcher
     src/centereddelegate.h
     src/creditsdialog.h src/creditsdialog.cpp
     src/contentimporter.h src/contentimporter.cpp
+    src/archivebrowser.h src/archivebrowser.cpp
+    src/downloadmanager.h src/downloadmanager.cpp
 )
 
 if(WIN32)
@@ -145,6 +147,10 @@ if(BUILD_TESTING)
         src/gamelauncher.cpp src/gamelauncher.h src/singleinstance.cpp src/singleinstance.h src/clientpatches.cpp src/clientpatches.h src/serverfeatures.cpp src/serverfeatures.h src/account.cpp src/account.h src/playerprofile.cpp src/playerprofile.h src/discordpresence.cpp src/discordpresence.h src/consolewindow.cpp src/consolewindow.h src/webplayerruntime.cpp src/webplayerruntime.h src/paths.cpp src/paths.h src/theme.cpp src/theme.h
         src/launchdialog.cpp src/launchdialog.h src/launchdialog.ui src/assetinstaller.cpp src/assetinstaller.h
         src/gameruntime.cpp src/gameruntime.h
+        src/archivebrowser.cpp src/archivebrowser.h
+        src/contentimporter.cpp src/contentimporter.h
+        src/downloadmanager.cpp src/downloadmanager.h
+        src/links.cpp src/links.h
         src/languages.cpp src/languages.h)
     target_include_directories(launcher-tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
     target_compile_definitions(launcher-tests PRIVATE LAUNCHER_TRANSLATIONS="${CMAKE_CURRENT_BINARY_DIR}")
