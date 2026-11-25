@@ -67,4 +67,7 @@ void setLanguage(const QString &code);
 QString theme();
 void setTheme(const QString &theme);
 
+bool askMapClientVersion();
+void setAskMapClientVersion(bool enabled);
+
 }

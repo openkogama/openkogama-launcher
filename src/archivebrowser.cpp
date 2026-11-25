@@ -164,6 +164,12 @@ ArchiveBrowser::ArchiveBrowser(Kind kind, QWidget *parent)
 
     toolbar->addWidget(m_search, 1);
     toolbar->addWidget(m_filter);
+    if (kind == Maps) {
+        m_yearFilter = new QComboBox(this);
+        m_yearFilter->setObjectName("archiveMapYearFilter");
+        m_yearFilter->addItem(tr("All years"), QString());
+        toolbar->addWidget(m_yearFilter);
+    }
     toolbar->addWidget(m_sort);
     layout->addLayout(toolbar);
 
@@ -210,6 +216,8 @@ ArchiveBrowser::ArchiveBrowser(Kind kind, QWidget *parent)
     });
     connect(m_search, &QLineEdit::textChanged, this, [this]() { m_searchTimer->start(); });
     connect(m_filter, &QComboBox::currentIndexChanged, this, &ArchiveBrowser::applyFilter);
+    if (m_yearFilter)
+        connect(m_yearFilter, &QComboBox::currentIndexChanged, this, &ArchiveBrowser::applyFilter);
     connect(m_sort, &QComboBox::currentIndexChanged, this, &ArchiveBrowser::applyFilter);
 
     connect(m_list, &QListWidget::currentItemChanged, this, &ArchiveBrowser::updateActions);
@@ -538,6 +546,7 @@ void ArchiveBrowser::parseMapIndex(const QByteArray &data)
     const QJsonArray rows = index.value("rows").toArray();
     m_entries.reserve(rows.size());
     const QString untitled = tr("Untitled map");
+    QSet<QString> years;
 
     for (int pos = 0; pos < rows.size(); ++pos) {
         const QJsonArray row = rows[pos].toArray();
@@ -552,12 +561,30 @@ void ArchiveBrowser::parseMapIndex(const QByteArray &data)
         e.plays = iPlays >= 0 ? row.at(iPlays).toVariant().toLongLong() : 0;
         e.likes = iLikes >= 0 ? row.at(iLikes).toVariant().toLongLong() : 0;
         e.published = iPublished >= 0 ? row.at(iPublished).toString() : QString();
+        if (e.published.size() >= 4) {
+            bool ok = false;
+            const int yr = e.published.left(4).toInt(&ok);
+            if (ok && yr >= 2011 && yr <= 2100) years.insert(e.published.left(4));
+        }
         e.format = iFormat >= 0 ? row.at(iFormat).toString() : QString();
         e.size = iSize >= 0 ? row.at(iSize).toVariant().toLongLong() : 0;
         e.image = iImage >= 0 ? row.at(iImage).toString() : QString();
         e.hasImage = !e.image.isEmpty();
         e.searchText = (e.name + " " + e.author + " " + idStr).toLower();
         m_entries.append(std::move(e));
+    }
+
+    if (m_yearFilter) {
+        const QString previous = m_yearFilter->currentData().toString();
+        QSignalBlocker blocker(m_yearFilter);
+        m_yearFilter->clear();
+        m_yearFilter->addItem(tr("All years"), QString());
+        QStringList sortedYears(years.cbegin(), years.cend());
+        std::sort(sortedYears.begin(), sortedYears.end(), std::greater<QString>());
+        for (const QString &yr : sortedYears)
+            m_yearFilter->addItem(yr, yr);
+        const int idx = m_yearFilter->findData(previous);
+        m_yearFilter->setCurrentIndex(idx >= 0 ? idx : 0);
     }
 
     applyFilter();
@@ -650,6 +677,7 @@ void ArchiveBrowser::applyFilter()
     const QString query = m_search->text().trimmed().toLower();
     const QStringList words = query.split(' ', Qt::SkipEmptyParts);
     const QString filterVal = m_filter->currentData().toString();
+    const QString yearVal = m_yearFilter ? m_yearFilter->currentData().toString() : QString();
     const QString sortKey = m_sort->currentData().toString();
 
     m_filtered.clear();
@@ -661,6 +689,8 @@ void ArchiveBrowser::applyFilter()
             if (m_kind == Maps && e.site != filterVal) continue;
             if (m_kind != Maps && e.type != filterVal) continue;
         }
+        if (!yearVal.isEmpty() && e.published.left(4) != yearVal)
+            continue;
         bool match = true;
         for (const QString &word : words) {
             if (!e.searchText.contains(word)) {
@@ -809,6 +839,7 @@ QString ArchiveBrowser::subtitleFor(const Entry &entry) const
         if (!entry.author.isEmpty()) parts << entry.author;
         if (entry.plays > 0) parts << tr("%1 plays").arg(formatCount(entry.plays));
         else if (entry.size > 0) parts << formatSize(entry.size);
+        if (entry.published.size() >= 4) parts << entry.published.left(4);
         return parts.join(QString::fromUtf8(" \u00b7 "));
     }
     QStringList parts;
@@ -901,11 +932,14 @@ void ArchiveBrowser::showContextMenu(const QPoint &pos)
     QAction *add = menu.addAction(addText);
     add->setEnabled(!m_importing);
 
+    QAction *downloadClient = nullptr;
     QAction *copyName = nullptr;
     QAction *byAuthor = nullptr;
     QAction *openWeb = nullptr;
     if (single && validEntry) {
         const Entry &e = m_entries[entryIdx];
+        if (m_kind == Maps && e.published.size() >= 4)
+            downloadClient = menu.addAction(tr("Download matching client (%1)...").arg(e.published.left(4)));
         menu.addSeparator();
         copyName = menu.addAction(tr("Copy name"));
         if (m_kind == Maps && !e.author.isEmpty())
@@ -917,6 +951,9 @@ void ArchiveBrowser::showContextMenu(const QPoint &pos)
     if (!chosen) return;
     if (chosen == add) {
         requestImportSelection();
+    } else if (chosen == downloadClient && validEntry) {
+        const Entry &e = m_entries[entryIdx];
+        emit clientForYearRequested(e.published, e.name);
     } else if (chosen == copyName && validEntry) {
         QGuiApplication::clipboard()->setText(m_entries[entryIdx].name);
     } else if (chosen == byAuthor && validEntry) {
@@ -1011,6 +1048,7 @@ void ArchiveBrowser::requestMapDetails(const QVector<Entry> &entries)
             ImportRequest req;
             req.kind = QStringLiteral("map");
             req.name = e.name;
+            req.published = e.published;
             req.sha256 = latestVersion.at(0).toString().trimmed().toLower();
             static const QRegularExpression sha(QStringLiteral("^[0-9a-f]{64}$"));
             if (!sha.match(req.sha256).hasMatch()) {

@@ -5,6 +5,7 @@
 #include <QStandardItemModel>
 #include <QSortFilterProxyModel>
 #include <QUrl>
+#include <optional>
 
 namespace Ui {
 class InstallDialog;
@@ -23,6 +24,7 @@ struct Version {
     qint64 zipSize = 0;
     QString id;
     qint64 unpackedSize = 0;
+    qint64 timestamp = 0;
 };
 
 class InstallDialog : public QDialog
@@ -36,6 +38,8 @@ public:
     QList<Version> selectedVersions() const;
     QString instanceName() const;
     static QList<Version> parse(const QByteArray &versionsJson);
+    static int yearOf(const Version &version);
+    static std::optional<Version> bestForDate(const QList<Version> &versions, const QString &isoDate);
 
 private:
     Ui::InstallDialog *ui;

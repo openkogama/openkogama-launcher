@@ -256,6 +256,16 @@ void setTheme(const QString &theme)
     store().setValue("General/theme", theme);
 }
 
+bool askMapClientVersion()
+{
+    return store().value("archive/askMapClientVersion", true).toBool();
+}
+
+void setAskMapClientVersion(bool enabled)
+{
+    store().setValue("archive/askMapClientVersion", enabled);
+}
+
 }
 
 QString GameServer::addressOf(const QString &text)

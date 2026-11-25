@@ -5,10 +5,12 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QDateTime>
+#include <QTimeZone>
 #include <QHeaderView>
 #include <QStandardItemModel>
 #include <QDebug>
 #include <algorithm>
+#include <limits>
 
 namespace {
 constexpr int MaxListed = 3;
@@ -105,7 +107,7 @@ QList<Version> InstallDialog::parse(const QByteArray &data) {
     for (const auto& entry : array) {
         auto object = entry.toObject();
         QString version = object.value("version").toString();
-        int timestamp = object.value("timestamp").toInt();
+        qint64 timestamp = object.value("timestamp").toVariant().toLongLong();
         QString date = QDateTime::fromSecsSinceEpoch(timestamp).toString("dd/MM/yyyy");
         QString unity = object.value("unityVersion").toString();
         QString backend;
@@ -123,9 +125,53 @@ QList<Version> InstallDialog::parse(const QByteArray &data) {
             urls.append(u.toString());
 
         parsed.append({version, date, unity, backend, download, installed,
-                       sha256.left(7), urls, sha256, zipSize, id, unpackedSize});
+                       sha256.left(7), urls, sha256, zipSize, id, unpackedSize, timestamp});
     }
     return parsed;
+}
+
+int InstallDialog::yearOf(const Version &version) {
+    if (version.timestamp <= 0) return 0;
+    return QDateTime::fromSecsSinceEpoch(version.timestamp, QTimeZone::UTC).date().year();
+}
+
+std::optional<Version> InstallDialog::bestForDate(const QList<Version> &versions, const QString &isoDate) {
+    const QString trimmed = isoDate.trimmed();
+    if (trimmed.isEmpty()) return std::nullopt;
+
+    QDateTime dt = QDateTime::fromString(trimmed, Qt::ISODate);
+    int targetYear = 0;
+    qint64 targetSecs = 0;
+    if (dt.isValid()) {
+        dt = dt.toUTC();
+        targetYear = dt.date().year();
+        targetSecs = dt.toSecsSinceEpoch();
+    } else {
+        bool ok = false;
+        const int y = trimmed.left(4).toInt(&ok);
+        if (!ok || y < 2011 || y > 2100) return std::nullopt;
+        targetYear = y;
+        targetSecs = QDateTime(QDate(y, 7, 1), QTime(0, 0), QTimeZone::UTC).toSecsSinceEpoch();
+    }
+
+    std::optional<Version> sameYearBest;
+    std::optional<Version> closest;
+    qint64 closestDiff = std::numeric_limits<qint64>::max();
+
+    for (const Version &v : versions) {
+        if (v.version.isEmpty() || v.urls.isEmpty() || v.timestamp <= 0) continue;
+        const int y = yearOf(v);
+        if (y == targetYear) {
+            if (!sameYearBest || v.timestamp > sameYearBest->timestamp)
+                sameYearBest = v;
+        }
+        const qint64 diff = qAbs(v.timestamp - targetSecs);
+        if (!closest || diff < closestDiff) {
+            closest = v;
+            closestDiff = diff;
+        }
+    }
+    return sameYearBest ? sameYearBest : closest;
 }
 
 void InstallDialog::populate(const QByteArray &data) {

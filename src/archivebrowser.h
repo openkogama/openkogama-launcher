@@ -40,6 +40,7 @@ public:
 
 signals:
     void importRequested(const ImportRequest &request, const QUrl &thumbnailUrl);
+    void clientForYearRequested(const QString &published, const QString &mapName);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -119,6 +120,7 @@ private:
     QNetworkAccessManager *m_thumbNet;
     QLineEdit *m_search;
     QComboBox *m_filter;
+    QComboBox *m_yearFilter = nullptr;
     QComboBox *m_sort;
     QLabel *m_status;
     QListWidget *m_list;
