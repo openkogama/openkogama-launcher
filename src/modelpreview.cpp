@@ -460,7 +460,7 @@ QImage renderAvatar(const QByteArray &avatarJson, const QSize &size)
         }
         if (!pose) continue;
         const float partScale = float(part.value("scale").toDouble(0.125));
-        if (!std::isfinite(partScale) || partScale <= 0) continue;
+        if (!std::isfinite(partScale) || partScale <= 0 || partScale > 100) continue;
         const QByteArray cubesData = QByteArray::fromBase64(part.value("cubes").toString().toLatin1());
         Cubes cubes;
         if (!parse(cubesData, cubes)) continue;
