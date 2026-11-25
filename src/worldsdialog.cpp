@@ -83,9 +83,17 @@ static QList<QListWidgetItem *> visibleSelected(QListWidget *list) {
     return result;
 }
 
+static QListWidgetItem *chosenItem(QListWidget *list) {
+    const QList<QListWidgetItem *> sel = visibleSelected(list);
+    return sel.size() == 1 ? sel.first() : list->currentItem();
+}
+
 static QString safeFileName(QString name) {
-    name.replace(QRegularExpression(R"([\\/:*?"<>|])"), "_");
-    name = name.trimmed();
+    name.replace(QRegularExpression(R"([\\/:*?"<>|\x00-\x1f])"), "_");
+    while (name.endsWith('.') || name.endsWith(' ')) name.chop(1);
+    name = name.trimmed().left(120);
+    static const QRegularExpression reserved(QStringLiteral("^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\\..*)?$"), QRegularExpression::CaseInsensitiveOption);
+    if (reserved.match(name).hasMatch()) name.prepend('_');
     return name.isEmpty() ? QStringLiteral("item") : name;
 }
 
@@ -236,7 +244,7 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     connect(ui->hostButton, &QPushButton::clicked, this, [this]() {
         const int world = selectedWorld();
         if (world == 0) return;
-        const QString name = ui->worldsList->currentItem()->data(NameRole).toString();
+        const QString name = chosenItem(ui->worldsList)->data(NameRole).toString();
         emit hostRequested(world, name, launch(guestMode(), world));
     });
     connect(ui->editAvatarButton, &QPushButton::clicked, this, &WorldsDialog::editAvatar);
@@ -246,7 +254,7 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
     worldMenu->addAction(tr("Export..."), this, &WorldsDialog::exportWorld);
     QAction *renameWorldAction = worldMenu->addAction(tr("Rename"), this, &WorldsDialog::renameWorld);
     QAction *platformer = worldMenu->addAction(tr("Switch to 2D"), this, [this]() {
-        if (QListWidgetItem *item = ui->worldsList->currentItem()) setPlatformer(!item->data(PlatformerRole).toBool());
+        if (QListWidgetItem *item = chosenItem(ui->worldsList)) setPlatformer(!item->data(PlatformerRole).toBool());
     });
     connect(worldMenu, &QMenu::aboutToShow, this, [this, renameWorldAction, platformer]() {
         const QList<QListWidgetItem *> sel = visibleSelected(ui->worldsList);
@@ -843,23 +851,24 @@ void WorldsDialog::exportWorld() {
     if (sel.isEmpty()) return;
 
     if (sel.size() > 1) {
-        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export worlds"));
-        if (dir.isEmpty()) return;
         QList<QPair<int, QString>> batch;
         for (QListWidgetItem *item : sel)
             batch.append({item->data(Qt::UserRole).toInt(), safeFileName(item->data(NameRole).toString())});
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export worlds"));
+        if (dir.isEmpty()) return;
         exportBatch("/api/worlds/export", batch, dir, ".kgmap");
         return;
     }
 
     QListWidgetItem *item = sel.first();
+    const int world = item->data(Qt::UserRole).toInt();
     const QString name = safeFileName(item->data(NameRole).toString());
     QString path = QFileDialog::getSaveFileName(this, tr("Export world"), name + ".kgmap", tr("KoGaMa maps (*.kgmap)"));
     if (path.isEmpty()) return;
 
     QUrl url(LocalServerUrl + "/api/worlds/export");
     QUrlQuery query;
-    query.addQueryItem("id", QString::number(item->data(Qt::UserRole).toInt()));
+    query.addQueryItem("id", QString::number(world));
     url.setQuery(query);
 
     QNetworkReply *reply = m_net->get(QNetworkRequest(url));
@@ -872,7 +881,7 @@ void WorldsDialog::exportWorld() {
 }
 
 void WorldsDialog::renameWorld() {
-    QListWidgetItem *item = ui->worldsList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->worldsList);
     if (!item || item->isHidden()) return;
     ui->worldsList->editItem(item);
 }
@@ -914,20 +923,20 @@ void WorldsDialog::deleteWorld() {
     const QString question = sel.size() == 1
         ? tr("Delete \"%1\"? This can't be undone.").arg(sel.first()->text())
         : tr("Delete %n world(s)? This can't be undone.", nullptr, int(sel.size()));
+    QList<int> ids;
+    for (QListWidgetItem *item : sel)
+        ids.append(item->data(Qt::UserRole).toInt());
     auto answer = QMessageBox::question(this, tr("Delete world"), question,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
-    QList<int> ids;
-    for (QListWidgetItem *item : sel)
-        ids.append(item->data(Qt::UserRole).toInt());
     deleteBatch("/api/worlds/delete", ids, tr("Delete world"),
         tr("Some worlds could not be deleted because they are open in the game. Close them first."),
         [this]() { loadWorlds(); });
 }
 
 void WorldsDialog::setPlatformer(bool on) {
-    QListWidgetItem *item = ui->worldsList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->worldsList);
     if (!item) return;
 
     QUrl url(LocalServerUrl + "/api/worlds/platformer");
@@ -1139,7 +1148,7 @@ void WorldsDialog::useAvatar() {
 }
 
 void WorldsDialog::editAvatar() {
-    QListWidgetItem *item = ui->avatarsList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->avatarsList);
     if (!item || item->data(ActiveRole).toBool())
         launch("avatar", 0);
     else
@@ -1203,11 +1212,11 @@ void WorldsDialog::exportAvatar() {
     if (sel.isEmpty()) return;
 
     if (sel.size() > 1) {
-        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export avatars"));
-        if (dir.isEmpty()) return;
         QList<QPair<int, QString>> batch;
         for (QListWidgetItem *item : sel)
             batch.append({item->data(Qt::UserRole).toInt(), safeFileName(item->text())});
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export avatars"));
+        if (dir.isEmpty()) return;
         exportBatch("/api/avatars/export", batch, dir, ".kgavatar");
         return;
     }
@@ -1232,7 +1241,7 @@ void WorldsDialog::exportAvatar() {
 }
 
 void WorldsDialog::renameAvatar() {
-    if (QListWidgetItem *item = ui->avatarsList->currentItem())
+    if (QListWidgetItem *item = chosenItem(ui->avatarsList))
         ui->avatarsList->editItem(item);
 }
 
@@ -1328,7 +1337,7 @@ void WorldsDialog::showAvatarMenu(const QPoint &pos) {
 }
 
 int WorldsDialog::selectedAvatar() const {
-    QListWidgetItem *item = ui->avatarsList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->avatarsList);
     return item ? item->data(Qt::UserRole).toInt() : 0;
 }
 
@@ -1535,17 +1544,17 @@ void WorldsDialog::importModels(QStringList paths, const QString &scale, QString
 }
 
 void WorldsDialog::scaleItem() {
-    QListWidgetItem *item = ui->inventoryList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->inventoryList);
     if (!item) return;
     const QByteArray model = item->data(ImageRole).toByteArray();
     if (model.isEmpty()) {
         QMessageBox::information(this, tr("Scale"), tr("Only models have a scale."));
         return;
     }
+    const int id = item->data(Qt::UserRole).toInt();
     const auto scale = askScale(this, tr("Scale %1").arg(item->text()), tr("Save"), QString::number(ModelPreview::scale(model)));
     if (!scale) return;
 
-    const int id = item->data(Qt::UserRole).toInt();
     QUrl url(LocalServerUrl + "/api/inventory/scale");
     QUrlQuery query;
     query.addQueryItem("id", QString::number(id));
@@ -1570,11 +1579,11 @@ void WorldsDialog::exportItem() {
     if (sel.isEmpty()) return;
 
     if (sel.size() > 1) {
-        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export models"));
-        if (dir.isEmpty()) return;
         QList<QPair<int, QString>> batch;
         for (QListWidgetItem *item : sel)
             batch.append({item->data(Qt::UserRole).toInt(), safeFileName(item->text())});
+        const QString dir = QFileDialog::getExistingDirectory(this, tr("Export models"));
+        if (dir.isEmpty()) return;
         exportBatch("/api/inventory/model", batch, dir, ".kgmodel");
         return;
     }
@@ -1599,7 +1608,7 @@ void WorldsDialog::exportItem() {
 }
 
 void WorldsDialog::renameItem() {
-    if (QListWidgetItem *item = ui->inventoryList->currentItem())
+    if (QListWidgetItem *item = chosenItem(ui->inventoryList))
         ui->inventoryList->editItem(item);
 }
 
@@ -1641,13 +1650,13 @@ void WorldsDialog::deleteItem() {
     const QString question = sel.size() == 1
         ? tr("Delete \"%1\" from your inventory? This can't be undone.").arg(sel.first()->text())
         : tr("Delete %n item(s) from your inventory? This can't be undone.", nullptr, int(sel.size()));
+    QList<int> ids;
+    for (QListWidgetItem *item : sel)
+        ids.append(item->data(Qt::UserRole).toInt());
     auto answer = QMessageBox::question(this, tr("Delete item"), question,
         QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
     if (answer != QMessageBox::Yes) return;
 
-    QList<int> ids;
-    for (QListWidgetItem *item : sel)
-        ids.append(item->data(Qt::UserRole).toInt());
     deleteBatch("/api/inventory/delete", ids, tr("Delete item"), tr("Could not delete some items."),
         [this]() { loadInventory(); });
 }
@@ -1727,12 +1736,12 @@ void WorldsDialog::showItemMenu(const QPoint &pos) {
 }
 
 int WorldsDialog::selectedItem() const {
-    QListWidgetItem *item = ui->inventoryList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->inventoryList);
     return item ? item->data(Qt::UserRole).toInt() : 0;
 }
 
 int WorldsDialog::selectedWorld() const {
-    QListWidgetItem *item = ui->worldsList->currentItem();
+    QListWidgetItem *item = chosenItem(ui->worldsList);
     return item ? item->data(Qt::UserRole).toInt() : 0;
 }
 
