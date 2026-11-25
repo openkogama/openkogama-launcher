@@ -176,6 +176,208 @@
     </message>
 </context>
 <context>
+    <name>ArchiveBrowser</name>
+    <message>
+        <source>Search archived maps...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search archived avatars...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search archived models...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All regions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All types</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Most played</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Most liked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Newest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Most popular</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Most cubes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archived maps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archived avatars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Archived models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading maps archive...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading avatars archive...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading models archive...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not load the archive. Press F5 to try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Untitled map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model %1</source>
+        <translation type="unfinished">Modelo %1</translation>
+    </message>
+    <message>
+        <source>Avatar %1</source>
+        <translation type="unfinished">Avatar %1</translation>
+    </message>
+    <message>
+        <source>No archived maps match your search.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No archived avatars match your search.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No archived models match your search.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 plays</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n map(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 cubes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>scale %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No map selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No avatar selected</source>
+        <translation type="unfinished">No hay ningún avatar seleccionado</translation>
+    </message>
+    <message>
+        <source>No model selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my worlds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my avatars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to my inventory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n map(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n avatar(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n model(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More by %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open on openkogama.org</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation type="unfinished">Importar</translation>
+    </message>
+    <message>
+        <source>No download links are available for this map.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not fetch map details: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>ClientPatches</name>
     <message numerus="yes">
         <source>added %n server sound(s) to the Sound Emitter list in data.unity3d</source>
@@ -453,6 +655,76 @@
     <message>
         <source>Thanks to</source>
         <translation>Agradecimientos a</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadManager</name>
+    <message>
+        <source>Map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Avatar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPopup</name>
+    <message>
+        <source>Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No downloads yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancelar</translation>
+    </message>
+    <message>
+        <source>Downloading... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -878,6 +1150,14 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation>No hay versiones instaladas</translation>
     </message>
     <message>
+        <source>Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show ongoing and recent downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;Servers</source>
         <translation>&amp;Servidores</translation>
     </message>
@@ -1031,6 +1311,10 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation>¿Unirse a %1?</translation>
     </message>
     <message>
+        <source>Downloads (%1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Server settings</source>
         <translation>Ajustes del servidor</translation>
     </message>
@@ -1120,14 +1404,6 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     </message>
     <message>
         <source>Add this model to your inventory?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>this item</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Adding %1 to KoGaMa...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1884,6 +2160,46 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My worlds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Worlds saved on your computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse and download archived KoGaMa maps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My avatars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Avatars saved on your computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse and download archived KoGaMa avatars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>My inventory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Models saved on your computer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Browse and download archived KoGaMa models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Scale...</source>
         <translation>Escala...</translation>
     </message>
@@ -1898,6 +2214,13 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     <message>
         <source>Your guests join in play (Server settings)</source>
         <translation>Tus invitados entran en modo juego (Ajustes del servidor)</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message numerus="yes">
         <source>Search %n world(s)...</source>
@@ -2001,6 +2324,10 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         </translation>
     </message>
     <message>
+        <source>Export worlds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export world</source>
         <translation>Exportar mundo</translation>
     </message>
@@ -2020,17 +2347,64 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <source>Could not rename this world</source>
         <translation>No se ha podido cambiar el nombre de este mundo</translation>
     </message>
+    <message numerus="yes">
+        <source>Delete %n world(s)? This can&apos;t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Delete world</source>
         <translation>Eliminar mundo</translation>
     </message>
     <message>
-        <source>Delete &quot;%1&quot;? This can&apos;t be undone.</source>
-        <translation>¿Eliminar «%1»? Esta acción no se puede deshacer.</translation>
+        <source>Some worlds could not be deleted because they are open in the game. Close them first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n avatar(s)? This can&apos;t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>This world is open in the game. Close it first.</source>
-        <translation>Este mundo está abierto en el juego. Ciérralo primero.</translation>
+        <source>Your currently active avatar will be kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete some avatars.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not delete some items.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Could not export %n item(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n item(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n item(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete &quot;%1&quot;? This can&apos;t be undone.</source>
+        <translation>¿Eliminar «%1»? Esta acción no se puede deshacer.</translation>
     </message>
     <message>
         <source>Play</source>
@@ -2040,9 +2414,23 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <source>Build</source>
         <translation>Construir</translation>
     </message>
+    <message numerus="yes">
+        <source>Export %n world(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Delete</source>
         <translation>Eliminar</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n world(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Could not load your avatars. Press F5 to try again.</source>
@@ -2080,6 +2468,10 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         </translation>
     </message>
     <message>
+        <source>Export avatars</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export avatar</source>
         <translation>Exportar avatar</translation>
     </message>
@@ -2104,12 +2496,22 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation>Estás usando este avatar. Cambia primero a otro y después elimina este.</translation>
     </message>
     <message>
-        <source>Could not delete this avatar</source>
-        <translation>No se ha podido eliminar este avatar</translation>
-    </message>
-    <message>
         <source>Use</source>
         <translation>Usar</translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n avatar(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n avatar(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Could not load your inventory. Press F5 to try again.</source>
@@ -2188,6 +2590,10 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation>No se ha podido cambiar la escala de este modelo</translation>
     </message>
     <message>
+        <source>Export models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Export model</source>
         <translation>Exportar modelo</translation>
     </message>
@@ -2203,6 +2609,13 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <source>Could not rename this item</source>
         <translation>No se ha podido cambiar el nombre de este objeto</translation>
     </message>
+    <message numerus="yes">
+        <source>Delete %n item(s) from your inventory? This can&apos;t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Delete item</source>
         <translation>Eliminar objeto</translation>
@@ -2210,10 +2623,6 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     <message>
         <source>Delete &quot;%1&quot; from your inventory? This can&apos;t be undone.</source>
         <translation>¿Eliminar «%1» de tu inventario? Esta acción no se puede deshacer.</translation>
-    </message>
-    <message>
-        <source>Could not delete this item</source>
-        <translation>No se ha podido eliminar este objeto</translation>
     </message>
     <message>
         <source>Worlds</source>

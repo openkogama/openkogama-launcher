@@ -2,6 +2,44 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en" sourcelanguage="en">
 <context>
+    <name>ArchiveBrowser</name>
+    <message numerus="yes">
+        <source>%n map(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n map(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n avatar(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n model(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+</context>
+<context>
     <name>ClientPatches</name>
     <message numerus="yes">
         <source>added %n server sound(s) to the Sound Emitter list in data.unity3d</source>
@@ -92,6 +130,13 @@
 <context>
     <name>WorldsDialog</name>
     <message numerus="yes">
+        <source>%n selected</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Search %n world(s)...</source>
         <translation>
             <numerusform>Search %n world...</numerusform>
@@ -113,10 +158,52 @@
         </translation>
     </message>
     <message numerus="yes">
+        <source>Delete %n world(s)? This can&apos;t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n world(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n world(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>These file(s) are not avatar(s): %1</source>
         <translation>
             <numerusform>This file is not an avatar: %1</numerusform>
             <numerusform>These files are not avatars: %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n avatar(s)? This can&apos;t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n avatar(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n avatar(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
     <message numerus="yes">
@@ -145,6 +232,34 @@
         <translation>
             <numerusform>This file is not a model: %1</numerusform>
             <numerusform>These files are not models: %1</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n item(s) from your inventory? This can&apos;t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Could not export %n item(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n item(s)...</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n item(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
         </translation>
     </message>
 </context>
