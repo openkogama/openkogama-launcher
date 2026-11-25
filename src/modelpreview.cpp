@@ -1,6 +1,10 @@
 #include "modelpreview.h"
 
 #include <QHash>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QString>
 #include <QtEndian>
 #include <QtMath>
 #include <algorithm>
@@ -252,34 +256,64 @@ bool triangulate(const Cubes &cubes, std::vector<Triangle> &triangles)
     return !triangles.empty();
 }
 
+struct BonePose {
+    const char *name;
+    Vec offset;
+    float qx, qy, qz, qw;
+};
+
+constexpr BonePose AvatarBones[] = {
+    {"Head",    {-0.1875f, 0.1259f,  0.0000f}, 0.0000f,  0.7071f,  0.0000f, 0.7071f},
+    {"Torso",   { 0.1875f, 0.1218f, -0.0338f}, 0.0000f, -0.7071f,  0.0000f, 0.7071f},
+    {"LArm",    {-0.3355f, 0.0618f, -0.1766f}, 0.1233f,  0.6963f, -0.0451f, 0.7057f},
+    {"RArm",    { 0.3076f, 0.0592f,  0.1327f}, 0.0434f, -0.7057f,  0.1039f, 0.6994f},
+    {"LUpLeg",  {-0.2972f, 0.2843f, -0.0774f}, 0.0000f, -0.1771f,  0.0000f, 0.9842f},
+    {"LLowLeg", {-0.2236f, 0.0386f,  0.0834f}, 0.0000f,  0.5707f,  0.0000f, 0.8212f},
+    {"RUpLeg",  { 0.0550f, 0.2843f, -0.0338f}, 0.0000f,  0.0000f,  0.0000f, 1.0000f},
+    {"RLowLeg", { 0.1800f, 0.0386f,  0.0912f}, 0.0000f,  0.7071f,  0.0000f, 0.7071f},
+};
+
+Vec rotateQuat(Vec v, float x, float y, float z, float w)
+{
+    return {
+        (1 - 2 * (y * y + z * z)) * v.x + 2 * (x * y - z * w) * v.y + 2 * (x * z + y * w) * v.z,
+        2 * (x * y + z * w) * v.x + (1 - 2 * (x * x + z * z)) * v.y + 2 * (y * z - x * w) * v.z,
+        2 * (x * z - y * w) * v.x + 2 * (y * z + x * w) * v.y + (1 - 2 * (x * x + y * y)) * v.z,
+    };
 }
 
-namespace ModelPreview {
-
-int cubeCount(const QByteArray &file)
+bool triangulatePart(const Cubes &cubes, float partScale, const BonePose &pose, float spinDegrees, std::vector<Triangle> &triangles)
 {
-    const qsizetype start = cubesStart(file);
-    if (file.size() < start + 4) return 0;
-    return std::max(qFromBigEndian<qint32>(file.constData() + start), 0);
+    for (const Cube &cube : cubes) {
+        for (int index = 0; index < 6; ++index) {
+            const Face &face = Faces[index];
+            const auto neighbor = cubes.constFind(key(cube.x + face.normal[0], cube.y + face.normal[1], cube.z + face.normal[2]));
+            if (neighbor != cubes.cend() && cube.sides & face.own && neighbor->sides & face.opposite) continue;
+
+            std::array<Vec, 4> points;
+            std::array<float, 4> light;
+            const Vec position{float(cube.x), float(cube.y), float(cube.z)};
+            for (int k = 0; k < 4; ++k) {
+                const int at = face.corners[k];
+                const Vec local = (position + corner(cube.corners[at])) * partScale;
+                const Vec world = rotateQuat(local, pose.qx, pose.qy, pose.qz, pose.qw) + pose.offset;
+                points[k] = yaw(world, spinDegrees);
+                light[k] = occlusion(cubes, cube, face, corner(Identity[at]));
+            }
+            const Vec normal = yaw(rotateQuat({float(face.normal[0]), float(face.normal[1]), float(face.normal[2])},
+                pose.qx, pose.qy, pose.qz, pose.qw), spinDegrees);
+            const int material = cube.materials[index] < MaterialCount ? cube.materials[index] : Fallback;
+            for (const auto &[a, b, c] : {std::array{0, 3, 2}, std::array{2, 1, 0}})
+                triangles.push_back({{points[a], points[b], points[c]}, {light[a], light[b], light[c]}, normal, material});
+        }
+        if (triangles.size() > size_t(MaxTriangles)) return false;
+    }
+    return true;
 }
 
-bool hasScale(const QByteArray &file)
+QImage rasterize(const std::vector<Triangle> &triangles, const Vec &eye, const QSize &size, const Vec &lightDir)
 {
-    return cubesStart(file) != 0 && file.size() >= 8;
-}
-
-float scale(const QByteArray &file)
-{
-    if (!hasScale(file)) return 1;
-    const float value = qFromBigEndian<float>(file.constData() + 4);
-    return std::isfinite(value) && value > 0 ? value : 1;
-}
-
-QImage render(const QByteArray &file, const QSize &size)
-{
-    Cubes cubes;
-    std::vector<Triangle> triangles;
-    if (size.isEmpty() || !parse(file, cubes) || !triangulate(cubes, triangles)) return {};
+    if (size.isEmpty() || triangles.empty()) return {};
 
     constexpr float Infinity = std::numeric_limits<float>::infinity();
     Vec low{Infinity, Infinity, Infinity}, high{-Infinity, -Infinity, -Infinity};
@@ -292,7 +326,6 @@ QImage render(const QByteArray &file, const QSize &size)
     const float extent = std::max({high.x - low.x, high.y - low.y, high.z - low.z});
     const float fit = extent > 0 ? 2 / extent : 1;
 
-    const Vec eye{2.4f, 2.6f, -3.8f};
     const Vec forward = normalized(eye * -1);
     const Vec right = normalized(cross({0, 1, 0}, forward));
     const Vec up = cross(forward, right);
@@ -323,7 +356,7 @@ QImage render(const QByteArray &file, const QSize &size)
     QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
     image.fill(Qt::transparent);
     std::vector<float> depths(size_t(width) * height, 0.0f);
-    const Vec light = normalized(yaw(pitch({0, 0, 1}, 50), -30) * -1);
+    const Vec light = normalized(lightDir);
     const Vec tint{1.0f, 0.988f, 0.753f};
 
     for (size_t i = 0; i < triangles.size(); ++i) {
@@ -374,6 +407,66 @@ QImage render(const QByteArray &file, const QSize &size)
         }
     }
     return image.scaled(size, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+}
+
+}
+
+namespace ModelPreview {
+
+int cubeCount(const QByteArray &file)
+{
+    const qsizetype start = cubesStart(file);
+    if (file.size() < start + 4) return 0;
+    return std::max(qFromBigEndian<qint32>(file.constData() + start), 0);
+}
+
+bool hasScale(const QByteArray &file)
+{
+    return cubesStart(file) != 0 && file.size() >= 8;
+}
+
+float scale(const QByteArray &file)
+{
+    if (!hasScale(file)) return 1;
+    const float value = qFromBigEndian<float>(file.constData() + 4);
+    return std::isfinite(value) && value > 0 ? value : 1;
+}
+
+QImage render(const QByteArray &file, const QSize &size)
+{
+    Cubes cubes;
+    std::vector<Triangle> triangles;
+    if (size.isEmpty() || !parse(file, cubes) || !triangulate(cubes, triangles)) return {};
+    return rasterize(triangles, {2.4f, 2.6f, -3.8f}, size, yaw(pitch({0, 0, 1}, 50), -30) * -1);
+}
+
+QImage renderAvatar(const QByteArray &avatarJson, const QSize &size)
+{
+    if (size.isEmpty() || avatarJson.isEmpty()) return {};
+    const QJsonDocument doc = QJsonDocument::fromJson(avatarJson);
+    const QJsonArray parts = doc.isArray() ? doc.array() : doc.object().value("parts").toArray();
+    if (parts.isEmpty()) return {};
+
+    std::vector<Triangle> triangles;
+    for (const QJsonValue &val : parts) {
+        const QJsonObject part = val.toObject();
+        const QString boneName = part.value("bone").toString();
+        const BonePose *pose = nullptr;
+        for (const BonePose &candidate : AvatarBones) {
+            if (boneName == QLatin1String(candidate.name)) {
+                pose = &candidate;
+                break;
+            }
+        }
+        if (!pose) continue;
+        const float partScale = float(part.value("scale").toDouble(0.125));
+        if (!std::isfinite(partScale) || partScale <= 0) continue;
+        const QByteArray cubesData = QByteArray::fromBase64(part.value("cubes").toString().toLatin1());
+        Cubes cubes;
+        if (!parse(cubesData, cubes)) continue;
+        if (!triangulatePart(cubes, partScale, *pose, -25.0f, triangles)) return {};
+    }
+    return rasterize(triangles, {0.0f, 1.1f, 4.4f}, size, {0.35f, 0.75f, 0.85f});
 }
 
 }

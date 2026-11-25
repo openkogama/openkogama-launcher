@@ -176,13 +176,210 @@
     </message>
 </context>
 <context>
+    <name>ArchiveBrowser</name>
+    <message>
+        <source>Search archived maps...</source>
+        <translation>Arşivdeki haritalarda ara...</translation>
+    </message>
+    <message>
+        <source>Search archived avatars...</source>
+        <translation>Arşivdeki avatarlarda ara...</translation>
+    </message>
+    <message>
+        <source>All regions</source>
+        <translation>Tüm bölgeler</translation>
+    </message>
+    <message>
+        <source>All types</source>
+        <translation>Tüm türler</translation>
+    </message>
+    <message>
+        <source>Most played</source>
+        <translation>En çok oynanan</translation>
+    </message>
+    <message>
+        <source>Most liked</source>
+        <translation>En çok beğenilen</translation>
+    </message>
+    <message>
+        <source>Newest</source>
+        <translation>En yeni</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>Ada göre</translation>
+    </message>
+    <message>
+        <source>Most popular</source>
+        <translation>En popüler</translation>
+    </message>
+    <message>
+        <source>Most cubes</source>
+        <translation>En çok küp</translation>
+    </message>
+    <message>
+        <source>Archived maps</source>
+        <translation>Arşivlenmiş haritalar</translation>
+    </message>
+    <message>
+        <source>Archived avatars</source>
+        <translation>Arşivlenmiş avatarlar</translation>
+    </message>
+    <message>
+        <source>Add to my worlds</source>
+        <translation>Dünyalarıma ekle</translation>
+    </message>
+    <message>
+        <source>Add to my avatars</source>
+        <translation>Avatarlarıma ekle</translation>
+    </message>
+    <message>
+        <source>Loading maps archive...</source>
+        <translation>Harita arşivi yükleniyor...</translation>
+    </message>
+    <message>
+        <source>Search archived models...</source>
+        <translation>Arşivdeki modellerde ara...</translation>
+    </message>
+    <message>
+        <source>Archived models</source>
+        <translation>Arşivlenmiş modeller</translation>
+    </message>
+    <message>
+        <source>Loading avatars archive...</source>
+        <translation>Avatar arşivi yükleniyor...</translation>
+    </message>
+    <message>
+        <source>Loading models archive...</source>
+        <translation>Model arşivi yükleniyor...</translation>
+    </message>
+    <message>
+        <source>Could not load the archive. Press F5 to try again.</source>
+        <translation>Arşiv yüklenemedi. Tekrar denemek için F5'e bas.</translation>
+    </message>
+    <message>
+        <source>Untitled map</source>
+        <translation>Adsız harita</translation>
+    </message>
+    <message>
+        <source>Avatar %1</source>
+        <translation>Avatar %1</translation>
+    </message>
+    <message>
+        <source>Model %1</source>
+        <translation>Model %1</translation>
+    </message>
+    <message>
+        <source>No archived maps match your search.</source>
+        <translation>Aramanla eşleşen arşivlenmiş harita yok.</translation>
+    </message>
+    <message>
+        <source>No archived avatars match your search.</source>
+        <translation>Aramanla eşleşen arşivlenmiş avatar yok.</translation>
+    </message>
+    <message>
+        <source>No archived models match your search.</source>
+        <translation>Aramanla eşleşen arşivlenmiş model yok.</translation>
+    </message>
+    <message>
+        <source>%1 plays</source>
+        <translation>%1 oynama</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n map(s)</source>
+        <translation>
+            <numerusform>%n harita</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>%1 cubes</source>
+        <translation>%1 küp</translation>
+    </message>
+    <message>
+        <source>by %1</source>
+        <translation>%1 tarafından</translation>
+    </message>
+    <message>
+        <source>scale %1</source>
+        <translation>ölçek %1</translation>
+    </message>
+    <message>
+        <source>No map selected</source>
+        <translation>Harita seçilmedi</translation>
+    </message>
+    <message>
+        <source>No avatar selected</source>
+        <translation>Avatar seçilmedi</translation>
+    </message>
+    <message>
+        <source>No model selected</source>
+        <translation>Model seçilmedi</translation>
+    </message>
+    <message>
+        <source>Add to my inventory</source>
+        <translation>Envanterime ekle</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n öğe seçili</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n map(s)</source>
+        <translation>
+            <numerusform>%n harita ekle</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n avatar(s)</source>
+        <translation>
+            <numerusform>%n avatar ekle</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Add %n model(s)</source>
+        <translation>
+            <numerusform>%n model ekle</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Refresh</source>
+        <translation>Yenile</translation>
+    </message>
+    <message>
+        <source>Copy name</source>
+        <translation>Adı kopyala</translation>
+    </message>
+    <message>
+        <source>More by %1</source>
+        <translation>%1 tarafından diğerleri</translation>
+    </message>
+    <message>
+        <source>Open on openkogama.org</source>
+        <translation>openkogama.org'da aç</translation>
+    </message>
+    <message>
+        <source>Import</source>
+        <translation>İçe aktar</translation>
+    </message>
+    <message>
+        <source>No download links are available for this map.</source>
+        <translation>Bu harita için indirme bağlantısı bulunmuyor.</translation>
+    </message>
+    <message>
+        <source>Could not fetch map details: %1</source>
+        <translation>Harita ayrıntıları alınamadı: %1</translation>
+    </message>
+</context>
+<context>
     <name>ClientPatches</name>
     <message>
         <source>put the original %1 back</source>
         <translation>orijinal %1 geri yüklendi</translation>
     </message>
     <message>
-        <source>could not add the server&apos;s sounds and themes to %1, the game keeps its own</source>
+        <source>could not add the server's sounds and themes to %1, the game keeps its own</source>
         <translation>sunucunun sesleri ve temaları %1 dosyasına eklenemedi, oyun kendi varsayılanlarını kullanıyor</translation>
     </message>
     <message numerus="yes">
@@ -192,7 +389,7 @@
         </translation>
     </message>
     <message>
-        <source>added the server&apos;s themes to the theme list in %1</source>
+        <source>added the server's themes to the theme list in %1</source>
         <translation>sunucunun temaları %1 içindeki tema listesine eklendi</translation>
     </message>
     <message>
@@ -200,13 +397,13 @@
         <translation>okmod.dll ve modlar oyundan kaldırıldı</translation>
     </message>
     <message numerus="yes">
-        <source>the game loads okmod.dll with %n mod(s) from the launcher&apos;s mods folder</source>
+        <source>the game loads okmod.dll with %n mod(s) from the launcher's mods folder</source>
         <translation>
             <numerusform>oyun, başlatıcının mods klasöründen %n mod ile okmod.dll dosyasını yüklüyor</numerusform>
         </translation>
     </message>
     <message>
-        <source>the game loads the scripts mod for this server&apos;s Lua scripts</source>
+        <source>the game loads the scripts mod for this server's Lua scripts</source>
         <translation>oyun bu sunucunun Lua betikleri için scripts modunu yüklüyor</translation>
     </message>
     <message>
@@ -246,7 +443,7 @@
         <translation>Sound Emitter listesinde sunucu sesleri</translation>
     </message>
     <message>
-        <source>Adds the server&apos;s own sounds to the Sound Emitter list of 3.5 by rewriting kogama_Data/data.unity3d. The original stays as data.unity3d.original and comes back when the server has none or this is off.</source>
+        <source>Adds the server's own sounds to the Sound Emitter list of 3.5 by rewriting kogama_Data/data.unity3d. The original stays as data.unity3d.original and comes back when the server has none or this is off.</source>
         <translation>kogama_Data/data.unity3d dosyasını yeniden yazarak 3.5 sürümünün Sound Emitter listesine sunucunun kendi seslerini ekler. Orijinal dosya data.unity3d.original olarak saklanır ve sunucuda özel ses yoksa veya bu ayar kapatılırsa geri yüklenir.</translation>
     </message>
     <message>
@@ -254,7 +451,7 @@
         <translation>Sunucu temaları</translation>
     </message>
     <message>
-        <source>Adds the server&apos;s own sky themes to the theme menu and gives the game&apos;s themes the pictures the server replaced, by rewriting the theme list in kogama_Data/sharedassets0.assets, or in kogama_Data/data.unity3d on 3.5. The original stays as .original next to it and comes back when the server has none or this is off.</source>
+        <source>Adds the server's own sky themes to the theme menu and gives the game's themes the pictures the server replaced, by rewriting the theme list in kogama_Data/sharedassets0.assets, or in kogama_Data/data.unity3d on 3.5. The original stays as .original next to it and comes back when the server has none or this is off.</source>
         <translation>kogama_Data/sharedassets0.assets (veya 3.5 sürümünde kogama_Data/data.unity3d) içindeki tema listesini yeniden yazarak sunucunun gökyüzü temalarını tema menüsüne ekler ve değiştirilen tema görsellerini uygular. Orijinal dosya yanında .original olarak saklanır ve kapatıldığında geri yüklenir.</translation>
     </message>
     <message>
@@ -262,7 +459,7 @@
         <translation>Değiştirilen paketlerin güncel kopyaları</translation>
     </message>
     <message>
-        <source>Removes the game&apos;s cached copies of bundles the server replaces, so the game downloads the server&apos;s version.</source>
+        <source>Removes the game's cached copies of bundles the server replaces, so the game downloads the server's version.</source>
         <translation>Sunucunun değiştirdiği paketlerin oyundaki önbellek kopyalarını temizler, böylece oyun sunucunun sürümünü indirir.</translation>
     </message>
     <message>
@@ -271,7 +468,7 @@
     </message>
     <message>
         <source>Wraps GodzillaLaser.OnUnequip in kogama_Data/Managed/Assembly-CSharp.dll in a try block, so 1.47 to 1.92 stop breaking when someone leaves the Colossus. The original stays as Assembly-CSharp.dll.original and comes back when this is off.</source>
-        <translation>1.47 ile 1.92 arası sürümlerde biri Colossus&apos;tan ayrıldığında oyunun bozulmaması için kogama_Data/Managed/Assembly-CSharp.dll içindeki GodzillaLaser.OnUnequip fonksiyonunu bir try bloğuna alır. Orijinal dosya Assembly-CSharp.dll.original olarak saklanır.</translation>
+        <translation>1.47 ile 1.92 arası sürümlerde biri Colossus'tan ayrıldığında oyunun bozulmaması için kogama_Data/Managed/Assembly-CSharp.dll içindeki GodzillaLaser.OnUnequip fonksiyonunu bir try bloğuna alır. Orijinal dosya Assembly-CSharp.dll.original olarak saklanır.</translation>
     </message>
     <message>
         <source>World switching</source>
@@ -286,8 +483,8 @@
         <translation>UDP engelliyken TCP kullan</translation>
     </message>
     <message>
-        <source>Before joining a server that offers it, the launcher checks whether the game&apos;s UDP traffic gets through. When your network or VPN blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back on the next launch over UDP.</source>
-        <translation>Bu özelliği destekleyen bir sunucuya katılmadan önce başlatıcı UDP trafiğinin ulaşıp ulaşmadığını kontrol eder. Ağın veya VPN&apos;in UDP&apos;yi engelliyorsa oyun o oturumda web sitesi gibi TCP üzerinden bağlanır. Orijinal dosya sonraki UDP başlatmasında geri yüklenir.</translation>
+        <source>Before joining a server that offers it, the launcher checks whether the game's UDP traffic gets through. When your network or VPN blocks it, the game connects over TCP for that launch instead, like a website. Rewrites how MVNetworkGame opens its connection in kogama_Data/Managed/Assembly-CSharp.dll, or in GameAssembly.dll on IL2CPP versions. The original stays as .original next to it and comes back on the next launch over UDP.</source>
+        <translation>Bu özelliği destekleyen bir sunucuya katılmadan önce başlatıcı UDP trafiğinin ulaşıp ulaşmadığını kontrol eder. Ağın veya VPN'in UDP'yi engelliyorsa oyun o oturumda web sitesi gibi TCP üzerinden bağlanır. Orijinal dosya sonraki UDP başlatmasında geri yüklenir.</translation>
     </message>
     <message>
         <source>Server teleport</source>
@@ -310,7 +507,7 @@
         <translation>Modlar</translation>
     </message>
     <message>
-        <source>Loads the mods you put in the mods folder in the launcher&apos;s data folder into the game, and the launcher&apos;s own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, or the same hooks to kogama_Data/Managed/Assembly-CSharp.dll on versions before IL2CPP, and puts okmod.dll and the mods built for the game&apos;s 32 or 64 bits next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher&apos;s. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as .original next to it and comes back when this is off or nothing needs it.</source>
+        <source>Loads the mods you put in the mods folder in the launcher's data folder into the game, and the launcher's own scripts mod when the server has Lua scripts for its players. Adds okmod.dll to the imports of GameAssembly.dll with hooks the mods use, or the same hooks to kogama_Data/Managed/Assembly-CSharp.dll on versions before IL2CPP, and puts okmod.dll and the mods built for the game's 32 or 64 bits next to the game. A scripts.dll of your own in the mods folder takes the place of the launcher's. While the folder has no mods and the server no scripts, the game stays as it is. The original stays as .original next to it and comes back when this is off or nothing needs it.</source>
         <translation>Başlatıcının veri klasöründeki mods klasörüne koyduğun modları ve sunucuda Lua betikleri varsa başlatıcının kendi scripts modunu oyuna yükler. GameAssembly.dll veya Assembly-CSharp.dll dosyasına okmod.dll kancalarını ekler. Hiç mod yoksa ve sunucuda betik bulunmuyorsa oyun orijinal halinde kalır.</translation>
     </message>
     <message numerus="yes">
@@ -400,7 +597,7 @@
     </message>
     <message>
         <source>Info on how things looked in old versions, help with the launcher, founding the r/OpenKogama subreddit, and translating the website into Russian.</source>
-        <translation>Eski sürümlerin nasıl göründüğü hakkındaki bilgiler, başlatıcıya destek, r/OpenKogama subreddit&apos;ini kurma ve web sitesini Rusçaya çevirme.</translation>
+        <translation>Eski sürümlerin nasıl göründüğü hakkındaki bilgiler, başlatıcıya destek, r/OpenKogama subreddit'ini kurma ve web sitesini Rusçaya çevirme.</translation>
     </message>
     <message>
         <source>Archiving the standalone builds.</source>
@@ -412,15 +609,15 @@
     </message>
     <message>
         <source>Announcing OpenKogama on Regama.</source>
-        <translation>OpenKogama&apos;yı Regama&apos;da duyurma.</translation>
+        <translation>OpenKogama'yı Regama'da duyurma.</translation>
     </message>
     <message>
         <source>Announcing OpenKogama.</source>
-        <translation>OpenKogama&apos;yı duyurma.</translation>
+        <translation>OpenKogama'yı duyurma.</translation>
     </message>
     <message>
         <source>Sharing OpenKogama on his server.</source>
-        <translation>OpenKogama&apos;yı kendi sunucusunda paylaşma.</translation>
+        <translation>OpenKogama'yı kendi sunucusunda paylaşma.</translation>
     </message>
     <message>
         <source>Translating the website and the launcher into French.</source>
@@ -436,7 +633,7 @@
     </message>
     <message>
         <source>Porting the launcher to Linux.</source>
-        <translation>Başlatıcıyı Linux&apos;a uyarlama.</translation>
+        <translation>Başlatıcıyı Linux'a uyarlama.</translation>
     </message>
     <message>
         <source>Credits</source>
@@ -449,6 +646,76 @@
     <message>
         <source>Thanks to</source>
         <translation>Teşekkürler</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadManager</name>
+    <message>
+        <source>Map</source>
+        <translation>Harita</translation>
+    </message>
+    <message>
+        <source>Avatar</source>
+        <translation>Avatar</translation>
+    </message>
+    <message>
+        <source>Model</source>
+        <translation>Model</translation>
+    </message>
+</context>
+<context>
+    <name>DownloadsPopup</name>
+    <message>
+        <source>Downloads</source>
+        <translation>İndirilenler</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>Temizle</translation>
+    </message>
+    <message>
+        <source>Cancel all</source>
+        <translation>Tümünü iptal et</translation>
+    </message>
+    <message>
+        <source>No downloads yet.</source>
+        <translation>Henüz indirme yok.</translation>
+    </message>
+    <message>
+        <source>Queued</source>
+        <translation>Sırada</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>İptal</translation>
+    </message>
+    <message>
+        <source>Downloading... %1%</source>
+        <translation>İndiriliyor... %1%</translation>
+    </message>
+    <message>
+        <source>Downloading...</source>
+        <translation>İndiriliyor...</translation>
+    </message>
+    <message>
+        <source>Added</source>
+        <translation>Eklendi</translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation>Göster</translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation>Başarısız</translation>
+    </message>
+    <message>
+        <source>Retry</source>
+        <translation>Tekrar dene</translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation>İptal edildi</translation>
     </message>
 </context>
 <context>
@@ -474,10 +741,10 @@ Tarayıcında giriş yap veya ücretsiz bir hesap oluştur. Oyun ardından kendi
         <translation>Ad alınmış</translation>
     </message>
     <message>
-        <source>The name &quot;%1&quot; belongs to an OpenKogama account on this server.
+        <source>The name "%1" belongs to an OpenKogama account on this server.
 
 If it is yours, sign in. Otherwise pick another nickname.</source>
-        <translation>&quot;%1&quot; adı bu sunucuda bir OpenKogama hesabına ait.
+        <translation>"%1" adı bu sunucuda bir OpenKogama hesabına ait.
 
 Bu hesap seninse giriş yap. Değilse başka bir takma ad seç.</translation>
     </message>
@@ -502,7 +769,7 @@ Bu hesap seninse giriş yap. Değilse başka bir takma ad seç.</translation>
         <translation>Katıl</translation>
     </message>
     <message>
-        <source>Loading the server&apos;s plugins...</source>
+        <source>Loading the server's plugins...</source>
         <translation>Sunucunun eklentileri yükleniyor...</translation>
     </message>
     <message>
@@ -564,10 +831,10 @@ Bu hesap seninse giriş yap. Değilse başka bir takma ad seç.</translation>
     <message>
         <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
 
-Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
+Install Wine with your package manager, for example "sudo apt install wine", and try again.</source>
         <translation>Bu KoGaMa sürümü bir Windows derlemesidir, bu yüzden bu sistemde çalışmak için Wine gerekir.
 
-Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;) ve tekrar dene.</translation>
+Paket yöneticinle Wine'ı kur (örneğin "sudo apt install wine") ve tekrar dene.</translation>
     </message>
     <message>
         <source>Could not start %1</source>
@@ -754,7 +1021,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>&amp;Dünyalar</translation>
     </message>
     <message>
-        <source>Let&apos;s get started</source>
+        <source>Let's get started</source>
         <translation>Başlayalım</translation>
     </message>
     <message>
@@ -874,6 +1141,14 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Yüklü sürüm yok</translation>
     </message>
     <message>
+        <source>Downloads</source>
+        <translation>İndirilenler</translation>
+    </message>
+    <message>
+        <source>Show ongoing and recent downloads</source>
+        <translation>Devam eden ve son indirmeleri göster</translation>
+    </message>
+    <message>
         <source>&amp;Servers</source>
         <translation>&amp;Sunucular</translation>
     </message>
@@ -982,12 +1257,12 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Sürümü sil</translation>
     </message>
     <message>
-        <source>Switch to another game version before deleting this one&apos;s files.</source>
+        <source>Switch to another game version before deleting this one's files.</source>
         <translation>Bu sürümün dosyalarını silmeden önce başka bir oyun sürümüne geç.</translation>
     </message>
     <message>
-        <source>Delete &quot;%1&quot; and all its files? This can&apos;t be undone.</source>
-        <translation>&quot;%1&quot; ve tüm dosyaları silinsin mi? Bu işlem geri alınamaz.</translation>
+        <source>Delete "%1" and all its files? This can't be undone.</source>
+        <translation>"%1" ve tüm dosyaları silinsin mi? Bu işlem geri alınamaz.</translation>
     </message>
     <message>
         <source>Some files could not be deleted. Close the game if it is running and try again.</source>
@@ -1002,7 +1277,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>OpenKogama Player %1 konumunda eksik</translation>
     </message>
     <message>
-        <source>This version can&apos;t be launched yet</source>
+        <source>This version can't be launched yet</source>
         <translation>Bu sürüm henüz başlatılamıyor</translation>
     </message>
     <message>
@@ -1026,7 +1301,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>%1 sunucusu KoGaMa %2 kullanıyor. Önce Sürümler sekmesinden ekle.</translation>
     </message>
     <message>
-        <source>%1 plays KoGaMa %2, which you don&apos;t have yet. Download it now (%3)?</source>
+        <source>%1 plays KoGaMa %2, which you don't have yet. Download it now (%3)?</source>
         <translation>%1 sunucusu sende yüklü olmayan KoGaMa %2 sürümünü kullanıyor. Şimdi indirilsin mi (%3)?</translation>
     </message>
     <message>
@@ -1044,6 +1319,10 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     <message>
         <source>Join %1?</source>
         <translation>%1 sunucusuna katıl?</translation>
+    </message>
+    <message>
+        <source>Downloads (%1)</source>
+        <translation>İndirilenler (%1)</translation>
     </message>
     <message>
         <source>Import</source>
@@ -1064,14 +1343,6 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     <message>
         <source>Add this model to your inventory?</source>
         <translation>Bu model envanterine eklensin mi?</translation>
-    </message>
-    <message>
-        <source>this item</source>
-        <translation>bu öğe</translation>
-    </message>
-    <message>
-        <source>Adding %1 to KoGaMa...</source>
-        <translation>%1 KoGaMa&apos;ya ekleniyor...</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -1175,7 +1446,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     </message>
     <message>
         <source>No plugins yet. Drop a .dll or .zip file here or click Add plugin.</source>
-        <translation>Henüz eklenti yok. Buraya bir .dll veya .zip dosyası sürükle ya da Eklenti ekle&apos;ye tıkla.</translation>
+        <translation>Henüz eklenti yok. Buraya bir .dll veya .zip dosyası sürükle ya da Eklenti ekle'ye tıkla.</translation>
     </message>
     <message>
         <source>Plugins</source>
@@ -1207,7 +1478,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     </message>
     <message>
         <source>Click Reload to load it</source>
-        <translation>Yüklemek için Yeniden yükle&apos;ye tıkla</translation>
+        <translation>Yüklemek için Yeniden yükle'ye tıkla</translation>
     </message>
     <message>
         <source>Failed to load</source>
@@ -1246,8 +1517,8 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Eklentiyi kaldır</translation>
     </message>
     <message>
-        <source>Remove the plugin &quot;%1&quot;? Its saved data is kept.</source>
-        <translation>&quot;%1&quot; eklentisi kaldırılsın mı? Kayıtlı verileri saklanır.</translation>
+        <source>Remove the plugin "%1"? Its saved data is kept.</source>
+        <translation>"%1" eklentisi kaldırılsın mı? Kayıtlı verileri saklanır.</translation>
     </message>
     <message>
         <source>Show in Explorer</source>
@@ -1265,8 +1536,8 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Sunucu ayarları</translation>
     </message>
     <message>
-        <source>The server.json of the server on this computer, which hosted worlds follow. Saving restarts the server. &lt;a href=&quot;%1&quot; style=&quot;color: #3a7a80; text-decoration: none;&quot;&gt;All settings&lt;/a&gt;</source>
-        <translation>Bu bilgisayardaki sunucunun ve barındırılan dünyaların kullandığı server.json dosyası. Kaydetmek sunucuyu yeniden başlatır. &lt;a href=&quot;%1&quot; style=&quot;color: #3a7a80; text-decoration: none;&quot;&gt;Tüm ayarlar&lt;/a&gt;</translation>
+        <source>The server.json of the server on this computer, which hosted worlds follow. Saving restarts the server. &lt;a href="%1" style="color: #3a7a80; text-decoration: none;"&gt;All settings&lt;/a&gt;</source>
+        <translation>Bu bilgisayardaki sunucunun ve barındırılan dünyaların kullandığı server.json dosyası. Kaydetmek sunucuyu yeniden başlatır. &lt;a href="%1" style="color: #3a7a80; text-decoration: none;"&gt;Tüm ayarlar&lt;/a&gt;</translation>
     </message>
     <message>
         <source>Open folder</source>
@@ -1430,8 +1701,8 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>İsteğe bağlı port ile bir sunucu adresi veya HTTP/HTTPS bağlantısı gir.</translation>
     </message>
     <message>
-        <source>Type the code shown in the host&apos;s launcher after they click Host.</source>
-        <translation>Ev sahibinin başlatıcısında Paylaş&apos;a bastıktan sonra görünen kodu yaz.</translation>
+        <source>Type the code shown in the host's launcher after they click Host.</source>
+        <translation>Ev sahibinin başlatıcısında Paylaş'a bastıktan sonra görünen kodu yaz.</translation>
     </message>
     <message>
         <source>Join</source>
@@ -1442,8 +1713,8 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Sunucuyu kaldır</translation>
     </message>
     <message>
-        <source>Remove &quot;%1&quot; from your servers?</source>
-        <translation>&quot;%1&quot; sunucularından kaldırılsın mı?</translation>
+        <source>Remove "%1" from your servers?</source>
+        <translation>"%1" sunucularından kaldırılsın mı?</translation>
     </message>
 </context>
 <context>
@@ -1469,7 +1740,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Discord:</translation>
     </message>
     <message>
-        <source>Show what I&apos;m playing</source>
+        <source>Show what I'm playing</source>
         <translation>Ne oynadığımı göster</translation>
     </message>
     <message>
@@ -1568,7 +1839,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>yerel sunucun çalışmıyor, önce Dünyalar sekmesini aç</translation>
     </message>
     <message>
-        <source>the OpenKogama P2P servers can&apos;t be reached</source>
+        <source>the OpenKogama P2P servers can't be reached</source>
         <translation>OpenKogama P2P sunucularına ulaşılamıyor</translation>
     </message>
     <message>
@@ -1861,15 +2132,55 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     </message>
     <message>
         <source>Switch to 2D</source>
-        <translation>2D&apos;ye geç</translation>
+        <translation>2D'ye geç</translation>
     </message>
     <message>
         <source>Switch to 3D</source>
-        <translation>3D&apos;ye geç</translation>
+        <translation>3D'ye geç</translation>
     </message>
     <message>
         <source>Delete...</source>
         <translation>Sil...</translation>
+    </message>
+    <message>
+        <source>Archive</source>
+        <translation>Arşiv</translation>
+    </message>
+    <message>
+        <source>My worlds</source>
+        <translation>Dünyalarım</translation>
+    </message>
+    <message>
+        <source>Worlds saved on your computer</source>
+        <translation>Bilgisayarında kayıtlı dünyalar</translation>
+    </message>
+    <message>
+        <source>Browse and download archived KoGaMa maps</source>
+        <translation>Arşivlenmiş KoGaMa haritalarına göz at ve indir</translation>
+    </message>
+    <message>
+        <source>My avatars</source>
+        <translation>Avatarlarım</translation>
+    </message>
+    <message>
+        <source>Avatars saved on your computer</source>
+        <translation>Bilgisayarında kayıtlı avatarlar</translation>
+    </message>
+    <message>
+        <source>Browse and download archived KoGaMa avatars</source>
+        <translation>Arşivlenmiş KoGaMa avatarlarına göz at ve indir</translation>
+    </message>
+    <message>
+        <source>My inventory</source>
+        <translation>Envanterim</translation>
+    </message>
+    <message>
+        <source>Models saved on your computer</source>
+        <translation>Bilgisayarında kayıtlı modeller</translation>
+    </message>
+    <message>
+        <source>Browse and download archived KoGaMa models</source>
+        <translation>Arşivlenmiş KoGaMa modellerine göz at ve indir</translation>
     </message>
     <message>
         <source>Scale...</source>
@@ -1888,6 +2199,12 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Misafirlerin oyun modunda katılır (Sunucu ayarları)</translation>
     </message>
     <message numerus="yes">
+        <source>%n selected</source>
+        <translation>
+            <numerusform>%n öğe seçili</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
         <source>Search %n world(s)...</source>
         <translation>
             <numerusform>%n dünya içinde ara...</numerusform>
@@ -1895,7 +2212,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     </message>
     <message>
         <source>No worlds yet. Click New world to create one, or Import to open a saved file.</source>
-        <translation>Henüz dünya yok. Oluşturmak için Yeni dünya&apos;ya, kayıtlı bir dosya açmak için İçe aktar&apos;a tıkla.</translation>
+        <translation>Henüz dünya yok. Oluşturmak için Yeni dünya'ya, kayıtlı bir dosya açmak için İçe aktar'a tıkla.</translation>
     </message>
     <message>
         <source>No worlds match your search.</source>
@@ -1921,7 +2238,7 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
     </message>
     <message>
         <source>Could not load your worlds. Press F5 to try again.</source>
-        <translation>Dünyaların yüklenemedi. Tekrar denemek için F5&apos;e bas.</translation>
+        <translation>Dünyaların yüklenemedi. Tekrar denemek için F5'e bas.</translation>
     </message>
     <message>
         <source>Last played: %1</source>
@@ -1990,6 +2307,10 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         </translation>
     </message>
     <message>
+        <source>Export worlds</source>
+        <translation>Dünyaları dışa aktar</translation>
+    </message>
+    <message>
         <source>Export world</source>
         <translation>Dünyayı dışa aktar</translation>
     </message>
@@ -2009,17 +2330,59 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <source>Could not rename this world</source>
         <translation>Bu dünya yeniden adlandırılamadı</translation>
     </message>
+    <message numerus="yes">
+        <source>Delete %n world(s)? This can't be undone.</source>
+        <translation>
+            <numerusform>%n dünya silinsin mi? Bu işlem geri alınamaz.</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Delete world</source>
         <translation>Dünyayı sil</translation>
     </message>
     <message>
-        <source>Delete &quot;%1&quot;? This can&apos;t be undone.</source>
-        <translation>&quot;%1&quot; silinsin mi? Bu işlem geri alınamaz.</translation>
+        <source>Some worlds could not be deleted because they are open in the game. Close them first.</source>
+        <translation>Bazı dünyalar oyunda açık olduğu için silinemedi. Önce onları kapat.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n avatar(s)? This can't be undone.</source>
+        <translation>
+            <numerusform>%n avatar silinsin mi? Bu işlem geri alınamaz.</numerusform>
+        </translation>
     </message>
     <message>
-        <source>This world is open in the game. Close it first.</source>
-        <translation>Bu dünya oyunda açık. Önce oyunu kapat.</translation>
+        <source>Your currently active avatar will be kept.</source>
+        <translation>Şu anda aktif olan avatarın korunacak.</translation>
+    </message>
+    <message>
+        <source>Could not delete some avatars.</source>
+        <translation>Bazı avatarlar silinemedi.</translation>
+    </message>
+    <message>
+        <source>Could not delete some items.</source>
+        <translation>Bazı öğeler silinemedi.</translation>
+    </message>
+    <message numerus="yes">
+        <source>Could not export %n item(s).</source>
+        <translation>
+            <numerusform>%n öğe dışa aktarılamadı.</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Export %n item(s)...</source>
+        <translation>
+            <numerusform>%n öğeyi dışa aktar...</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n item(s)</source>
+        <translation>
+            <numerusform>%n öğeyi sil</numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Delete "%1"? This can't be undone.</source>
+        <translation>"%1" silinsin mi? Bu işlem geri alınamaz.</translation>
     </message>
     <message>
         <source>Play</source>
@@ -2029,13 +2392,25 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <source>Build</source>
         <translation>İnşa et</translation>
     </message>
+    <message numerus="yes">
+        <source>Export %n world(s)...</source>
+        <translation>
+            <numerusform>%n dünyayı dışa aktar...</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Delete</source>
         <translation>Sil</translation>
     </message>
+    <message numerus="yes">
+        <source>Delete %n world(s)</source>
+        <translation>
+            <numerusform>%n dünyayı sil</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Could not load your avatars. Press F5 to try again.</source>
-        <translation>Avatarların yüklenemedi. Tekrar denemek için F5&apos;e bas.</translation>
+        <translation>Avatarların yüklenemedi. Tekrar denemek için F5'e bas.</translation>
     </message>
     <message>
         <source>No picture yet, take one with the camera in the avatar editor</source>
@@ -2068,6 +2443,10 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         </translation>
     </message>
     <message>
+        <source>Export avatars</source>
+        <translation>Avatarları dışa aktar</translation>
+    </message>
+    <message>
         <source>Export avatar</source>
         <translation>Avatarı dışa aktar</translation>
     </message>
@@ -2092,16 +2471,24 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Bu avatarı kullanıyorsun. Önce başka birini kullan, sonra bunu sil.</translation>
     </message>
     <message>
-        <source>Could not delete this avatar</source>
-        <translation>Bu avatar silinemedi</translation>
-    </message>
-    <message>
         <source>Use</source>
         <translation>Kullan</translation>
     </message>
+    <message numerus="yes">
+        <source>Export %n avatar(s)...</source>
+        <translation>
+            <numerusform>%n avatarı dışa aktar...</numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n avatar(s)</source>
+        <translation>
+            <numerusform>%n avatarı sil</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Could not load your inventory. Press F5 to try again.</source>
-        <translation>Envanterin yüklenemedi. Tekrar denemek için F5&apos;e bas.</translation>
+        <translation>Envanterin yüklenemedi. Tekrar denemek için F5'e bas.</translation>
     </message>
     <message>
         <source>Model %1</source>
@@ -2172,6 +2559,10 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <translation>Bu modelin ölçeği değiştirilemedi</translation>
     </message>
     <message>
+        <source>Export models</source>
+        <translation>Modelleri dışa aktar</translation>
+    </message>
+    <message>
         <source>Export model</source>
         <translation>Modeli dışa aktar</translation>
     </message>
@@ -2187,17 +2578,19 @@ Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;
         <source>Could not rename this item</source>
         <translation>Bu öğe yeniden adlandırılamadı</translation>
     </message>
+    <message numerus="yes">
+        <source>Delete %n item(s) from your inventory? This can't be undone.</source>
+        <translation>
+            <numerusform>Envanterinden %n öğe silinsin mi? Bu işlem geri alınamaz.</numerusform>
+        </translation>
+    </message>
     <message>
         <source>Delete item</source>
         <translation>Öğeyi sil</translation>
     </message>
     <message>
-        <source>Delete &quot;%1&quot; from your inventory? This can&apos;t be undone.</source>
-        <translation>&quot;%1&quot; envanterinden silinsin mi? Bu işlem geri alınamaz.</translation>
-    </message>
-    <message>
-        <source>Could not delete this item</source>
-        <translation>Bu öğe silinemedi</translation>
+        <source>Delete "%1" from your inventory? This can't be undone.</source>
+        <translation>"%1" envanterinden silinsin mi? Bu işlem geri alınamaz.</translation>
     </message>
     <message>
         <source>Worlds</source>

@@ -10,5 +10,6 @@ int cubeCount(const QByteArray &file);
 bool hasScale(const QByteArray &file);
 float scale(const QByteArray &file);
 QImage render(const QByteArray &file, const QSize &size);
+QImage renderAvatar(const QByteArray &avatarJson, const QSize &size);
 
 }

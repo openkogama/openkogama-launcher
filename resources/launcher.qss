@@ -121,4 +121,7 @@ QCheckBox::indicator:checked, QTreeView::indicator:checked { background: #3a7a80
 QProgressBar { background: @field@; border: 1px solid @border@; border-radius: 4px; text-align: center; color: @text@; }
 QProgressBar::chunk { background: #3a7a80; border-radius: 3px; }
 QFrame#shareBar { background: @alternate@; border: 1px solid @border@; border-left: 3px solid #3a7a80; border-radius: 6px; }
+QFrame#downloadsPopup { background: @field@; border: 1px solid @border@; border-radius: 6px; }
+QFrame#downloadRow { background: @alternate@; border: 1px solid @border@; border-radius: 4px; }
+QPushButton#downloadsButton[active="true"] { border-color: #3a7a80; color: @text@; font-weight: bold; }
 QLabel#serverConfigError { color: #e05d5d; }
