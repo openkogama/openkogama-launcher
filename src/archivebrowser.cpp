@@ -28,6 +28,7 @@
 #include <QNetworkRequest>
 #include <QPixmap>
 #include <QPushButton>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QScrollBar>
 #include <QShortcut>
@@ -299,7 +300,8 @@ void ArchiveBrowser::fetchLatest()
         }
         const QJsonObject latest = QJsonDocument::fromJson(reply->readAll()).object();
         m_build = latest.value("build").toString();
-        if (m_build.isEmpty()) {
+        static const QRegularExpression buildName(QStringLiteral("^[A-Za-z0-9_-][A-Za-z0-9._-]{0,63}$"));
+        if (!buildName.match(m_build).hasMatch()) {
             m_loading = false;
             m_status->setText(tr("Could not load the archive. Press F5 to try again."));
             m_status->show();
@@ -582,7 +584,7 @@ void ArchiveBrowser::parseCardChunk(int chunkIndex, const QByteArray &cards)
         if (metaVal.isArray()) {
             const QJsonArray info = metaVal.toArray();
             const QString rating = info.at(4).toString().trimmed();
-            if (!rating.isEmpty()) continue; // Skip mature/hidden entries
+            if (!rating.isEmpty()) continue;
             name = info.at(0).toString().trimmed();
             type = info.at(1).toString().trimmed().toLower();
             desc = info.at(2).toString().trimmed();
@@ -1012,7 +1014,7 @@ void ArchiveBrowser::requestMapDetails(const QVector<Entry> &entries)
             req.sha256 = latestVersion.at(0).toString().trimmed().toLower();
             for (const QJsonValue &val : latestVersion.at(5).toArray()) {
                 const QUrl u(val.toString());
-                if (u.isValid() && (u.scheme() == "https" || u.scheme() == "http"))
+                if (u.isValid() && u.scheme() == "https")
                     req.urls.append(u);
             }
             if (req.urls.isEmpty()) {
