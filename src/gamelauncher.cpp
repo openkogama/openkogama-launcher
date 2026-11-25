@@ -202,8 +202,10 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     const bool viaCode = !code.isEmpty();
     QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
     if (local) {
+#ifdef Q_OS_WIN
         env.insert("http_proxy", "http://127.0.0.1:8081");
         env.insert("no_proxy", "127.0.0.1,localhost");
+#endif
         if (!waitForPlugins(parent, url)) return nullptr;
     }
 

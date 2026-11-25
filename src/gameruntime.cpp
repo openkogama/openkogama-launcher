@@ -562,6 +562,24 @@ bool isServerProgram(const QString &program)
     return QFileInfo(program).fileName() == serverExecutable();
 }
 
+#ifndef Q_OS_WIN
+void ensureProtonFonts()
+{
+    const QDir fonts(prefixPath() + "/drive_c/windows/Fonts");
+    if (!fonts.exists()) return;
+    const QList<QPair<QString, QString>> aliases = {
+        {QStringLiteral("segoeuib.ttf"), QStringLiteral("arialbd.ttf")},
+        {QStringLiteral("segoeui.ttf"), QStringLiteral("arial.ttf")},
+    };
+    for (const auto &[missing, fallback] : aliases) {
+        const QString target = fonts.filePath(missing);
+        const QString source = fonts.filePath(fallback);
+        if (!QFileInfo::exists(target) && QFileInfo::exists(source))
+            QFile::link(source, target);
+    }
+}
+#endif
+
 void prepare(QProcess *process)
 {
 #ifdef Q_OS_WIN
@@ -573,6 +591,7 @@ void prepare(QProcess *process)
     if (!needsWine(program)) return;
     const QString proton = activeProton();
     if (proton.isEmpty()) return;
+    ensureProtonFonts();
     process->setArguments(QStringList{QStringLiteral("run"), program} + process->arguments());
     process->setProgram(proton);
     process->setProcessEnvironment(protonEnvironment(process->processEnvironment()));
