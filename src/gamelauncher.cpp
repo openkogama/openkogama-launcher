@@ -343,13 +343,9 @@ QProcess *GameLauncher::start(const QString &path, const QString &exe, const QSt
     }
     if (arguments)
         client->setArguments(arguments(session));
-    if (GameRuntime::needsWine(client->program()) && !GameRuntime::wineAvailable()) {
+    if (GameRuntime::needsWine(client->program()) && !GameRuntime::ensureAvailable(parent)) {
         client->deleteLater();
         console->deleteLater();
-        QMessageBox::warning(parent, QCoreApplication::translate("GameLauncher", "Wine is missing"),
-            QCoreApplication::translate("GameLauncher",
-                "This KoGaMa version is a Windows build, so it needs Wine to run on this system.\n\n"
-                "Install Wine with your package manager, for example \"sudo apt install wine\", and try again."));
         return nullptr;
     }
     GameRuntime::prepare(client);

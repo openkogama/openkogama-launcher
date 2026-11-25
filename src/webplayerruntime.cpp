@@ -157,6 +157,7 @@ bool WebPlayerRuntime::isWebPlayerFile(const QString &name) {
 }
 
 bool WebPlayerRuntime::ensureInstalled(QWidget *parent, const QString &file) {
+    if (!GameRuntime::ensureAvailable(parent)) return false;
     if (!installed(Runtime) && !install(Runtime, parent)) return false;
     if (engineFamily(file) == "5.x.x" && !installed(Unity5) && !install(Unity5, parent)) return false;
     registerRuntime();

@@ -256,6 +256,16 @@ void setTheme(const QString &theme)
     store().setValue("General/theme", theme);
 }
 
+QString protonPath()
+{
+    return store().value("runtime/protonPath").toString();
+}
+
+void setProtonPath(const QString &path)
+{
+    store().setValue("runtime/protonPath", path);
+}
+
 }
 
 QString GameServer::addressOf(const QString &text)

@@ -67,4 +67,7 @@ void setLanguage(const QString &code);
 QString theme();
 void setTheme(const QString &theme);
 
+QString protonPath();
+void setProtonPath(const QString &path);
+
 }

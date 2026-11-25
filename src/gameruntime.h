@@ -1,14 +1,25 @@
 #ifndef GAMERUNTIME_H
 #define GAMERUNTIME_H
 
+#include <QList>
 #include <QString>
 
 class QProcess;
+class QWidget;
 
 namespace GameRuntime {
 
+struct ProtonBuild {
+    QString name;
+    QString path;
+};
+
 bool needsWine(const QString &program);
 bool wineAvailable();
+bool ensureAvailable(QWidget *parent);
+bool installProton(QWidget *parent, QString *installedPath = nullptr);
+QList<ProtonBuild> installedProtons();
+QString activeProton();
 
 QString gameHome();
 QString gameTemp();
