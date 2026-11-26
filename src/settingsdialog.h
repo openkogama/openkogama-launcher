@@ -27,6 +27,9 @@ public:
 private:
     void showAccount();
     void switchAccount();
+#ifndef Q_OS_WIN
+    void refreshProtons(const QString &selectPath = {});
+#endif
 
     Ui::SettingsDialog *ui;
     QList<QPair<QString, QCheckBox *>> m_patches;
@@ -34,6 +37,10 @@ private:
     QPushButton *m_accountButton = nullptr;
     QComboBox *m_language = nullptr;
     QComboBox *m_theme = nullptr;
+#ifndef Q_OS_WIN
+    QComboBox *m_proton = nullptr;
+    QPushButton *m_installProtonButton = nullptr;
+#endif
     QCheckBox *m_askMapClient = nullptr;
 };
 

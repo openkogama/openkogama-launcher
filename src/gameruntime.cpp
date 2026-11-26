@@ -1,13 +1,32 @@
 #include "gameruntime.h"
 #include "paths.h"
+#include "settings.h"
+#include <QCoreApplication>
+#include <QCryptographicHash>
 #include <QDir>
+#include <QEventLoop>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QLocale>
+#include <QMessageBox>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QProgressDialog>
+#include <QPushButton>
 #include <QRegularExpression>
+#include <QSet>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QSysInfo>
+#include <QUrl>
+#include <QVersionNumber>
+#include <algorithm>
 
 namespace {
 
@@ -16,21 +35,27 @@ const QString ServerName = "openkogama-server";
 #ifdef Q_OS_WIN
 constexpr unsigned long CreateNoWindow = 0x08000000;
 #else
-constexpr int RegistryReadMs = 20000;
+constexpr int RegistryReadMs = 30000;
 constexpr int RegistryWriteMs = 30000;
+constexpr int PrefixInitMs = 120000;
+const QUrl ProtonGeLatestApi(QStringLiteral("https://api.github.com/repos/GloriousEggroll/proton-ge-custom/releases/latest"));
+
+const QString SystemWine = QStringLiteral("wine");
+
+bool systemWine()
+{
+    return Settings::protonPath() == SystemWine;
+}
 
 QString wineBinary()
 {
-    static const QString chosen = []() {
-        const QString configured = qEnvironmentVariable("OPENKOGAMA_WINE").trimmed();
-        if (!configured.isEmpty()) return configured;
-        for (const QString &name : {QStringLiteral("wine"), QStringLiteral("wine64")}) {
-            const QString found = QStandardPaths::findExecutable(name);
-            if (!found.isEmpty()) return found;
-        }
-        return QStringLiteral("wine");
-    }();
-    return chosen;
+    const QString configured = qEnvironmentVariable("OPENKOGAMA_WINE").trimmed();
+    if (!configured.isEmpty()) return configured;
+    for (const QString &name : {QStringLiteral("wine"), QStringLiteral("wine64")}) {
+        const QString found = QStandardPaths::findExecutable(name);
+        if (!found.isEmpty()) return found;
+    }
+    return {};
 }
 
 QString winePrefix()
@@ -48,14 +73,155 @@ QProcessEnvironment wineEnvironment(QProcessEnvironment env)
     return env;
 }
 
-int runWine(const QStringList &arguments, int timeout, QByteArray *output = nullptr)
+QString compatDataPath()
+{
+    const QString configured = qEnvironmentVariable("STEAM_COMPAT_DATA_PATH").trimmed();
+    if (!configured.isEmpty()) return QDir::cleanPath(configured);
+    return QDir::cleanPath(Paths::data() + "/proton");
+}
+
+QString prefixPath()
+{
+    return systemWine() ? winePrefix() : compatDataPath() + "/pfx";
+}
+
+QString managedRuntimesDir()
+{
+    return QDir::cleanPath(Paths::data() + "/proton/runtimes");
+}
+
+QString resolveProtonScript(const QString &candidate)
+{
+    if (candidate.trimmed().isEmpty()) return {};
+    const QFileInfo info(candidate.trimmed());
+    if (info.isDir()) {
+        const QFileInfo script(QDir(info.absoluteFilePath()).filePath("proton"));
+        if (script.isFile() && script.isExecutable()) return script.absoluteFilePath();
+        return {};
+    }
+    if (info.isFile() && info.isExecutable()) return info.absoluteFilePath();
+    return {};
+}
+
+QVersionNumber protonVersionKey(const QString &name)
+{
+    static const QRegularExpression re(QStringLiteral("^GE-Proton(\\d+)(?:[-.](\\d+))?(?:[-.](\\d+))?"), QRegularExpression::CaseInsensitiveOption);
+    const QRegularExpressionMatch m = re.match(name.trimmed());
+    if (!m.hasMatch()) return {};
+    QList<int> nums;
+    for (int i = 1; i <= 3; ++i) {
+        if (!m.captured(i).isEmpty()) nums.append(m.captured(i).toInt());
+    }
+    return QVersionNumber(nums);
+}
+
+bool isManagedProton(const QString &script)
+{
+    if (script.isEmpty()) return false;
+    const QString root = QDir::cleanPath(managedRuntimesDir()) + "/";
+    return QDir::cleanPath(script).startsWith(root);
+}
+
+QList<GameRuntime::ProtonBuild> scanProtonDirs()
+{
+    QList<GameRuntime::ProtonBuild> builds;
+    QSet<QString> seenPaths;
+    QSet<QString> seenNames;
+
+    QDir dir(managedRuntimesDir());
+    if (dir.exists()) {
+        for (const QString &entry : dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+            if (!entry.startsWith(QStringLiteral("GE-Proton"), Qt::CaseInsensitive)) continue;
+            const QString script = resolveProtonScript(dir.filePath(entry));
+            if (script.isEmpty()) continue;
+            const QString canon = QFileInfo(script).canonicalFilePath();
+            const QString lowerName = entry.toLower();
+            if (seenPaths.contains(canon) || seenNames.contains(lowerName)) continue;
+            seenPaths.insert(canon);
+            seenNames.insert(lowerName);
+            builds.append({entry, script});
+        }
+    }
+
+    std::sort(builds.begin(), builds.end(), [](const GameRuntime::ProtonBuild &a, const GameRuntime::ProtonBuild &b) {
+        const QVersionNumber va = protonVersionKey(a.name);
+        const QVersionNumber vb = protonVersionKey(b.name);
+        if (va != vb) return va > vb;
+        return a.name > b.name;
+    });
+    return builds;
+}
+
+QString steamClientInstallPath()
+{
+    const QString configured = qEnvironmentVariable("STEAM_COMPAT_CLIENT_INSTALL_PATH").trimmed();
+    if (!configured.isEmpty()) return QDir::cleanPath(configured);
+    return compatDataPath();
+}
+
+QProcessEnvironment protonEnvironment(QProcessEnvironment env)
+{
+    if (env.isEmpty()) env = QProcessEnvironment::systemEnvironment();
+    const QString compat = compatDataPath();
+    QDir().mkpath(compat);
+    env.insert("STEAM_COMPAT_DATA_PATH", compat);
+    env.insert("STEAM_COMPAT_CLIENT_INSTALL_PATH", steamClientInstallPath());
+    if (!env.contains("STEAM_COMPAT_APP_ID")) env.insert("STEAM_COMPAT_APP_ID", "0");
+    if (!env.contains("SteamAppId")) env.insert("SteamAppId", "0");
+    if (!env.contains("WINEDEBUG")) env.insert("WINEDEBUG", "-all");
+
+    // Strip AppImage runtime library overrides so host Python and Proton binaries run cleanly
+    const QString appDir = env.value("APPDIR");
+    if (!appDir.isEmpty() && env.contains("LD_LIBRARY_PATH")) {
+        const QStringList parts = env.value("LD_LIBRARY_PATH").split(':', Qt::SkipEmptyParts);
+        QStringList clean;
+        for (const QString &part : parts) {
+            if (!part.startsWith(appDir)) clean.append(part);
+        }
+        if (clean.isEmpty()) env.remove("LD_LIBRARY_PATH");
+        else env.insert("LD_LIBRARY_PATH", clean.join(':'));
+    }
+    env.remove("PYTHONHOME");
+    env.remove("PYTHONPATH");
+    env.remove("QT_PLUGIN_PATH");
+    return env;
+}
+
+bool ensurePrefixInitialized(const QString &proton)
+{
+    if (QFileInfo::exists(prefixPath() + "/system.reg")) return true;
+    QProcess init;
+    init.setProcessEnvironment(protonEnvironment({}));
+    init.start(proton, {QStringLiteral("run"), QStringLiteral("cmd"), QStringLiteral("/c"), QStringLiteral("exit"), QStringLiteral("0")});
+    if (!init.waitForFinished(PrefixInitMs) || init.exitStatus() != QProcess::NormalExit) return false;
+    return QFileInfo::exists(prefixPath() + "/system.reg");
+}
+
+int runInPrefix(const QStringList &arguments, int timeout, QByteArray *output = nullptr)
 {
     QProcess process;
-    process.setProcessEnvironment(wineEnvironment({}));
-    process.start(wineBinary(), arguments);
+    if (systemWine()) {
+        const QString wine = wineBinary();
+        if (wine.isEmpty()) return -1;
+        process.setProcessEnvironment(wineEnvironment({}));
+        process.start(wine, arguments);
+    } else {
+        const QString proton = GameRuntime::activeProton();
+        if (proton.isEmpty() || !ensurePrefixInitialized(proton)) return -1;
+        process.setProcessEnvironment(protonEnvironment({}));
+        process.start(proton, QStringList{QStringLiteral("runinprefix")} + arguments);
+    }
     if (!process.waitForFinished(timeout) || process.exitStatus() != QProcess::NormalExit) return -1;
     if (output) *output = process.readAllStandardOutput();
     return process.exitCode();
+}
+
+QNetworkRequest githubRequest(const QUrl &url)
+{
+    QNetworkRequest req(url);
+    req.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("OpenKogamaLauncher/1.9.7"));
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    return req;
 }
 #endif
 
@@ -75,14 +241,328 @@ bool needsWine(const QString &program)
 #endif
 }
 
+QList<ProtonBuild> installedProtons()
+{
+#ifdef Q_OS_WIN
+    return {};
+#else
+    return scanProtonDirs();
+#endif
+}
+
+QString activeProton()
+{
+#ifdef Q_OS_WIN
+    return {};
+#else
+    if (const QString env = resolveProtonScript(qEnvironmentVariable("OPENKOGAMA_PROTON")); !env.isEmpty())
+        return env;
+    if (systemWine()) return {};
+    if (const QString configured = resolveProtonScript(Settings::protonPath()); isManagedProton(configured))
+        return configured;
+    const QList<ProtonBuild> found = scanProtonDirs();
+    return found.isEmpty() ? QString() : found.first().path;
+#endif
+}
+
 bool wineAvailable()
 {
 #ifdef Q_OS_WIN
     return true;
 #else
-    const QString binary = wineBinary();
-    if (QFileInfo(binary).isAbsolute()) return QFileInfo(binary).isExecutable();
-    return !QStandardPaths::findExecutable(binary).isEmpty();
+    return systemWine() ? !wineBinary().isEmpty() : !activeProton().isEmpty();
+#endif
+}
+
+bool systemWineFound()
+{
+#ifdef Q_OS_WIN
+    return false;
+#else
+    return !wineBinary().isEmpty();
+#endif
+}
+
+bool ensureAvailable(QWidget *parent)
+{
+#ifdef Q_OS_WIN
+    Q_UNUSED(parent);
+    return true;
+#else
+    if (wineAvailable()) return true;
+    QMessageBox box(QMessageBox::Question, QCoreApplication::translate("GameRuntime", "GE-Proton is required"),
+        QCoreApplication::translate("GameRuntime",
+            "KoGaMa runs on Linux through GE-Proton, a Wine build made for games.\n\n"
+            "Download and install the latest GE-Proton now? (~600 MB)"),
+        QMessageBox::NoButton, parent);
+    QPushButton *download = box.addButton(QCoreApplication::translate("GameRuntime", "Download"), QMessageBox::AcceptRole);
+    QPushButton *wine = systemWineFound()
+        ? box.addButton(QCoreApplication::translate("GameRuntime", "Use system Wine"), QMessageBox::ActionRole) : nullptr;
+    box.addButton(QMessageBox::Cancel);
+    box.setDefaultButton(download);
+    box.exec();
+    if (wine && box.clickedButton() == wine) {
+        Settings::setProtonPath(SystemWine);
+        return true;
+    }
+    if (box.clickedButton() != download) return false;
+    return installProton(parent);
+#endif
+}
+
+bool installProton(QWidget *parent, QString *installedPath)
+{
+#ifdef Q_OS_WIN
+    Q_UNUSED(parent);
+    Q_UNUSED(installedPath);
+    return true;
+#else
+    QProgressDialog progress(
+        QCoreApplication::translate("GameRuntime", "Checking for the latest GE-Proton release..."),
+        QCoreApplication::translate("GameRuntime", "Cancel"), 0, 0, parent);
+    progress.setWindowTitle(QCoreApplication::translate("GameRuntime", "Install GE-Proton"));
+    progress.setWindowModality(Qt::WindowModal);
+    progress.setMinimumDuration(0);
+    progress.setAutoClose(false);
+    progress.setAutoReset(false);
+    progress.show();
+
+    QNetworkAccessManager nam;
+    bool cancelled = false;
+    QObject::connect(&progress, &QProgressDialog::canceled, [&]() { cancelled = true; });
+
+    // 1. Fetch latest release metadata
+    QNetworkReply *metaReply = nam.get(githubRequest(ProtonGeLatestApi));
+    {
+        QEventLoop loop;
+        QObject::connect(metaReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(&progress, &QProgressDialog::canceled, metaReply, &QNetworkReply::abort);
+        loop.exec();
+    }
+    const QByteArray metaData = metaReply->readAll();
+    const QNetworkReply::NetworkError metaErr = metaReply->error();
+    const QString metaErrStr = metaReply->errorString();
+    metaReply->deleteLater();
+
+    if (cancelled) return false;
+    if (metaErr != QNetworkReply::NoError) {
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Could not check for GE-Proton releases: %1").arg(metaErrStr));
+        return false;
+    }
+
+    const QJsonObject rel = QJsonDocument::fromJson(metaData).object();
+    const QString tag = rel.value("tag_name").toString().trimmed();
+    const QVersionNumber latestVer = protonVersionKey(tag);
+
+    // Avoid re-downloading if this or a newer GE-Proton is already installed (e.g. via Steam or launcher)
+    for (const ProtonBuild &existing : scanProtonDirs()) {
+        const QVersionNumber existingVer = protonVersionKey(existing.name);
+        const bool sameOrNewer = (!latestVer.isNull() && !existingVer.isNull() && existingVer >= latestVer)
+            || (!tag.isEmpty() && existing.name.startsWith(tag, Qt::CaseInsensitive));
+        if (sameOrNewer) {
+            progress.close();
+            if (installedPath) *installedPath = existing.path;
+            QMessageBox::information(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+                QCoreApplication::translate("GameRuntime", "The latest GE-Proton (%1) is already installed.").arg(existing.name));
+            return false;
+        }
+    }
+
+    const bool isArm = QSysInfo::currentCpuArchitecture().contains("arm", Qt::CaseInsensitive)
+        || QSysInfo::currentCpuArchitecture().contains("aarch64", Qt::CaseInsensitive);
+    const QString archSuffix = isArm ? QStringLiteral("aarch64") : QStringLiteral("x86_64");
+
+    QUrl tarballUrl;
+    QUrl shaUrl;
+    QString tarballName;
+    qint64 expectedSize = 0;
+
+    for (const QJsonValue &val : rel.value("assets").toArray()) {
+        const QJsonObject asset = val.toObject();
+        const QString name = asset.value("name").toString();
+        const QUrl url(asset.value("browser_download_url").toString());
+        if (!url.isValid() || url.scheme() != "https") continue;
+        if (name.endsWith(".tar.gz", Qt::CaseInsensitive)) {
+            if (name.contains(archSuffix, Qt::CaseInsensitive)) {
+                tarballUrl = url;
+                tarballName = name;
+                expectedSize = asset.value("size").toVariant().toLongLong();
+            } else if (tarballUrl.isEmpty() && !isArm && !name.contains("aarch64", Qt::CaseInsensitive) && !name.contains("arm64", Qt::CaseInsensitive)) {
+                tarballUrl = url;
+                tarballName = name;
+                expectedSize = asset.value("size").toVariant().toLongLong();
+            }
+        } else if (name.endsWith(".sha512sum", Qt::CaseInsensitive) && name.contains(archSuffix, Qt::CaseInsensitive)) {
+            shaUrl = url;
+        }
+    }
+
+    if (tarballUrl.isEmpty() || shaUrl.isEmpty()) {
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Could not find a compatible GE-Proton package for this architecture."));
+        return false;
+    }
+
+    QString expectedSha512;
+    {
+        QNetworkReply *shaReply = nam.get(githubRequest(shaUrl));
+        QEventLoop loop;
+        QObject::connect(shaReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(&progress, &QProgressDialog::canceled, shaReply, &QNetworkReply::abort);
+        loop.exec();
+        if (!cancelled && shaReply->error() == QNetworkReply::NoError) {
+            const QString line = QString::fromUtf8(shaReply->readAll()).trimmed();
+            expectedSha512 = line.split(QRegularExpression("\\s+")).value(0).toLower();
+        }
+        shaReply->deleteLater();
+        if (cancelled) return false;
+    }
+    static const QRegularExpression sha512(QStringLiteral("^[0-9a-f]{128}$"));
+    if (!sha512.match(expectedSha512).hasMatch()) {
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Could not get the checksum of %1. Please try again.").arg(tag));
+        return false;
+    }
+
+    // 3. Download tarball with live progress & SHA-512 verification
+    const QString runtimesDir = managedRuntimesDir();
+    QDir().mkpath(runtimesDir);
+    const QString archivePath = runtimesDir + "/.download-" + tarballName;
+    QFile outFile(archivePath);
+    if (!outFile.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Could not write to %1").arg(archivePath));
+        return false;
+    }
+
+    const QString displayName = tag.isEmpty() ? tarballName : tag;
+    progress.setRange(0, 100);
+    progress.setValue(0);
+    progress.setLabelText(QCoreApplication::translate("GameRuntime", "Downloading %1...").arg(displayName));
+
+    QCryptographicHash hasher(QCryptographicHash::Sha512);
+    qint64 receivedBytes = 0;
+    QNetworkReply *dlReply = nam.get(githubRequest(tarballUrl));
+    {
+        QEventLoop loop;
+        QObject::connect(dlReply, &QNetworkReply::readyRead, [&]() {
+            const QByteArray chunk = dlReply->readAll();
+            if (!chunk.isEmpty()) {
+                outFile.write(chunk);
+                hasher.addData(chunk);
+                receivedBytes += chunk.size();
+            }
+        });
+        QObject::connect(dlReply, &QNetworkReply::downloadProgress, [&](qint64 done, qint64 total) {
+            const qint64 denom = total > 0 ? total : expectedSize;
+            if (denom > 0) {
+                progress.setValue(qBound(0, int(done * 100 / denom), 100));
+                progress.setLabelText(QCoreApplication::translate("GameRuntime", "Downloading %1 (%2 / %3)...")
+                    .arg(displayName, QLocale().formattedDataSize(done), QLocale().formattedDataSize(denom)));
+            }
+        });
+        QObject::connect(dlReply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+        QObject::connect(&progress, &QProgressDialog::canceled, dlReply, &QNetworkReply::abort);
+        loop.exec();
+    }
+    if (dlReply->bytesAvailable() > 0) {
+        const QByteArray rest = dlReply->readAll();
+        outFile.write(rest);
+        hasher.addData(rest);
+        receivedBytes += rest.size();
+    }
+    outFile.close();
+
+    const QNetworkReply::NetworkError dlErr = dlReply->error();
+    const QString dlErrStr = dlReply->errorString();
+    dlReply->deleteLater();
+
+    if (cancelled) {
+        QFile::remove(archivePath);
+        return false;
+    }
+    if (dlErr != QNetworkReply::NoError || receivedBytes == 0) {
+        QFile::remove(archivePath);
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Could not download %1: %2").arg(displayName, dlErrStr));
+        return false;
+    }
+    if (QString::fromLatin1(hasher.result().toHex()) != expectedSha512) {
+        QFile::remove(archivePath);
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Downloaded %1 failed checksum verification. Please try again.").arg(displayName));
+        return false;
+    }
+
+    // 4. Extract archive into staging dir, then move into runtimesDir
+    const QString stagingDir = runtimesDir + "/.extract-tmp";
+    QDir(stagingDir).removeRecursively();
+    QDir().mkpath(stagingDir);
+
+    progress.setRange(0, 0);
+    progress.setLabelText(QCoreApplication::translate("GameRuntime", "Extracting %1...").arg(displayName));
+
+    QProcess tar;
+    tar.start(QStringLiteral("tar"), {QStringLiteral("-xzf"), archivePath, QStringLiteral("-C"), stagingDir});
+    {
+        QEventLoop loop;
+        QObject::connect(&tar, &QProcess::finished, &loop, &QEventLoop::quit);
+        QObject::connect(&tar, &QProcess::errorOccurred, &loop, &QEventLoop::quit);
+        QObject::connect(&progress, &QProgressDialog::canceled, &tar, &QProcess::kill);
+        loop.exec();
+    }
+    QFile::remove(archivePath);
+
+    if (cancelled || tar.exitStatus() != QProcess::NormalExit || tar.exitCode() != 0) {
+        QDir(stagingDir).removeRecursively();
+        progress.close();
+        if (!cancelled) {
+            QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+                QCoreApplication::translate("GameRuntime", "Could not extract %1.").arg(displayName));
+        }
+        return false;
+    }
+
+    QString extractedName;
+    for (const QString &entry : QDir(stagingDir).entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        if (!resolveProtonScript(QDir(stagingDir).filePath(entry)).isEmpty()) {
+            extractedName = entry;
+            break;
+        }
+    }
+
+    if (extractedName.isEmpty()) {
+        QDir(stagingDir).removeRecursively();
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "The downloaded archive did not contain a valid GE-Proton runtime."));
+        return false;
+    }
+
+    const QString finalDir = QDir(runtimesDir).filePath(extractedName);
+    if (QDir(finalDir).exists())
+        QDir(finalDir).removeRecursively();
+    if (!QDir().rename(QDir(stagingDir).filePath(extractedName), finalDir)) {
+        QDir(stagingDir).removeRecursively();
+        progress.close();
+        QMessageBox::warning(parent, QCoreApplication::translate("GameRuntime", "Install GE-Proton"),
+            QCoreApplication::translate("GameRuntime", "Could not move %1 into place.").arg(extractedName));
+        return false;
+    }
+    QDir(stagingDir).removeRecursively();
+
+    const QString script = resolveProtonScript(finalDir);
+    if (installedPath) *installedPath = script;
+    Settings::setProtonPath(script);
+    progress.close();
+    return !script.isEmpty();
 #endif
 }
 
@@ -93,8 +573,11 @@ QString gameHome()
 #else
     const QString configured = qEnvironmentVariable("OPENKOGAMA_GAME_HOME").trimmed();
     if (!configured.isEmpty()) return QDir::cleanPath(configured);
-    const QString user = qEnvironmentVariable("USER", QFileInfo(QDir::homePath()).fileName());
-    return QDir::cleanPath(winePrefix() + "/drive_c/users/" + user);
+    if (systemWine()) {
+        const QString user = qEnvironmentVariable("USER", QFileInfo(QDir::homePath()).fileName());
+        return QDir::cleanPath(winePrefix() + "/drive_c/users/" + user);
+    }
+    return QDir::cleanPath(prefixPath() + "/drive_c/users/steamuser");
 #endif
 }
 
@@ -114,7 +597,7 @@ QString windowsPath(const QString &path)
 #else
     const QString clean = QDir::cleanPath(path);
     if (!clean.startsWith('/')) return QString(clean).replace('/', '\\');
-    const QString drive = QDir::cleanPath(winePrefix() + "/drive_c");
+    const QString drive = QDir::cleanPath(prefixPath() + "/drive_c");
     if (clean == drive || clean.startsWith(drive + "/")) {
         const QString rest = clean.mid(drive.size());
         return "C:" + (rest.isEmpty() ? QStringLiteral("\\") : QString(rest).replace('/', '\\'));
@@ -147,6 +630,24 @@ bool isServerProgram(const QString &program)
     return QFileInfo(program).fileName() == serverExecutable();
 }
 
+#ifndef Q_OS_WIN
+void ensureProtonFonts()
+{
+    const QDir fonts(prefixPath() + "/drive_c/windows/Fonts");
+    if (!fonts.exists()) return;
+    const QList<QPair<QString, QString>> aliases = {
+        {QStringLiteral("segoeuib.ttf"), QStringLiteral("arialbd.ttf")},
+        {QStringLiteral("segoeui.ttf"), QStringLiteral("arial.ttf")},
+    };
+    for (const auto &[missing, fallback] : aliases) {
+        const QString target = fonts.filePath(missing);
+        const QString source = fonts.filePath(fallback);
+        if (!QFileInfo::exists(target) && QFileInfo::exists(source))
+            QFile::link(source, target);
+    }
+}
+#endif
+
 void prepare(QProcess *process)
 {
 #ifdef Q_OS_WIN
@@ -156,9 +657,20 @@ void prepare(QProcess *process)
 #else
     const QString program = process->program();
     if (!needsWine(program)) return;
-    process->setArguments(QStringList{program} + process->arguments());
-    process->setProgram(wineBinary());
-    process->setProcessEnvironment(wineEnvironment(process->processEnvironment()));
+    if (systemWine()) {
+        const QString wine = wineBinary();
+        if (wine.isEmpty()) return;
+        process->setArguments(QStringList{program} + process->arguments());
+        process->setProgram(wine);
+        process->setProcessEnvironment(wineEnvironment(process->processEnvironment()));
+        return;
+    }
+    const QString proton = activeProton();
+    if (proton.isEmpty()) return;
+    ensureProtonFonts();
+    process->setArguments(QStringList{QStringLiteral("run"), program} + process->arguments());
+    process->setProgram(proton);
+    process->setProcessEnvironment(protonEnvironment(process->processEnvironment()));
 #endif
 }
 
@@ -169,7 +681,7 @@ QString registryValue(const QString &key, const QString &name)
 #else
     if (!wineAvailable()) return {};
     QByteArray output;
-    if (runWine({"reg", "query", key, "/v", name}, RegistryReadMs, &output) != 0) return {};
+    if (runInPrefix({"reg", "query", key, "/v", name}, RegistryReadMs, &output) != 0) return {};
     static const QRegularExpression spaces("\\s{2,}");
     for (const QString &line : QString::fromLocal8Bit(output).split('\n')) {
         const QStringList parts = line.trimmed().split(spaces);
@@ -188,7 +700,7 @@ bool setRegistryValue(const QString &key, const QString &name, const QString &va
     return settings.status() == QSettings::NoError;
 #else
     if (!wineAvailable()) return false;
-    return runWine({"reg", "add", key, "/v", name, "/t", "REG_SZ", "/d", value, "/f"}, RegistryWriteMs) == 0;
+    return runInPrefix({"reg", "add", key, "/v", name, "/t", "REG_SZ", "/d", value, "/f"}, RegistryWriteMs) == 0;
 #endif
 }
 

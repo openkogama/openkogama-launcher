@@ -4,6 +4,7 @@
 #include "discordpresence.h"
 #include "clientpatches.h"
 #include "account.h"
+#include "gameruntime.h"
 #include "languages.h"
 #include "theme.h"
 #include <QCheckBox>
@@ -42,6 +43,22 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     m_theme->addItem(tr("Dark"), "dark");
     m_theme->setCurrentIndex(qMax(0, m_theme->findData(Settings::theme())));
     ui->generalLayout->addRow(tr("Theme:"), m_theme);
+#ifndef Q_OS_WIN
+    auto *protonRowWidget = new QWidget(ui->generalPage);
+    auto *protonRow = new QHBoxLayout(protonRowWidget);
+    protonRow->setContentsMargins(0, 0, 0, 0);
+    m_proton = new QComboBox(protonRowWidget);
+    m_installProtonButton = new QPushButton(tr("Install latest..."), protonRowWidget);
+    protonRow->addWidget(m_proton, 1);
+    protonRow->addWidget(m_installProtonButton);
+    ui->generalLayout->addRow(tr("Runtime:"), protonRowWidget);
+    refreshProtons(Settings::protonPath());
+    connect(m_installProtonButton, &QPushButton::clicked, this, [this]() {
+        QString installed;
+        if (GameRuntime::installProton(this, &installed))
+            refreshProtons(installed);
+    });
+#endif
     m_askMapClient = new QCheckBox(tr("Ask to download a matching KoGaMa client when adding archived maps"), ui->generalPage);
     m_askMapClient->setChecked(Settings::askMapClientVersion());
     ui->generalLayout->addRow(QString(), m_askMapClient);
@@ -82,12 +99,30 @@ void SettingsDialog::switchAccount()
     m_account->setText(tr("Finish in your browser"));
 }
 
+#ifndef Q_OS_WIN
+void SettingsDialog::refreshProtons(const QString &selectPath)
+{
+    m_proton->clear();
+    m_proton->addItem(tr("Automatic (newest GE-Proton)"), QString());
+    if (GameRuntime::systemWineFound() || selectPath == "wine")
+        m_proton->addItem(tr("System Wine"), QStringLiteral("wine"));
+    for (const GameRuntime::ProtonBuild &build : GameRuntime::installedProtons())
+        m_proton->addItem(build.name, build.path);
+    const int idx = m_proton->findData(selectPath);
+    m_proton->setCurrentIndex(idx >= 0 ? idx : 0);
+}
+#endif
+
 void SettingsDialog::accept()
 {
     Settings::setNickname(ui->nicknameEdit->text().trimmed());
     Settings::setConsoleOnLaunch(ui->consoleOnLaunchCheck->isChecked());
     Settings::setConsoleOnCrash(ui->consoleOnCrashCheck->isChecked());
     Settings::setDiscordPresence(ui->discordPresenceCheck->isChecked());
+#ifndef Q_OS_WIN
+    if (m_proton)
+        Settings::setProtonPath(m_proton->currentData().toString());
+#endif
     Settings::setAskMapClientVersion(m_askMapClient->isChecked());
     for (const auto &[id, check] : m_patches)
         Settings::setClientPatch(id, check->isChecked());

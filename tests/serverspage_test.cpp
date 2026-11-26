@@ -30,6 +30,7 @@
 #include <QDialogButtonBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QScopeGuard>
 #include <QShortcut>
 #include <QSignalSpy>
 #include <QPointer>
@@ -614,6 +615,61 @@ private slots:
         manager.clearFinished();
         QCOMPARE(manager.entries().size(), 0);
     }
+
+#ifndef Q_OS_WIN
+    void protonRuntimePreparesProcessAndPaths()
+    {
+        QTemporaryDir temp;
+        QVERIFY(temp.isValid());
+
+        const QString fakeProtonDir = temp.path() + "/GE-Proton11-14-x86_64";
+        QVERIFY(QDir().mkpath(fakeProtonDir));
+        const QString fakeProton = fakeProtonDir + "/proton";
+        {
+            QFile f(fakeProton);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("#!/bin/sh\nexit 0\n");
+            f.setPermissions(QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+        }
+
+        const QString fakeExe = temp.path() + "/KoGaMa.exe";
+        {
+            QFile f(fakeExe);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("MZ\x90\x00");
+        }
+
+        const QString compat = temp.path() + "/compat";
+        qputenv("OPENKOGAMA_PROTON", fakeProton.toUtf8());
+        qputenv("STEAM_COMPAT_DATA_PATH", compat.toUtf8());
+        auto cleanup = qScopeGuard([]() {
+            qunsetenv("OPENKOGAMA_PROTON");
+            qunsetenv("STEAM_COMPAT_DATA_PATH");
+        });
+
+        QCOMPARE(GameRuntime::activeProton(), QFileInfo(fakeProton).absoluteFilePath());
+        QVERIFY(GameRuntime::wineAvailable());
+        QCOMPARE(GameRuntime::gameHome(), QDir::cleanPath(compat + "/pfx/drive_c/users/steamuser"));
+        QCOMPARE(GameRuntime::windowsPath(compat + "/pfx/drive_c/users/steamuser/test.log"),
+                 QString("C:\\users\\steamuser\\test.log"));
+        QCOMPARE(GameRuntime::windowsPath("/tmp/game.log"), QString("Z:\\tmp\\game.log"));
+
+        QProcess proc;
+        proc.setProgram(fakeExe);
+        proc.setArguments({"-logFile", "Z:\\tmp\\game.log"});
+        GameRuntime::prepare(&proc);
+
+        QCOMPARE(proc.program(), QFileInfo(fakeProton).absoluteFilePath());
+        QCOMPARE(proc.arguments(), QStringList({"run", fakeExe, "-logFile", "Z:\\tmp\\game.log"}));
+        QCOMPARE(proc.processEnvironment().value("STEAM_COMPAT_DATA_PATH"), QDir::cleanPath(compat));
+        QCOMPARE(proc.processEnvironment().value("STEAM_COMPAT_CLIENT_INSTALL_PATH"), QDir::cleanPath(compat));
+
+        // Only builds inside OpenKogama's managed proton/runtimes directory are listed
+        const QString managedRoot = QDir::cleanPath(Paths::data() + "/proton/runtimes") + "/";
+        for (const GameRuntime::ProtonBuild &b : GameRuntime::installedProtons())
+            QVERIFY(QDir::cleanPath(b.path).startsWith(managedRoot));
+    }
+#endif
 
     void cleanupTestCase()
     {
