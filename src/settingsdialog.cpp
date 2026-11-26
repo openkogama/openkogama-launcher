@@ -42,6 +42,9 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     m_theme->addItem(tr("Dark"), "dark");
     m_theme->setCurrentIndex(qMax(0, m_theme->findData(Settings::theme())));
     ui->generalLayout->addRow(tr("Theme:"), m_theme);
+    m_askMapClient = new QCheckBox(tr("Ask to download a matching KoGaMa client when adding archived maps"), ui->generalPage);
+    m_askMapClient->setChecked(Settings::askMapClientVersion());
+    ui->generalLayout->addRow(QString(), m_askMapClient);
     ui->nicknameEdit->setText(Settings::nickname());
     ui->consoleOnLaunchCheck->setChecked(Settings::consoleOnLaunch());
     ui->consoleOnCrashCheck->setChecked(Settings::consoleOnCrash());
@@ -85,6 +88,7 @@ void SettingsDialog::accept()
     Settings::setConsoleOnLaunch(ui->consoleOnLaunchCheck->isChecked());
     Settings::setConsoleOnCrash(ui->consoleOnCrashCheck->isChecked());
     Settings::setDiscordPresence(ui->discordPresenceCheck->isChecked());
+    Settings::setAskMapClientVersion(m_askMapClient->isChecked());
     for (const auto &[id, check] : m_patches)
         Settings::setClientPatch(id, check->isChecked());
     const QString language = m_language->currentData().toString();

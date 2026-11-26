@@ -64,6 +64,7 @@ private:
     void joinServer(const QString &address);
     void joinCode(const QString &address);
     void openImport(const ImportRequest &request, bool confirm = true, const QUrl &thumbnailUrl = {});
+    bool offerMapClient(const QString &published, const QString &mapName, bool explicitRequest, bool *cancelled = nullptr);
     void updateDownloadsButton();
     void offerVersion(const QStringList &clients, const QString &title, std::function<void()> then);
     void updateHostVersion();
@@ -92,6 +93,7 @@ private:
     bool m_localReady = false;
     bool m_autoLaunch = true;
     QSet<QString> m_checkedVersions;
+    QSet<int> m_skippedClientYears;
 };
 
 #endif // MAINWINDOW_H

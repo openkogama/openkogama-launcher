@@ -17,6 +17,7 @@ struct ImportRequest {
     qint64 length = -1;
     QString sha256;
     QString scale;
+    QString published;
 };
 
 namespace Links {

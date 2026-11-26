@@ -314,6 +314,7 @@ WorldsDialog::WorldsDialog(const QString &path, const QString &exe, QProcess *se
             if (index == 1) browser->ensureLoaded();
         });
         connect(browser, &ArchiveBrowser::importRequested, this, &WorldsDialog::importRequested);
+        connect(browser, &ArchiveBrowser::clientForYearRequested, this, &WorldsDialog::clientForYearRequested);
 
         *outBar = bar;
         *outStack = stack;

@@ -34,6 +34,7 @@ private:
     QPushButton *m_accountButton = nullptr;
     QComboBox *m_language = nullptr;
     QComboBox *m_theme = nullptr;
+    QCheckBox *m_askMapClient = nullptr;
 };
 
 #endif

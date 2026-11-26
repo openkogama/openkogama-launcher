@@ -1,6 +1,7 @@
 #include "serverspage.h"
 #include "archivebrowser.h"
 #include "downloadmanager.h"
+#include "installdialog.h"
 #include "settings.h"
 #include "tunnel.h"
 #include "sharebar.h"
@@ -398,9 +399,57 @@ private slots:
         add->click();
         QTRY_COMPARE(captured.kind, QString("map"));
         QCOMPARE(captured.name, QString("Parkour City"));
+        QCOMPARE(captured.published, QString("2025-05-01"));
         QCOMPARE(captured.sha256, QString(64, 'b'));
         QCOMPARE(captured.urls, QList<QUrl>({QUrl("https://cdn.openkogama.org/games/bbb.kgmap")}));
         QCOMPARE(capturedThumb, QUrl(server.url() + "/maps/v1/images/img2.jpg"));
+
+        // Year filter narrows maps by published year
+        search->clear();
+        QTRY_COMPARE(list->count(), 2);
+        auto *yearFilter = browser.findChild<QComboBox *>("archiveMapYearFilter");
+        QVERIFY(yearFilter);
+        QVERIFY(yearFilter->findData("2024") > 0);
+        yearFilter->setCurrentIndex(yearFilter->findData("2024"));
+        QCOMPARE(list->count(), 1);
+        QCOMPARE(list->item(0)->text(), QString("War Arena"));
+    }
+
+    void clientVersionMatchingByMapYear()
+    {
+        const QByteArray versionsJson = QByteArrayLiteral(
+            "{\"versions\":["
+            "{\"version\":\"3.5.25\",\"timestamp\":1770681600,\"unityVersion\":\"6000.2.7f2\",\"il2cpp\":true,\"zipSize\":40000000,\"unpackedSize\":90000000,\"sha256\":\"aaaa\",\"id\":\"v26\",\"urls\":[\"https://cdn.openkogama.org/v26.zip\"]},"
+            "{\"version\":\"2.30.51\",\"timestamp\":1703116800,\"unityVersion\":\"2022.3.13f1\",\"il2cpp\":true,\"zipSize\":30000000,\"unpackedSize\":70000000,\"sha256\":\"bbbb\",\"id\":\"v23b\",\"urls\":[\"https://cdn.openkogama.org/v23b.zip\"]},"
+            "{\"version\":\"2.30.63\",\"timestamp\":1697500800,\"unityVersion\":\"2021.3.14f1\",\"il2cpp\":true,\"zipSize\":25000000,\"unpackedSize\":60000000,\"sha256\":\"cccc\",\"id\":\"v23a\",\"urls\":[\"https://cdn.openkogama.org/v23a.zip\"]},"
+            "{\"version\":\"2.30.13\",\"timestamp\":1631750400,\"unityVersion\":\"2018.4.32f1\",\"il2cpp\":false,\"zipSize\":20000000,\"unpackedSize\":50000000,\"sha256\":\"dddd\",\"id\":\"v21\",\"urls\":[\"https://cdn.openkogama.org/v21.zip\"]},"
+            "{\"version\":\"2.30.3\",\"timestamp\":1608595200,\"unityVersion\":\"2018.4.29f1\",\"il2cpp\":false,\"zipSize\":18000000,\"unpackedSize\":45000000,\"sha256\":\"eeee\",\"id\":\"v20b\",\"urls\":[\"https://cdn.openkogama.org/v20b.zip\"]},"
+            "{\"version\":\"2.22.2\",\"timestamp\":1577923200,\"unityVersion\":\"2018.3.14f1\",\"il2cpp\":false,\"zipSize\":18000000,\"unpackedSize\":45000000,\"sha256\":\"ffff\",\"id\":\"v20a\",\"urls\":[\"https://cdn.openkogama.org/v20a.zip\"]},"
+            "{\"version\":\"\",\"timestamp\":1327271495,\"unityVersion\":\"3.4.2f2\",\"il2cpp\":false,\"zipSize\":4500000,\"unpackedSize\":14000000,\"sha256\":\"0000\",\"id\":\"v12\",\"urls\":[\"https://cdn.openkogama.org/v12.zip\"]}"
+            "]}");
+        const QList<Version> versions = InstallDialog::parse(versionsJson);
+        QCOMPARE(versions.size(), 7);
+
+        // Exact year matches pick the latest release of that year
+        const auto m2020 = InstallDialog::bestForDate(versions, "2020-07-23T14:27:38+00:00");
+        QVERIFY(m2020.has_value());
+        QCOMPARE(m2020->version, QString("2.30.3"));
+        QCOMPARE(InstallDialog::yearOf(*m2020), 2020);
+
+        const auto m2023 = InstallDialog::bestForDate(versions, "2023-04-10");
+        QVERIFY(m2023.has_value());
+        QCOMPARE(m2023->version, QString("2.30.51"));
+        QCOMPARE(InstallDialog::yearOf(*m2023), 2023);
+
+        // Gap year (2022) falls back to the closest timestamp (late 2021)
+        const auto m2022 = InstallDialog::bestForDate(versions, "2022-02-15");
+        QVERIFY(m2022.has_value());
+        QCOMPARE(m2022->version, QString("2.30.13"));
+
+        // Empty-name entry from 2012 is skipped
+        const auto m2012 = InstallDialog::bestForDate(versions, "2012-01-22");
+        QVERIFY(m2012.has_value());
+        QVERIFY(!m2012->version.isEmpty());
     }
 
     void archiveAvatarsBrowseFilterAndImport()

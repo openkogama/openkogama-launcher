@@ -26,6 +26,7 @@
 #include "webplayerruntime.h"
 #include <QAction>
 #include <QApplication>
+#include <QCheckBox>
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QDir>
@@ -673,6 +674,9 @@ bool MainWindow::launchInstance(const QString &path) {
         connect(m_worlds, &WorldsDialog::importRequested, this, [this](const ImportRequest &request, const QUrl &thumbnailUrl) {
             openImport(request, false, thumbnailUrl);
         });
+        connect(m_worlds, &WorldsDialog::clientForYearRequested, this, [this](const QString &published, const QString &mapName) {
+            offerMapClient(published, mapName, true);
+        });
         connect(m_share, &ShareBar::hostedWorldChanged, m_worlds, &WorldsDialog::setHostedWorld);
         m_worlds->setHostedWorld(m_share->hostedWorld());
         m_worlds->setWindowFlags(Qt::Widget);
@@ -828,7 +832,143 @@ void MainWindow::updateDownloadsButton() {
     ui->mainTabs->setCornerWidget(ui->headerBar, Qt::TopRightCorner);
 }
 
+bool MainWindow::offerMapClient(const QString &published, const QString &mapName, bool explicitRequest, bool *cancelled) {
+    if (cancelled) *cancelled = false;
+    if (published.trimmed().isEmpty()) return false;
+    if (m_installing) return false;
+
+    if (m_versionsJson.isEmpty()) {
+        if (!explicitRequest) return false;
+        fetchVersions([this, published, mapName]() {
+            if (m_versionsJson.isEmpty())
+                QMessageBox::warning(this, tr("Download matching client"), tr("Could not load the version list. Check your internet connection and try again.\n%1").arg(m_versionsError));
+            else
+                offerMapClient(published, mapName, true);
+        });
+        return false;
+    }
+
+    const QList<Version> catalog = InstallDialog::parse(m_versionsJson);
+    const std::optional<Version> best = InstallDialog::bestForDate(catalog, published);
+    if (!best) {
+        if (explicitRequest)
+            QMessageBox::information(this, tr("Download matching client"), tr("No matching KoGaMa client version was found for this map."));
+        return false;
+    }
+
+    const int bestYear = InstallDialog::yearOf(*best);
+    bool yearOk = false;
+    const int mapYear = published.trimmed().left(4).toInt(&yearOk);
+
+    // Check if the user already has a client installed for the matching year
+    QHash<QString, int> versionYears;
+    for (const Version &v : catalog) {
+        if (!v.version.isEmpty() && v.timestamp > 0 && !versionYears.contains(v.version))
+            versionYears.insert(v.version, InstallDialog::yearOf(v));
+    }
+
+    QString installedPath;
+    QString installedName;
+    for (int row = 0; row < instances->rowCount(); ++row) {
+        const QModelIndex idx = instances->index(row, 0);
+        const QString ver = idx.data(VersionRole).toString();
+        const int yr = versionYears.value(ver, 0);
+        if (ver == best->version || (bestYear > 0 && yr == bestYear)) {
+            installedPath = idx.data(Qt::UserRole).toString();
+            installedName = versionTitle(idx.data(NameRole).toString(), ver);
+            if (installedPath == m_activePath) break;
+        }
+    }
+
+    if (!installedPath.isEmpty()) {
+        if (explicitRequest) {
+            if (installedPath == m_activePath) {
+                QMessageBox::information(this, tr("Download matching client"),
+                    tr("You are already using a %1 client (%2).").arg(QString::number(bestYear), installedName));
+            } else if (QMessageBox::question(this, tr("Download matching client"),
+                    tr("You already have a %1 client installed (%2). Switch to it now?").arg(QString::number(bestYear), installedName)) == QMessageBox::Yes) {
+                launchInstance(installedPath);
+            }
+        }
+        return false;
+    }
+
+    if (!explicitRequest) {
+        if (!Settings::askMapClientVersion() || m_skippedClientYears.contains(bestYear))
+            return false;
+    }
+
+    const QString label = mapName.isEmpty() ? tr("This map") : mapName;
+    const QString yearText = yearOk ? QString::number(mapYear) : QString::number(bestYear);
+    const QString body = (yearOk && bestYear == mapYear)
+        ? tr("\"%1\" is from %2.\n\nWould you like to also download the matching KoGaMa %3 client (%4, %5)?")
+            .arg(label, yearText, best->version, best->date, best->download)
+        : tr("\"%1\" is from %2.\n\nWould you like to also download the closest KoGaMa %3 client (%4, %5)?")
+            .arg(label, yearText, best->version, best->date, best->download);
+
+    QMessageBox box(QMessageBox::Question, tr("Download matching client"), body, QMessageBox::NoButton, this);
+    QPushButton *downloadBtn = box.addButton(explicitRequest ? tr("Download") : tr("Download map && client"), QMessageBox::AcceptRole);
+    QPushButton *mapOnlyBtn = explicitRequest ? nullptr : box.addButton(tr("Map only"), QMessageBox::RejectRole);
+    QPushButton *cancelBtn = box.addButton(QMessageBox::Cancel);
+    box.setDefaultButton(explicitRequest ? downloadBtn : mapOnlyBtn);
+
+    QCheckBox *dontAsk = nullptr;
+    if (!explicitRequest) {
+        dontAsk = new QCheckBox(tr("Don't ask again when adding maps"), &box);
+        box.setCheckBox(dontAsk);
+    }
+
+    box.exec();
+    if (dontAsk && dontAsk->isChecked())
+        Settings::setAskMapClientVersion(false);
+
+    if (box.clickedButton() == cancelBtn) {
+        if (cancelled) *cancelled = true;
+        return false;
+    }
+    if (mapOnlyBtn && box.clickedButton() == mapOnlyBtn) {
+        m_skippedClientYears.insert(bestYear);
+        return false;
+    }
+    if (box.clickedButton() != downloadBtn)
+        return false;
+
+    m_installing = true;
+    ui->actionInstall->setEnabled(false);
+    ui->addVersionButton->setEnabled(false);
+    ui->firstVersionButton->setEnabled(false);
+    ui->noVersionsButton->setEnabled(false);
+
+    InstallProgressDialog progress(*best, best->version, this);
+    const bool ok = progress.exec() == QDialog::Accepted;
+
+    m_installing = false;
+    ui->actionInstall->setEnabled(true);
+    ui->addVersionButton->setEnabled(true);
+    ui->firstVersionButton->setEnabled(true);
+    ui->noVersionsButton->setEnabled(true);
+
+    if (!ok) return false;
+
+    const QString newPath = progress.installedPath();
+    if (!newPath.isEmpty()) {
+        if (!(m_worlds && m_worlds->hasRunningGames()) && !hasRemoteGames()) {
+            loadInstances(newPath);
+            launchInstance(newPath);
+        } else {
+            loadInstances(m_activePath);
+        }
+    }
+    return true;
+}
+
 void MainWindow::openImport(const ImportRequest &request, bool confirm, const QUrl &thumbnailUrl) {
+    if (request.kind == "map" && !request.published.isEmpty()) {
+        bool cancelled = false;
+        offerMapClient(request.published, request.name, false, &cancelled);
+        if (cancelled) return;
+    }
+
     const QString path = ui->versionCombo->currentData().toString();
     if (path.isEmpty()) {
         QMessageBox::information(this, tr("Import"), tr("Add a game version before adding content from the website."));

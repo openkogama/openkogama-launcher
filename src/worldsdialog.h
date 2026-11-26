@@ -44,6 +44,7 @@ public:
 signals:
     void hostRequested(int world, const QString &name, QProcess *client);
     void importRequested(const ImportRequest &request, const QUrl &thumbnailUrl);
+    void clientForYearRequested(const QString &published, const QString &mapName);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
