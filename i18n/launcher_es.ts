@@ -810,16 +810,6 @@ Si es tuya, inicia sesión. De lo contrario, elige otro nombre de jugador.</tran
         <translation>Servidor</translation>
     </message>
     <message>
-        <source>Wine is missing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
-
-Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Could not start %1</source>
         <translation>No se ha podido iniciar %1</translation>
     </message>
@@ -854,6 +844,91 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     <message>
         <source>Starting server</source>
         <translation type="unfinished">Iniciando el servidor</translation>
+    </message>
+</context>
+<context>
+    <name>GameRuntime</name>
+    <message>
+        <source>GE-Proton is required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>KoGaMa runs on Linux through GE-Proton, a Wine build made for games.
+
+Download and install the latest GE-Proton now? (~600 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system Wine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for the latest GE-Proton release...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancelar</translation>
+    </message>
+    <message>
+        <source>Install GE-Proton</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not check for GE-Proton releases: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The latest GE-Proton (%1) is already installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find a compatible GE-Proton package for this architecture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not get the checksum of %1. Please try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1 (%2 / %3)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not download %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloaded %1 failed checksum verification. Please try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extracting %1...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not extract %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded archive did not contain a valid GE-Proton runtime.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not move %1 into place.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1856,6 +1931,14 @@ Would you like to also download the closest KoGaMa %3 client (%4, %5)?</source>
         <translation>Tema:</translation>
     </message>
     <message>
+        <source>Install latest...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ask to download a matching KoGaMa client when adding archived maps</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1874,6 +1957,14 @@ Would you like to also download the closest KoGaMa %3 client (%4, %5)?</source>
     <message>
         <source>Finish in your browser</source>
         <translation>Termina el proceso en tu navegador</translation>
+    </message>
+    <message>
+        <source>Automatic (newest GE-Proton)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System Wine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language</source>

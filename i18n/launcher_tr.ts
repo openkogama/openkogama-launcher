@@ -833,20 +833,93 @@ Bu hesap seninse giriş yap. Değilse başka bir takma ad seç.</translation>
         <translation>buraya giriş yapılamadı, misafir olarak oynanıyor: %1</translation>
     </message>
     <message>
-        <source>Wine is missing</source>
-        <translation>Wine eksik</translation>
-    </message>
-    <message>
-        <source>This KoGaMa version is a Windows build, so it needs Wine to run on this system.
-
-Install Wine with your package manager, for example &quot;sudo apt install wine&quot;, and try again.</source>
-        <translation>Bu KoGaMa sürümü bir Windows derlemesidir, bu yüzden bu sistemde çalışmak için Wine gerekir.
-
-Paket yöneticinle Wine&apos;ı kur (örneğin &quot;sudo apt install wine&quot;) ve tekrar dene.</translation>
-    </message>
-    <message>
         <source>Could not start %1</source>
         <translation>%1 başlatılamadı</translation>
+    </message>
+</context>
+<context>
+    <name>GameRuntime</name>
+    <message>
+        <source>GE-Proton is required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>KoGaMa runs on Linux through GE-Proton, a Wine build made for games.
+
+Download and install the latest GE-Proton now? (~600 MB)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished">İndir</translation>
+    </message>
+    <message>
+        <source>Use system Wine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Checking for the latest GE-Proton release...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">İptal</translation>
+    </message>
+    <message>
+        <source>Install GE-Proton</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not check for GE-Proton releases: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The latest GE-Proton (%1) is already installed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not find a compatible GE-Proton package for this architecture.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not get the checksum of %1. Please try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading %1 (%2 / %3)...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not download %1: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloaded %1 failed checksum verification. Please try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Extracting %1...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not extract %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The downloaded archive did not contain a valid GE-Proton runtime.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not move %1 into place.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -1848,6 +1921,14 @@ En yakın KoGaMa %3 istemcisini de indirmek ister misiniz (%4, %5)?</translation
         <translation>Tema:</translation>
     </message>
     <message>
+        <source>Install latest...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runtime:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Ask to download a matching KoGaMa client when adding archived maps</source>
         <translation>Arşivden harita eklerken uygun KoGaMa istemcisini indirmeyi sor</translation>
     </message>
@@ -1866,6 +1947,14 @@ En yakın KoGaMa %3 istemcisini de indirmek ister misiniz (%4, %5)?</translation
     <message>
         <source>Finish in your browser</source>
         <translation>Tarayıcında tamamla</translation>
+    </message>
+    <message>
+        <source>Automatic (newest GE-Proton)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>System Wine</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Language</source>
