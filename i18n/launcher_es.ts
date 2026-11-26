@@ -222,6 +222,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>All years</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Archived maps</source>
         <translation type="unfinished"></translation>
     </message>
@@ -350,6 +354,10 @@
     </message>
     <message>
         <source>Refresh</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download matching client (%1)...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1315,6 +1323,54 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Download matching client</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching KoGaMa client version was found for this map.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You are already using a %1 client (%2).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You already have a %1 client installed (%2). Switch to it now?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This map</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is from %2.
+
+Would you like to also download the matching KoGaMa %3 client (%4, %5)?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is from %2.
+
+Would you like to also download the closest KoGaMa %3 client (%4, %5)?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Download map &amp;&amp; client</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Map only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t ask again when adding maps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Server settings</source>
         <translation>Ajustes del servidor</translation>
     </message>
@@ -1798,6 +1854,10 @@ Install Wine with your package manager, for example &quot;sudo apt install wine&
     <message>
         <source>Theme:</source>
         <translation>Tema:</translation>
+    </message>
+    <message>
+        <source>Ask to download a matching KoGaMa client when adding archived maps</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Not signed in</source>
